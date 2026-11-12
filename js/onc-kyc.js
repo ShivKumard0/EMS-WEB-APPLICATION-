@@ -19,6 +19,8 @@
     const at=ONC_REGISTRY.findIndex(function(f){return f.k==='pan';});
     Array.prototype.splice.apply(ONC_REGISTRY,[at<0?ONC_REGISTRY.length:at+1,0].concat(NEW));
   }
+  /* "KYC Address Line 1, 2, 3" read "Address Line 1, 2, 3" (product owner, 12 Nov 2026). */
+  ONC_REGISTRY.forEach(function(f){if(/^addr[123]$/.test(f.k))f.label=f.label.replace('KYC Address Line','Address Line');});
   if(typeof ONC_GROUPS!=='undefined'&&ONC_GROUPS.indexOf('Documents')<0)ONC_GROUPS.splice(ONC_GROUPS.indexOf('KYC')+1,0,'Documents');
   /* Companies set up before these fields existed get them too: shown and required. */
   if(typeof oncCfgOf==='function'){
