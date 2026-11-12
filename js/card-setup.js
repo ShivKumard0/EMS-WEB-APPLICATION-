@@ -348,19 +348,20 @@ function renderCsuEnrSidebar(){
     body=hero+(oncProgEdit.reg===f.k?oncRegFormHTML(f):oncFieldFormHTML());
   }else{
     const can=emsCan('onc.config.manage'),locked=oncLocked(f);
+    /* Show and Mandatory read like every other detail: a field card, its value On / Off, the reason underneath when
+       it cannot be changed, and the switch beside the value when it can. */
     const tog=function(what,v,disabled,why){
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9">'
-        +'<span style="font-size:13px;color:var(--navy)">'+(what==='show'?'Show on the enrollment form':'Mandatory')+(disabled&&why?'<span class="lp-c-sub" style="display:block">'+why+'</span>':'')+'</span>'
-        +(disabled?csuOnOff(v):'<label class="cs-toggle"><input type="checkbox"'+(v?' checked':'')+' onchange="oncCfgToggle(\''+f.k+'\',\''+what+'\')"><span class="cs-toggle-slider"></span></label>')+'</div>';
+      const val='<span style="display:flex;align-items:center;gap:10px">'
+        +(disabled?'':'<label class="cs-toggle"><input type="checkbox"'+(v?' checked':'')+' onchange="oncCfgToggle(\''+f.k+'\',\''+what+'\')"><span class="cs-toggle-slider"></span></label>')
+        +(v?'On':'Off')
+        +(disabled&&why?'<span class="lp-c-sub" style="font-weight:400">· '+why+'</span>':'')+'</span>';
+      return csuFc(CSU_ICO.flow,what==='show'?'Show on Enrollment Form':'Mandatory',val);
     };
     const why=locked?'Required by '+sbEsc(oncProviderName())+'.':!can?'Managed by Opendhi.':'';
     body=hero
-      +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">This Company</span></div>'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:0 14px;margin-bottom:14px">'
+      +'<div class="lp-sb-detail-grid">'
         +tog('show',oncShown(f),locked||!can||!!f.provider,f.provider&&!locked?'Shown while '+sbEsc(oncProviderName())+' is enabled.':why)
         +tog('mandatory',oncMandatory(f),locked||!can||(f.provider&&!(r&&r.confirmed)),f.provider&&!(r&&r.confirmed)?'Not confirmed by the provider yet.':why)
-      +'</div>'
-      +'<div class="lp-sb-detail-grid">'
         +csuFc(CSU_ICO.tag,'Group',sbEsc(f.group))
         +csuFc(CSU_ICO.users,'Source',f.src==='employee'?'From the employee record':'Collected on the ONC Card tab')
         +csuFc(CSU_ICO.card,'Type',sbEsc(f.type==='select'?'Dropdown':f.type==='date'?'Date':f.type==='email'?'Email':'Text'))
@@ -441,7 +442,9 @@ function renderCsuProvSidebar(){
         +'<textarea class="lp-logs-form-textarea" id="csuv-log-comment" placeholder="'+(on?'Reason for disabling':'Comment')+'"></textarea>'
         +'<button class="lp-logs-save-btn" onclick="csuProvLogSave(\''+p.key+'\')">Save</button>')
       +'</div>':'';
-    body=lpLogsView(logs,form);
+    body=!can?lpLogsView(logs,'',{current:on?'Enabled':'Not Enabled',noAction:{title:'Managed by Opendhi',sub:'Your role can view this provider but not enable or disable it.'}})
+      :blocked?lpLogsView(logs,'',{current:'Not Enabled',noAction:{title:'One provider per entity',sub:ccE(oncProviderName())+' is enabled. Disable it first (Providers → '+ccE(oncProviderName())+' → Logs), then enable '+ccE(p.name)+' here.'}})
+      :lpLogsView(logs,form);
   }else if(csuProvTab==='workflow'){
     body=wfTimelineHTML(wfDoneFromLogs(logs));
   }else{
@@ -498,16 +501,25 @@ function csuEnrLogsHTML(f){
   const moves=[];
   if(can&&!locked&&!f.provider)moves.push(oncShown(f)?'Show: Off':'Show: On');
   if(can&&!locked&&!(f.provider&&!(r&&r.confirmed)))moves.push(oncMandatory(f)?'Mandatory: Off':'Mandatory: On');
-  const why=locked?'Required by '+oncProviderName()+': always shown and mandatory.':!can?'Managed by Opendhi.':'Not confirmed by the provider yet, so it cannot be changed here.';
+  const cur=(oncShown(f)?'Shown':'Hidden')+(oncMandatory(f)?' · Mandatory':'');
+  /* No move here: say why, and where it can be changed, instead of the generic "No action available". */
+  if(!moves.length){
+    const reg=emsCan('onc.registry.manage')&&oncProgrammeOn();
+    const nm=sbEsc(oncProviderName());
+    const no=locked?{title:'Required by '+nm,sub:'While '+nm+' requires '+sbEsc(f.label)+', it is always shown and mandatory.'
+        +(reg?' To change that, open Basic Details → Edit and clear “Provider requires this field”.':' Only Opendhi can change the '+nm+' field mapping.')}
+      :!can?{title:'Managed by Opendhi',sub:'Your role can view this field but not change it.'}
+      :{title:'Awaiting '+nm,sub:sbEsc(f.label)+' cannot be made mandatory until '+nm+' confirms it.'+(reg?' Confirm it in Basic Details → Edit.':'')};
+    return lpLogsView(logs,'',{current:cur,noAction:no});
+  }
   const form='<div class="lp-logs-form">'
-    +'<div class="lp-logs-form-header"><span class="lp-log-dot lp-log-dot--'+(oncShown(f)?'active':'inactive')+'"></span>'+(oncShown(f)?'Shown':'Hidden')+(oncMandatory(f)?' · Mandatory':'')+'</div>'
-    +(moves.length?'<p class="lp-logs-form-sub">Change this field for this company and add a comment.</p>'
-      +'<div class="lp-logs-form-label">Change <span class="lp-logs-form-req">*</span></div>'
-      +apCS('csue-log-change',moves,moves[0],'Select Change')
-      +'<div class="lp-logs-form-label">Comment</div>'
-      +'<textarea class="lp-logs-form-textarea" id="csue-log-comment" placeholder="Comment"></textarea>'
-      +'<button class="lp-logs-save-btn" onclick="csuEnrLogSave(\''+f.k+'\')">Save</button>'
-      :'<p class="lp-logs-form-sub">'+sbEsc(why)+'</p>')
+    +'<div class="lp-logs-form-header"><span class="lp-log-dot lp-log-dot--'+(oncShown(f)?'active':'inactive')+'"></span>'+cur+'</div>'
+    +'<p class="lp-logs-form-sub">Change this field for this company and add a comment.</p>'
+    +'<div class="lp-logs-form-label">Change <span class="lp-logs-form-req">*</span></div>'
+    +apCS('csue-log-change',moves,moves[0],'Select Change')
+    +'<div class="lp-logs-form-label">Comment</div>'
+    +'<textarea class="lp-logs-form-textarea" id="csue-log-comment" placeholder="Comment"></textarea>'
+    +'<button class="lp-logs-save-btn" onclick="csuEnrLogSave(\''+f.k+'\')">Save</button>'
     +'</div>';
   return lpLogsView(logs,form);
 }

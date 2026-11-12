@@ -135,6 +135,52 @@
 /* Tickets - the ticket tilts. */
 :is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="support-tickets"] svg{animation:sbi-swipe .5s var(--e-out)}
 
+/* ── Expense Management, Corporate Cards, Company Structure, RBAC (12 Nov 2026) ──
+   These items fell back to the default hop. Each now plays the animation its glyph already plays elsewhere in the
+   rail, so the same picture always moves the same way; the two glyphs used nowhere else get their own. */
+
+/* Receipt (Expense Management, Expenses & Advances) - prints out, like Payheads. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-expense-management"],[data-ico="expenses"]) svg{animation:sbi-print .55s var(--e-out)}
+
+/* Transactions - the two arrows pass each other. */
+@keyframes sbi-xfer-r{0%,100%{transform:none}45%{transform:translateX(3px)}}
+@keyframes sbi-xfer-l{0%,100%{transform:none}45%{transform:translateX(-3px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-transactions"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-transactions"] svg>:nth-child(-n+2){animation:sbi-xfer-r .5s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-transactions"] svg>:nth-child(n+3){animation:sbi-xfer-l .5s var(--e-out) .08s}
+
+/* Capping Limit - the gauge needle sweeps up to the limit and settles. */
+@keyframes sbi-needle{0%,100%{transform:none}35%{transform:rotate(-70deg)}65%{transform:rotate(20deg)}85%{transform:rotate(-6deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="capping-limit"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="capping-limit"] svg>:first-child{transform-origin:0% 100%;animation:sbi-needle .7s var(--e-out)}
+
+/* Wallet (Wallet & Benefits) - a little shake, like Finance. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="wallet-benefits"] svg{animation:sbi-shake .5s var(--e-out)}
+
+/* Dollar (Funding & Budgets) - the coin flips, like Payroll. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="budgets"] svg{animation:sbi-coin .7s var(--e-in-out)}
+
+/* Card (Corporate Cards, Cards) - the card swipes, like Payments. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-corporate-cards"],[data-ico="card-list"]) svg{animation:sbi-swipe .5s var(--e-out)}
+
+/* Page with lines (Requests & Loads) - tips and writes its lines in, like Templates. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-requests"] svg{transform-origin:20% 90%;animation:qli-book .6s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-requests"] line{transform-origin:left center;animation:qli-write .42s var(--e-out) .12s backwards}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-requests"] line:last-child{animation-delay:.26s}
+
+/* Page with a check (Statements & Reconciliation) - lifts and the check pops, like Contracts. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-statements"] svg{animation:sbi-lift .5s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-statements"] svg>:last-child{animation:sbi-pop .45s var(--e-spring) .1s}
+
+/* Gear (Card Setup) - turns, like Administration. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="card-setup"] svg{animation:sbi-gear .7s var(--e-in-out)}
+
+/* Building (Company Structure, Workspaces) - rises, like Company Settings. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="company-structure"],[data-ico="rbac-workspaces"]) svg{animation:sbi-print .5s var(--e-out)}
+
+/* Shield with a check (RBAC, RBAC Templates) - pulses, like Compliance. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-rbac"],[data-ico="rbac-templates"]) svg{animation:sbi-guard .5s var(--e-spring)}
+
 @media (prefers-reduced-motion:reduce){
   .sb-ico-wrap svg,.sb-ico-wrap svg *{animation:none!important}
 }

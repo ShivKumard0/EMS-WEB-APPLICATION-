@@ -8372,7 +8372,11 @@ function renderCsSidebar(){
     body=csAttachmentsTabHTML();   // agreements + uploads, see cs-agreements.js
   }
   else if(csTab==='esign'){
-    body=typeof csEsignTabHTML==='function'?csEsignTabHTML():'';
+    /* The company's own header card first. The tab's DocuSeal card is the provider, not the record: as the first
+       card it was taken for the record's header and then shown on top of every other tab (Payroll, Leaves …). */
+    const row=csEntityRows().find(r=>r[0]===csSelectedItem)||[];
+    body=sbHero({icon:sbIco.building,name:row[1]||'Opendhi',meta:[row[2],row[3],row[4]],status:sbHeroBadge(row[7])})
+      +(typeof csEsignTabHTML==='function'?csEsignTabHTML():'');
   }
   else if(csTab==='banking-details'){
     const dlIco='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
