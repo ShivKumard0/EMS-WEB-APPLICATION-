@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.2';
+const PRES_DATA_VERSION='2026-11-12.3';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -180,23 +180,57 @@ const PRES_PEOPLE=[
   ['Manish','Agarwal','manish.agarwal@novaretail.in','Procurement','Procurement Manager','karan.shah@novaretail.in','Male','1987-05-21'],
   ['Kavya','Nair','kavya.nair@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Female','1995-10-03'],
   ['Rohit','Saxena','rohit.saxena@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1997-01-16'],
-  ['Deepa','Rawat','deepa.rawat@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Female','1994-03-27']
+  ['Deepa','Rawat','deepa.rawat@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Female','1994-03-27'],
+  /* Five to six people in every team (product owner, 12 Nov 2026). */
+  ['Sanjay','Kumar','sanjay.kumar@novaretail.in','Administration','Office Administrator','karan.shah@novaretail.in','Male','1985-08-19'],
+  ['Lakshmi','Narayan','lakshmi.narayan@novaretail.in','Administration','Facilities Executive','karan.shah@novaretail.in','Female','1992-02-07'],
+  ['Mohit','Jain','mohit.jain@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Male','1996-12-01'],
+  ['Anjali','Mishra','anjali.mishra@novaretail.in','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1995-06-23'],
+  ['Rajesh','Pandey','rajesh.pandey@novaretail.in','Human Resources','Talent Acquisition Executive','riya.kapoor@novaretail.in','Male','1993-03-15'],
+  ['Priya','Nambiar','priya.nambiar@novaretail.in','Human Resources','HR Business Partner','riya.kapoor@novaretail.in','Female','1989-10-11'],
+  ['Suresh','Babu','suresh.babu@novaretail.in','Finance','Accounts Executive','rohan.mehta@novaretail.in','Male','1994-07-29'],
+  ['Meera','Raghavan','meera.raghavan@novaretail.in','Finance','Accounts Executive','rohan.mehta@novaretail.in','Female','1996-01-17'],
+  ['Vikas','Yadav','vikas.yadav@novaretail.in','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1995-04-08'],
+  ['Ritika','Singh','ritika.singh@novaretail.in','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1997-09-26'],
+  ['Arvind','Sharma','arvind.sharma@novaretail.in','Operations','Logistics Coordinator','ananya.iyer@novaretail.in','Male','1991-05-12'],
+  ['Ravi','Teja','ravi.teja@novaretail.in','Operations','Store Associate','sneha.kulkarni@novaretail.in','Male','1998-11-03'],
+  ['Fatima','Shaikh','fatima.shaikh@novaretail.in','Operations','Store Associate','karthik.reddy@novaretail.in','Female','1999-02-20'],
+  ['Aman','Khurana','aman.khurana@novaretail.in','Product','Category Manager','nikhil.bansal@novaretail.in','Male','1988-06-30'],
+  ['Neha','Bhatia','neha.bhatia@novaretail.in','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1997-03-08'],
+  ['Tarun','Mehra','tarun.mehra@novaretail.in','Product','Merchandise Planner','nikhil.bansal@novaretail.in','Male','1993-12-14'],
+  ['Gaurav','Sethi','gaurav.sethi@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1994-09-05'],
+  ['Shalini','Deshmukh','shalini.deshmukh@novaretail.in','Procurement','Vendor Manager','manish.agarwal@novaretail.in','Female','1990-07-22'],
+  ['Harish','Bhat','harish.bhat@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1996-04-18'],
+  ['Ajay','Thakur','ajay.thakur@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1997-08-27'],
+  ['Swati','Patil','swati.patil@novaretail.in','Administration','System Administrator','imran.khan@novaretail.in','Female','1992-11-09'],
+  ['Nitin','Chauhan','nitin.chauhan@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1998-05-14'],
+  ['Deepak','Sinha','deepak.sinha@novaretail.in','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Male','1993-01-26'],
+  ['Ishita','Bose','ishita.bose@novaretail.in','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Female','1996-10-02'],
+  ['Arun','Prakash','arun.prakash@novaretail.in','Compliance','Internal Auditor','sara.thomas@novaretail.in','Male','1987-02-16'],
+  ['Megha','Dutta','megha.dutta@novaretail.in','Compliance','Risk Analyst','sara.thomas@novaretail.in','Female','1994-06-07']
 ];
 /* Nova's department teams, filled by designation (product owner, 12 Nov 2026). They carry no access of their own:
    approvals stay with the approval teams. */
 const PRES_TEAMS=[
-  ['Admin Team',['General Manager','Admin Executive']],
-  ['HR Team',['HR Manager','HR Executive']],
-  ['Finance Team',['Finance Manager','Finance Controller','Finance Executive']],
+  ['Admin Team',['General Manager','Admin Executive','Office Administrator','Facilities Executive']],
+  ['HR Team',['HR Manager','HR Executive','Talent Acquisition Executive','HR Business Partner']],
+  ['Finance Team',['Finance Manager','Finance Controller','Finance Executive','Accounts Executive']],
   ['Sales Team',['Sales Manager','Area Sales Manager','Sales Executive']],
-  ['Operations Team',['Operations Manager','Operations Executive']],
-  ['Store Team',['Store Manager','Visual Merchandiser']],
-  ['Product Team',['Product Manager','Product Analyst']],
-  ['Procurement Team',['Procurement Manager','Procurement Executive']],
-  ['IT Support Team',['IT Manager','IT Support Engineer']],
-  ['Compliance Team',['Compliance Officer']]
+  ['Operations Team',['Operations Manager','Operations Executive','Logistics Coordinator']],
+  ['Store Team',['Store Manager','Visual Merchandiser','Store Associate']],
+  ['Product Team',['Product Manager','Product Analyst','Category Manager','Merchandise Planner']],
+  ['Procurement Team',['Procurement Manager','Procurement Executive','Vendor Manager']],
+  ['IT Support Team',['IT Manager','IT Support Engineer','System Administrator']],
+  ['Compliance Team',['Compliance Officer','Compliance Analyst','Internal Auditor','Risk Analyst']]
 ];
 /* The approval teams under the names Nova uses; same people, same access. */
+/* More people in the approval teams (product owner, 12 Nov 2026): every step that uses a team takes Any One of them. */
+const PRES_TEAM_MORE={'Expense Review Team':['rohan.mehta','vivek.menon','ananya.iyer','aditya.shah'],
+  'Budget Committee':['rohan.mehta','karan.shah','ananya.iyer','ritu.sen'],
+  'Treasury Team':['divya.krishnan','suresh.babu','meera.raghavan'],
+  'Card Approval Team':['rohan.mehta','riya.kapoor','deepa.rawat','sanjay.kumar'],
+  'Card Operations Team':['divya.krishnan','suresh.babu','meera.raghavan','vivek.menon'],
+  'Department Heads':['nikhil.bansal','manish.agarwal','imran.khan','sara.thomas']};
 const PRES_TEAM_NAMES={'Expense Approvers':'Expense Review Team','Budget Approvers':'Budget Committee','Funding Verifiers':'Treasury Team',
   'Budget Owners':'Department Heads','Card Approvers':'Card Approval Team','Card Load Verifiers':'Card Operations Team'};
 function presBuildBaseline(){
@@ -253,7 +287,11 @@ function presBuildBaseline(){
        ['designation','Store Manager','STM'],['designation','Area Sales Manager','ASM'],['designation','Visual Merchandiser','VMD'],['designation','HR Executive','HRX'],
        ['departments','Product','PRD'],['departments','Procurement','PRC'],
        ['designation','Product Manager','PDM'],['designation','Product Analyst','PDA'],['designation','Procurement Manager','PCM'],['designation','Procurement Executive','PCX'],
-       ['designation','IT Support Engineer','ITS'],['designation','Admin Executive','ADX']
+       ['designation','IT Support Engineer','ITS'],['designation','Admin Executive','ADX'],
+       ['designation','Office Administrator','OFA'],['designation','Facilities Executive','FAX'],['designation','Talent Acquisition Executive','TAE'],['designation','HR Business Partner','HBP'],
+       ['designation','Accounts Executive','ACX'],['designation','Logistics Coordinator','LGC'],['designation','Store Associate','SAS'],['designation','Category Manager','CTM'],
+       ['designation','Merchandise Planner','MDP'],['designation','Vendor Manager','VNM'],['designation','System Administrator','SYA'],['designation','Compliance Analyst','CMA'],
+       ['designation','Internal Auditor','IAU'],['designation','Risk Analyst','RSK']
       ].forEach(function(x){cstSetTab(x[0]);csStructOpen(x[0],null);setIn('css-name',x[1]);setIn('css-code',x[2]);csStructSave();});return csDeptNames().length+' departments, '+csDesigNames().length+' designations';});
     step('card provider and illustrative mode',function(){oncProgrammeEnable('rbl');E('presentation mode',ccSetDemoMode(true,'Presentation company: bank-side events are recorded as Illustrative.'));return oncProg(P.ent).provider;});
     step('company admin',function(){const p=PRES_PEOPLE[0],nx=eaNextEmpId('de',P.ent);
@@ -276,7 +314,14 @@ function presBuildBaseline(){
        ['Direct Employee','Rahul Verma'],['Direct Employee','Sneha Kulkarni'],['Direct Employee','Aditya Shah'],['Direct Employee','Pooja Desai'],['Direct Employee','Farhan Qureshi'],
        ['Direct Employee','Divya Krishnan'],['Direct Employee','Karthik Reddy'],['Direct Employee','Nisha Gupta'],
        ['Direct Employee','Nikhil Bansal'],['Direct Employee','Shreya Malhotra'],['Direct Employee','Manish Agarwal'],['Direct Employee','Kavya Nair'],
-       ['Direct Employee','Rohit Saxena'],['Direct Employee','Deepa Rawat']
+       ['Direct Employee','Rohit Saxena'],['Direct Employee','Deepa Rawat'],
+       ['Direct Employee','Sanjay Kumar'],['Direct Employee','Lakshmi Narayan'],['Direct Employee','Mohit Jain'],['Direct Employee','Anjali Mishra'],
+       ['Direct Employee','Rajesh Pandey'],['Direct Employee','Priya Nambiar'],['Direct Employee','Suresh Babu'],['Direct Employee','Meera Raghavan'],
+       ['Direct Employee','Vikas Yadav'],['Direct Employee','Ritika Singh'],['Direct Employee','Arvind Sharma'],['Direct Employee','Ravi Teja'],
+       ['Direct Employee','Fatima Shaikh'],['Direct Employee','Aman Khurana'],['Direct Employee','Neha Bhatia'],['Direct Employee','Tarun Mehra'],
+       ['Direct Employee','Gaurav Sethi'],['Direct Employee','Shalini Deshmukh'],['Direct Employee','Harish Bhat'],['Direct Employee','Ajay Thakur'],
+       ['Direct Employee','Swati Patil'],['Direct Employee','Nitin Chauhan'],['Direct Employee','Deepak Sinha'],['Direct Employee','Ishita Bose'],
+       ['Direct Employee','Arun Prakash'],['Direct Employee','Megha Dutta']
       ].forEach(function(x){csRoleOpen();setCS('csr-role',x[0]);setCS('csr-user',x[1]);csRoleSave();});return csRolesHere().length+' role assignments';});
     step('teams',function(){navigatePage('rbac-workspaces');const w=wsRows().find(function(x){return x.entityId===P.ent;});openWsSidebar(w.id,'members');
       [[NA,'Card Load Verifiers'],[NA,'Funding Verifiers'],[VM,'Funding Verifiers'],[AI,'Card Approvers'],[VM,'Budget Approvers'],[RM,'Budget Owners'],[RS,'Budget Owners'],[AI,'Budget Owners'],[RK,'Budget Owners'],[RS,'Expense Approvers']
@@ -285,7 +330,8 @@ function presBuildBaseline(){
     step('department teams',function(){const w=emsWorkspace(P.ent),ren=PRES_TEAM_NAMES;
       /* Imprest is not used (product owner, 12 Nov 2026): its team goes, and the workspace's history does not name it. */
       w.teams=w.teams.filter(function(t){return !/imprest/i.test(t.name);});
-      w.teams.forEach(function(t){if(ren[t.name])t.name=ren[t.name];});
+      w.teams.forEach(function(t){if(ren[t.name])t.name=ren[t.name];
+        (PRES_TEAM_MORE[t.name]||[]).forEach(function(n){const u=U(n+'@novaretail.in');if(u&&t.members.indexOf(u)<0){t.members.push(u);wsNote(w,idName(u)+' added to '+t.name+'.');}});});
       (w.logs||[]).forEach(function(l){let a=String(l.action||'').replace(/,?\s*Imprest Custodians/g,'');Object.keys(ren).forEach(function(k){a=a.split(k).join(ren[k]);});l.action=a;});
       PRES_TEAMS.forEach(function(x){
         const m=PRES_PEOPLE.filter(function(p){return x[1].indexOf(p[4])>=0;}).map(function(p){return U(p[2]);});
