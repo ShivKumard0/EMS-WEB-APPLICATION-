@@ -106,7 +106,7 @@
      delivery choice. */
   if(typeof oncShown==='function'){
     const h0=oncShown;
-    oncShown=function(f){if(f&&(f.k==='nameOnCard'||f.k==='delivery'))return false;return h0.apply(this,arguments);};
+    oncShown=function(f){if(f&&(f.k==='nameOnCard'||f.k==='delivery'||f.k==='title'))return false;return h0.apply(this,arguments);};   // and no Title (product owner, 12 Nov 2026)
   }
   if(typeof window.showToast==='function'){
     const t0=window.showToast;
