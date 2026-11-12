@@ -110,7 +110,9 @@ const CST_KINDS={
     extra:function(){const h=bgmTabHTML(k),i=h.indexOf('<div class="wb-proj-h">Free-text');return i>=0?h.slice(i):'';}
   });
 });
-const CST_TABS=['branch','departments','designation','cost-centres','projects','signatories'];
+/* No Cost Centres or Projects tab (product owner, 12 Nov 2026). The existing cost centres and projects stay on budgets,
+   claims and advances and can still be picked; none can be added, edited or deactivated from the app. */
+const CST_TABS=['branch','departments','designation','signatories'];
 
 /* ── Page ── */
 function cstCloseForms(){
