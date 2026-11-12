@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.10';
+const PRES_DATA_VERSION='2026-11-12.11';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -792,7 +792,7 @@ if(PRES_ON){
     shade.textContent='Preparing '+PRES_COMPANY+'…';
     (document.body||document.documentElement).appendChild(shade);
     /* After the page has loaded: every module has finished its own start-up (RBAC templates included). */
-    window.PRES_READY=new Promise(function(res){window.addEventListener('load',function(){setTimeout(function(){presBuildBaseline().then(function(log){window.PRES_LOG=log;presEnsureBranches();presTidy();presSave();shade.remove();
+    window.PRES_READY=new Promise(function(res){window.addEventListener('load',function(){setTimeout(function(){/* The set-up works through the screens: the app view is shown first, also in a tab that was left signed in (it may still be on the sign-in view), product owner, 12 Nov 2026. */if(typeof showView==='function'&&typeof view!=='undefined'&&view!=='adt')showView('adt');presBuildBaseline().then(function(log){window.PRES_LOG=log;presEnsureBranches();presTidy();/* A set-up that stopped part-way is not kept: the next visit prepares the company again. */if(log.some(function(x){return /^STOPPED/.test(x);})){presInitial=null;if(typeof console!=='undefined')console.error('Presentation set-up stopped:',log.slice(-2));}else presSave();shade.remove();
       presStart();if(typeof lgEnter==='function')lgEnter();else if(typeof renderADTPage==='function')renderADTPage();res(log);});},0);});});
   }else window.PRES_READY=Promise.resolve(['restored']);
 }
