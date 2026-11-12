@@ -1,6 +1,6 @@
 /* ══ MODULE CONTROL AS MODULE CARDS (product owner, 12 Nov 2026) ════════════════════════════════════════════════════
-   Company Settings → Module Control in a client company (Nova Retail), for the Super Admin only (not the Company
-   Admin), drawn like the product owner's reference: "Module Control" with the modules enabled and an Unsaved changes
+   Company Settings → Module Control in every company (Nova Retail, Dhi Hyperlocal …), for the Super Admin only (not the
+   Company Admin), drawn like the product owner's reference: "Module Control" with the modules enabled and an Unsaved changes
    badge; Always Enabled (Dashboard, My Profile); then Modules - the platform's own menu (Dhi Hyperlocal's, without
    Funding & Budgets) - each a card with its section, its switch and, when on, its sub-modules to tick. Changes are kept
    with Save changes (Discard drops them). Everything starts selected.
@@ -120,8 +120,8 @@ let mcShowBook={};   // entityId → {v:2, mods:{key:true|false}, subs:{key:{sub
     if(typeof mcTabHTML!=='function')return;
     const t0=mcTabHTML;
     mcTabHTML=function(){
-      const client=typeof emsClientOnly==='function'&&emsClientOnly();
-      if(!client||!can())return t0.apply(this,arguments);
+      /* Every company, Dhi Hyperlocal included (product owner, 12 Nov 2026): the Super Admin sees this. */
+      if(!can())return t0.apply(this,arguments);
       return viewHTML();
     };
   });
