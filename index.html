@@ -103,7 +103,8 @@
 <link rel="stylesheet" href="css/listing-weight.css?v=20261108l">
 <link rel="stylesheet" href="css/listing-clean.css?v=20261110c1">
 <link rel="stylesheet" href="css/ems-card-visual.css?v=20261110wr2">
-<link rel="stylesheet" href="css/no-info-notes.css?v=20261111nn2"></head>
+<link rel="stylesheet" href="css/no-info-notes.css?v=20261111nn2">
+<link rel="stylesheet" href="css/ems-policies.css?v=20261112po1"></head>
 <body>
 <!-- ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚Â ADT DASHBOARD ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚Â -->
 <!-- ═══ SIGN IN ═══ The first view on load (js/login.js). Sign in hands over to
@@ -2330,7 +2331,7 @@
 <script src="js/leaves-holidays.js?v=20261108l"></script>
 <!-- Reads csAtt (the shift and its grace) and the entity holiday calendar. -->
 <script src="js/day-status.js?v=20261108l"></script>
-<script src="js/pages.js?v=20261110lg2"></script>
+<script src="js/pages.js?v=20261112ra1"></script>
 <!-- All Timesheet Salary tab + payslip. Reads atPeriod/atEmp (pages.js, core.js)
      and payheadsData for the PF / PT slabs. -->
 <script src="js/at-salary.js?v=20261110c1"></script>
@@ -2368,7 +2369,7 @@
 <!-- Capping Limit / expense policies: after wallet-benefits.js (dates, periods, CSV) and expenses.js (claims it evaluates). -->
 <script src="js/capping-limit.js?v=20261110lg1"></script>
 <!-- Module Control and role scoping: replaces getSidebarItems, guards pages, scopes data. -->
-<script src="js/ems-access.js?v=20261110lg1"></script>
+<script src="js/ems-access.js?v=20261112tm1"></script>
 <!-- ONC / corporate card enrollment: wizard step 5, the ONC Card tab, the two settings tabs. -->
 <script src="js/onc-enrollment.js?v=20261110lg2"></script>
 <script src="js/employee-bulk.js?v=20261108emp7"></script>
@@ -2424,8 +2425,13 @@
 <!-- History tab: wraps the save functions above to record field changes. Last. -->
 <script src="js/history.js?v=20261110af1"></script>
 <!-- Sign in: the first view, and Sign Out in the profile menu. -->
-<script src="js/pres-names.js?v=20261111ds1"></script>
-<script src="js/presentation.js?v=20261112pb1"></script>
+<!-- Policies (Expense Management → Policies, My Profile → Policies) and the one-line Expenses & Advances list: before the
+     presentation scripts, so the presentation keeps their data. -->
+<script src="js/ems-policies.js?v=20261112po5"></script>
+<script src="js/ems-list-tidy.js?v=20261112lt1"></script>
+<script src="js/ems-client-teams.js?v=20261112ct2"></script>
+<script src="js/pres-names.js?v=20261112po1"></script>
+<script src="js/presentation.js?v=20261112tm1"></script>
 <script src="js/card-load-flow.js?v=20261112lf3"></script>
 <script src="js/exp-panel-extras.js?v=20261112ep1"></script>
 <script src="js/ems-mycards-list.js?v=20261112rd1"></script>
@@ -2435,6 +2441,9 @@
 <script src="js/ems-approval-lines.js?v=20261112al1"></script>
 <!-- No "Illustrative" on screen (product owner, 9 Nov 2026); records keep their source. -->
 <script src="js/ems-plain-labels.js?v=20261110fn1"></script>
+<!-- No imprest in the presentation (product owner, 12 Nov 2026). Last: it trims what the scripts above list. -->
+<script src="js/ems-no-imprest.js?v=20261112ni1"></script>
+<script src="js/ems-rbac-nova.js?v=20261112rb2"></script>
 <script src="js/login.js?v=20261108emp4"></script>
 <script>
 function switchDashboard(tab){

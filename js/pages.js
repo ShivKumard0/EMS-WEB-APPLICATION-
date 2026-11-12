@@ -8477,7 +8477,7 @@ function renderCsSidebar(){
    (only its RBAC right, platform.module.control, decides who sees it). */
 const CS_GROUPS=[
   {id:'company',label:'Company Information',tabs:['basic-details','banking-details','company-structure','attachments']},
-  {id:'people',label:'People & Access',tabs:['roles-access']},
+  {id:'people',label:'Roles & Access',tabs:['roles-access']},   // renamed from People & Access (product owner, 12 Nov 2026)
   {id:'hr',label:'HR & Payroll',tabs:['payroll','leaves','attendance']},
   {id:'cards',label:'Expense & Cards',tabs:['card-programmes','onc-enrollment','rbl-registry','exchange-rates']},
   {id:'platform',label:'Platform & Integrations',tabs:['module-control','esign']},

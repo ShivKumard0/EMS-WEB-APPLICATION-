@@ -408,7 +408,8 @@ function emsPagePermitted(pg){return appPagePermitted(pg);}
 /* An EMS client company (entity.emsOnly): its menu holds the EMS and the
    workforce and settings screens EMS depends on; the rest of ADT stays out
    of the way. The ADT platform company keeps its full menu. */
-const EMS_CLIENT_PAGES=['dashboard','employees','expenses','capping-limit','wallet-benefits','budgets','cards','settings','rbac-workspaces','rbac-templates'];
+/* Teams sits under People in client companies too, as in the platform company (product owner, 12 Nov 2026). */
+const EMS_CLIENT_PAGES=['dashboard','employees','teams','expenses','capping-limit','wallet-benefits','budgets','cards','settings','rbac-workspaces','rbac-templates'];
 function emsClientOnly(){const e=typeof idEntityRec==='function'?idEntityRec(idEntity()):null;return !!(e&&e.emsOnly);}
 function emsMenuPage(id){let f=false;(typeof sidebarItems!=='undefined'?sidebarItems:[]).forEach(function(i){if(i.id===id||(i.children||[]).some(function(c){return c.id===id;}))f=true;});return f;}
 function emsClientHidden(id){

@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-11.4';
+const PRES_DATA_VERSION='2026-11-12.1';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -169,8 +169,32 @@ const PRES_PEOPLE=[
   ['Farhan','Qureshi','farhan.qureshi@novaretail.in','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1998-06-18'],
   ['Divya','Krishnan','divya.krishnan@novaretail.in','Finance','Finance Executive','vivek.menon@novaretail.in','Female','1993-08-09'],
   ['Karthik','Reddy','karthik.reddy@novaretail.in','Operations','Store Manager','ananya.iyer@novaretail.in','Male','1989-12-02'],
-  ['Nisha','Gupta','nisha.gupta@novaretail.in','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1997-04-25']
+  ['Nisha','Gupta','nisha.gupta@novaretail.in','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1997-04-25'],
+  /* The Product, Procurement, IT Support and Admin teams (product owner, 12 Nov 2026). */
+  ['Nikhil','Bansal','nikhil.bansal@novaretail.in','Product','Product Manager','karan.shah@novaretail.in','Male','1990-02-14'],
+  ['Shreya','Malhotra','shreya.malhotra@novaretail.in','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1996-07-09'],
+  ['Manish','Agarwal','manish.agarwal@novaretail.in','Procurement','Procurement Manager','karan.shah@novaretail.in','Male','1987-05-21'],
+  ['Kavya','Nair','kavya.nair@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Female','1995-10-03'],
+  ['Rohit','Saxena','rohit.saxena@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1997-01-16'],
+  ['Deepa','Rawat','deepa.rawat@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Female','1994-03-27']
 ];
+/* Nova's department teams, filled by designation (product owner, 12 Nov 2026). They carry no access of their own:
+   approvals stay with the approval teams. */
+const PRES_TEAMS=[
+  ['Admin Team',['General Manager','Admin Executive']],
+  ['HR Team',['HR Manager','HR Executive']],
+  ['Finance Team',['Finance Manager','Finance Controller','Finance Executive']],
+  ['Sales Team',['Sales Manager','Area Sales Manager','Sales Executive']],
+  ['Operations Team',['Operations Manager','Operations Executive']],
+  ['Store Team',['Store Manager','Visual Merchandiser']],
+  ['Product Team',['Product Manager','Product Analyst']],
+  ['Procurement Team',['Procurement Manager','Procurement Executive']],
+  ['IT Support Team',['IT Manager','IT Support Engineer']],
+  ['Compliance Team',['Compliance Officer']]
+];
+/* The approval teams under the names Nova uses; same people, same access. */
+const PRES_TEAM_NAMES={'Expense Approvers':'Expense Review Team','Budget Approvers':'Budget Committee','Funding Verifiers':'Treasury Team',
+  'Budget Owners':'Department Heads','Card Approvers':'Card Approval Team','Card Load Verifiers':'Card Operations Team'};
 function presBuildBaseline(){
   const log=[],T0=window.showToast;let lastT='';presBuilding=true;
   window.showToast=function(a,b,c){lastT=a+(c?' - '+c:'');};
@@ -221,7 +245,10 @@ function presBuildBaseline(){
       [['departments','Administration','ADM'],['departments','Human Resources','HRD'],['departments','Finance','FIN'],['departments','Sales','SAL'],['departments','Operations','OPS'],['departments','Compliance','CMP'],
        ['designation','General Manager','GMG'],['designation','HR Manager','HRM'],['designation','Finance Manager','FMG'],['designation','Finance Executive','FEX'],['designation','Finance Controller','FCT'],
        ['designation','Sales Manager','SMG'],['designation','Sales Executive','SEX'],['designation','Operations Manager','OMG'],['designation','Operations Executive','OEX'],['designation','Compliance Officer','CMO'],['designation','IT Manager','ITM'],
-       ['designation','Store Manager','STM'],['designation','Area Sales Manager','ASM'],['designation','Visual Merchandiser','VMD'],['designation','HR Executive','HRX']
+       ['designation','Store Manager','STM'],['designation','Area Sales Manager','ASM'],['designation','Visual Merchandiser','VMD'],['designation','HR Executive','HRX'],
+       ['departments','Product','PRD'],['departments','Procurement','PRC'],
+       ['designation','Product Manager','PDM'],['designation','Product Analyst','PDA'],['designation','Procurement Manager','PCM'],['designation','Procurement Executive','PCX'],
+       ['designation','IT Support Engineer','ITS'],['designation','Admin Executive','ADX']
       ].forEach(function(x){csStructureTab=x[0];csStructOpen(x[0],null);setIn('css-name',x[1]);setIn('css-code',x[2]);csStructSave();});return csDeptNames().length+' departments, '+csDesigNames().length+' designations';});
     step('card provider and illustrative mode',function(){oncProgrammeEnable('rbl');E('presentation mode',ccSetDemoMode(true,'Presentation company: bank-side events are recorded as Illustrative.'));return oncProg(P.ent).provider;});
     step('company admin',function(){const p=PRES_PEOPLE[0],nx=eaNextEmpId('de',P.ent);
@@ -242,12 +269,24 @@ function presBuildBaseline(){
       [['HR Admin','Riya Kapoor'],['Finance/Billing Admin','Rohan Mehta'],['Manager','Ritu Sen'],['Manager','Ananya Iyer'],['Compliance Officer','Sara Thomas'],['IT Admin','Imran Khan'],
        ['Direct Employee','Kabir Joshi'],['Direct Employee','Arjun Rao'],['Direct Employee','Meghna Pillai'],['Direct Employee','Neel Arora'],['Direct Employee','Vivek Menon'],
        ['Direct Employee','Rahul Verma'],['Direct Employee','Sneha Kulkarni'],['Direct Employee','Aditya Shah'],['Direct Employee','Pooja Desai'],['Direct Employee','Farhan Qureshi'],
-       ['Direct Employee','Divya Krishnan'],['Direct Employee','Karthik Reddy'],['Direct Employee','Nisha Gupta']
+       ['Direct Employee','Divya Krishnan'],['Direct Employee','Karthik Reddy'],['Direct Employee','Nisha Gupta'],
+       ['Direct Employee','Nikhil Bansal'],['Direct Employee','Shreya Malhotra'],['Direct Employee','Manish Agarwal'],['Direct Employee','Kavya Nair'],
+       ['Direct Employee','Rohit Saxena'],['Direct Employee','Deepa Rawat']
       ].forEach(function(x){csRoleOpen();setCS('csr-role',x[0]);setCS('csr-user',x[1]);csRoleSave();});return csRolesHere().length+' role assignments';});
     step('teams',function(){navigatePage('rbac-workspaces');const w=wsRows().find(function(x){return x.entityId===P.ent;});openWsSidebar(w.id,'members');
       [[NA,'Card Load Verifiers'],[NA,'Funding Verifiers'],[VM,'Funding Verifiers'],[AI,'Card Approvers'],[VM,'Budget Approvers'],[RM,'Budget Owners'],[RS,'Budget Owners'],[AI,'Budget Owners'],[RK,'Budget Owners'],[RS,'Expense Approvers']
       ].forEach(function(x){wsOpenAdd('member');const pool=wsCandidates(w),u=U(x[0]);setCS('ws-m-person',idLabel(u,pool));setCS('ws-m-team',x[1]);wsSaveMember(w.id);});
       return emsWorkspace(P.ent).teams.map(function(t){return t.name+' '+t.members.length;}).join(', ');});
+    step('department teams',function(){const w=emsWorkspace(P.ent),ren=PRES_TEAM_NAMES;
+      /* Imprest is not used (product owner, 12 Nov 2026): its team goes, and the workspace's history does not name it. */
+      w.teams=w.teams.filter(function(t){return !/imprest/i.test(t.name);});
+      w.teams.forEach(function(t){if(ren[t.name])t.name=ren[t.name];});
+      (w.logs||[]).forEach(function(l){let a=String(l.action||'').replace(/,?\s*Imprest Custodians/g,'');Object.keys(ren).forEach(function(k){a=a.split(k).join(ren[k]);});l.action=a;});
+      PRES_TEAMS.forEach(function(x){
+        const m=PRES_PEOPLE.filter(function(p){return x[1].indexOf(p[4])>=0;}).map(function(p){return U(p[2]);});
+        w.teams.push({id:wsTeamNext++,name:x[0],tpl:null,members:m});wsNote(w,'Team '+x[0]+' added with '+m.length+' member'+(m.length===1?'':'s')+'.');});
+      if(typeof emsClearCache==='function')emsClearCache();
+      return w.teams.map(function(t){return t.name+' '+t.members.length;}).join(', ');});
     step('onboarding',function(){const who={'verified':ST};const done=[];
       PRES_PEOPLE.forEach(function(p){const e=emp(p[2]);if(!e)throw new Error('no employee '+p[2]);let g=0;
         if(p[0]==='Kabir'){S(RK);navigatePage('employees');openDeSidebar(e.id);
