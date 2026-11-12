@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.3';
+const PRES_DATA_VERSION='2026-11-12.4';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -336,8 +336,30 @@ function presBuildBaseline(){
       PRES_TEAMS.forEach(function(x){
         const m=PRES_PEOPLE.filter(function(p){return x[1].indexOf(p[4])>=0;}).map(function(p){return U(p[2]);});
         w.teams.push({id:wsTeamNext++,name:x[0],tpl:null,members:m});wsNote(w,'Team '+x[0]+' added with '+m.length+' member'+(m.length===1?'':'s')+'.');});
+      /* Access for three department teams (product owner, 12 Nov 2026): the Admin Team everything a company administrator
+         has; the Finance Team every finance right; the Compliance Team the Compliance Hub and every compliance review and
+         audit right. Each is its own template in RBAC → Templates, applied through the team. */
+      const A0=caNow(),at=A0.date+' | '+A0.time,codes={};
+      const ok=function(c){return typeof RB_PERM==='undefined'||(RB_PERM[c]&&RB_PLATFORM_CODES.indexOf(c)<0&&c.indexOf('card.demo.')!==0);};
+      const fromTpl=function(names){const o=[];rbacTemplatesData.forEach(function(t){if(names.indexOf(t.name)>=0)t.perms.forEach(function(c){if(o.indexOf(c)<0)o.push(c);});});return o;};
+      const fromArea=function(mod,areas){const o=[];(RB_CATALOGUE[mod]||[]).forEach(function(a){if(!areas||areas.indexOf(a.area)>=0)a.items.forEach(function(i){o.push(i.c);});});return o;};
+      const audit=function(){const o=[];Object.keys(RB_CATALOGUE).forEach(function(m){RB_CATALOGUE[m].forEach(function(a){a.items.forEach(function(i){if(/\.audit\.view$|compliance/.test(i.c))o.push(i.c);});});});return o;};
+      const uniq=function(l){const o=[];l.forEach(function(c){if(ok(c)&&o.indexOf(c)<0)o.push(c);});return o;};
+      const TPL=[
+        ['Admin Team','Admin Team · Full Access','Foundation',uniq(rbCompanyAdminPerms()),'Everything a company administrator manages for this company, for the Admin Team. Platform administration stays with OpenDhi.'],
+        ['Finance Team','Finance Team · Full Access','Finance',uniq(fromArea('Finance').concat(fromArea('Budgets'),fromTpl(['Finance Admin Access','Expense Finance Administrator','Advance Finance Administrator','Budget & Funding Administrator','Budget Approver','Funding Verifier','Card Load Verifier','Expense Approver']))),
+          'Every finance right in the expense system for the Finance Team: claim and advance finance review, reimbursements and disbursements, budgets and funding, card load verification and payments.'],
+        ['Compliance Team','Compliance Team · Full Access','Governance',uniq(fromArea('Governance',['Compliance Hub','Rates & rules']).concat(audit(),fromTpl(['Compliance Officer Access','Expense Compliance Review','Advance Compliance Review','Budget Compliance Review','Card Compliance Review']))),
+          'The Compliance Hub in full and every compliance review and audit right in the expense system, for the Compliance Team.']
+      ];
+      TPL.forEach(function(x){
+        const id=rbacTemplatesData.reduce(function(m,t){return Math.max(m,t.id);},0)+1;
+        rbacTemplatesData.push(rbSeed(id,x[1],x[2],x[3],[],'Active','Karan Shah',at,x[4]));
+        const t=w.teams.find(function(y){return y.name===x[0];});if(t){t.tpl=id;wsNote(w,x[0]+' given the '+x[1]+' template.');}
+        codes[x[0]]=x[3].length;
+      });
       if(typeof emsClearCache==='function')emsClearCache();
-      return w.teams.map(function(t){return t.name+' '+t.members.length;}).join(', ');});
+      return w.teams.map(function(t){return t.name+' '+t.members.length;}).join(', ')+' · templates '+JSON.stringify(codes);});
     step('onboarding',function(){const who={'verified':ST};const done=[];
       PRES_PEOPLE.forEach(function(p){const e=emp(p[2]);if(!e)throw new Error('no employee '+p[2]);let g=0;
         if(p[0]==='Kabir'){S(RK);navigatePage('employees');openDeSidebar(e.id);
