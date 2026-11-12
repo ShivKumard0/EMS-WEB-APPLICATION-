@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.11';
+const PRES_DATA_VERSION='2026-11-12.12';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -252,7 +252,7 @@ function presBuildBaseline(){
   const line=function(title,amount,sub,start,o){o=o||{};return {title:title,amount:String(amount),subCat:sub,start:start,end:start,proof:o.proof||'receipt.pdf',proofUrl:'',comments:'',cols:{},paidBy:o.paidBy||'Employee',merchant:o.merchant||'',invoice:'',advanceId:o.advanceId||'',advAmount:o.advAmount!=null?String(o.advAmount):''};};
   const sub=function(cat){return (EXP_SUBCATS[cat]||[cat])[0];};
   /* HR (Riya) checks card details; Riya's own are checked by Karan, the company admin (no one checks their own). */
-  const kyc=function(email,V){const r=emp(email),HR=email===RK?KS:RK;S(HR);oncToggle(r.eid,'enroll');S(email);empProfPersona={kind:'',id:null};profTab='onc-card';navigatePage('my-profile');oncStartEdit(r.eid);
+  const kyc=function(email,V){/* Aadhaar and the two KYC documents (product owner, 12 Nov 2026): a 12-digit number of the person's own and their files. */V=Object.assign({aadhaar:(function(e){let h=7;for(let i=0;i<e.length;i++)h=(h*31+e.charCodeAt(i))%100000000000;return String(2+(h%8))+String(h).padStart(11,'0');})(email),docAadhaar:'Aadhaar Card.pdf',docPan:'PAN Card.pdf'},V);const r=emp(email),HR=email===RK?KS:RK;S(HR);oncToggle(r.eid,'enroll');S(email);empProfPersona={kind:'',id:null};profTab='onc-card';navigatePage('my-profile');oncStartEdit(r.eid);
     oncFields().forEach(function(f){if(f.src!=='onc'||f.type==='decl'||!oncShown(f)||!oncEditable(f))return;const id='onc-e-'+f.k;
       if(f.type==='select'){if(document.getElementById('csw-'+id)&&!getCSValue(id)&&f.opts&&f.opts.length)setCS(id,V[f.k]&&f.opts.indexOf(V[f.k])>=0?V[f.k]:f.opts[0]);}else{const el=document.getElementById(id);if(el&&!el.value&&V[f.k]!=null)el.value=V[f.k];}});
     oncSaveEdit();S(HR);oncReview(r.eid,true);S(email);profTab='onc-card';navigatePage('my-profile');['declConsent','declPep','declTrue'].forEach(function(k){const el=document.getElementById('onc-d-'+k);if(el)el.checked=true;});oncAccept(r.eid);
@@ -495,7 +495,7 @@ function presBuildBaseline(){
     step('reimbursement (Meghna)',function(){S(MP);const c=file({title:'Client site visit - local travel',category:'Travel Reimbursement',line:line('Cab to client site and back',850,sub('Travel Reimbursement'),wbAddDays(today,-6),{merchant:'CityRide Cabs'})});
       decide(c,expKey(c));S(RM);E('route',caPaySetRoute(c.id,'Manual/External Payment','',null,P.src.id));E('payment',caPaySettle(c.id,{amount:String(caOutstanding(c)),date:today,source:'Illustrative'}));return expKey(c)+' '+c.pay.key+' '+c.pay.status+' (Illustrative)';});
     stepOn('KYC (Arjun)',wbAddDays(M1,-18),'09:30',function(){const a=emp(AR);S(RK);oncToggle(a.eid,'enroll');S(AR);empProfPersona={kind:'',id:null};profTab='onc-card';navigatePage('my-profile');oncStartEdit(a.eid);
-      const V={title:'Mr',nameOnCard:'ARJUN RAO',pan:'ABCPR7314K',occupation:'Sales Executive',annualIncome:'Rs. 5 L to 10 L',sourceOfIncome:'Salaried',addr1:'Flat 12, Sea Breeze Apartments',addr2:'Andheri West',city:'Mumbai',state:'Maharashtra',pincode:'400053'};
+      const V={aadhaar:'482759316045',docAadhaar:'Aadhaar Card.pdf',docPan:'PAN Card.pdf',title:'Mr',nameOnCard:'ARJUN RAO',pan:'ABCPR7314K',occupation:'Sales Executive',annualIncome:'Rs. 5 L to 10 L',sourceOfIncome:'Salaried',addr1:'Flat 12, Sea Breeze Apartments',addr2:'Andheri West',city:'Mumbai',state:'Maharashtra',pincode:'400053'};
       oncFields().forEach(function(f){if(f.src!=='onc'||f.type==='decl'||!oncShown(f)||!oncEditable(f))return;const id='onc-e-'+f.k;
         if(f.type==='select'){if(document.getElementById('csw-'+id)&&!getCSValue(id)&&f.opts&&f.opts.length)setCS(id,V[f.k]&&f.opts.indexOf(V[f.k])>=0?V[f.k]:f.opts[0]);}else{const el=document.getElementById(id);if(el&&!el.value&&V[f.k]!=null)el.value=V[f.k];}});
       oncSaveEdit();S(RK);oncReview(a.eid,true);S(AR);profTab='onc-card';navigatePage('my-profile');['declConsent','declPep','declTrue'].forEach(function(k){const el=document.getElementById('onc-d-'+k);if(el)el.checked=true;});oncAccept(a.eid);
@@ -597,7 +597,7 @@ function presBuildBaseline(){
       return expKey(hotel)+' … '+expKey(pend)+' '+pend.status+' · refund '+expKey(cr)+' · '+expKey(x)+' '+x.status;});
     /* Meghna's card enrollment details are ready: her multi-wallet card is issued automatically (enrollment pending). */
     step('KYC (Meghna)',function(){const r=emp(MP);S(RK);oncToggle(r.eid,'enroll');S(MP);empProfPersona={kind:'',id:null};profTab='onc-card';navigatePage('my-profile');oncStartEdit(r.eid);
-      const V={title:'Ms',nameOnCard:'MEGHNA PILLAI',pan:'ABCPP5532M',occupation:'Operations Executive',annualIncome:'Rs. 5 L to 10 L',sourceOfIncome:'Salaried',addr1:'Flat 21, Lake View Residency',addr2:'Powai',city:'Mumbai',state:'Maharashtra',pincode:'400076'};
+      const V={aadhaar:'638104527719',docAadhaar:'Aadhaar Card.pdf',docPan:'PAN Card.pdf',title:'Ms',nameOnCard:'MEGHNA PILLAI',pan:'ABCPP5532M',occupation:'Operations Executive',annualIncome:'Rs. 5 L to 10 L',sourceOfIncome:'Salaried',addr1:'Flat 21, Lake View Residency',addr2:'Powai',city:'Mumbai',state:'Maharashtra',pincode:'400076'};
       oncFields().forEach(function(f){if(f.src!=='onc'||f.type==='decl'||!oncShown(f)||!oncEditable(f))return;const id='onc-e-'+f.k;
         if(f.type==='select'){if(document.getElementById('csw-'+id)&&!getCSValue(id)&&f.opts&&f.opts.length)setCS(id,V[f.k]&&f.opts.indexOf(V[f.k])>=0?V[f.k]:f.opts[0]);}else{const el=document.getElementById(id);if(el&&!el.value&&V[f.k]!=null)el.value=V[f.k];}});
       oncSaveEdit();S(RK);oncReview(r.eid,true);S(MP);profTab='onc-card';navigatePage('my-profile');['declConsent','declPep','declTrue'].forEach(function(k){const el=document.getElementById('onc-d-'+k);if(el)el.checked=true;});oncAccept(r.eid);
