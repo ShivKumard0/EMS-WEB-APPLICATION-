@@ -422,7 +422,7 @@ function presBuildBaseline(){
       return expKey(c)+' '+c.status+' ('+c.lines.length+' items) · '+expKey(dr)+' '+dr.status+' ('+dr.lines.length+' items)';});
     step('travel advance and settlement (Arjun)',function(){S(AR);navigatePage('advances');advSetPageTab('advances');advStart();setCS('advf-type','Travel Advance');advFormHook();setIn('advf-title','Pune client visits');setIn('advf-amount','5000');setIn('advf-purpose','Hotel for two nights and local travel for client meetings at the Hinjewadi and Kharadi stores.');setIn('advf-req',wbAddDays(today,2));
       /* A complete request, as an employee fills it: the trip dates, cost centre, project, budget line, itinerary and a note. */
-      setIn('advf-pf',wbAddDays(today,3));setIn('advf-pt',wbAddDays(today,5));setCS('advf-cc','NR-SALES-W · Sales West');setCS('advf-prj','PRJ-PUNE · Pune store expansion');advFormHook();
+      setIn('advf-pf',wbAddDays(today,3));setIn('advf-pt',wbAddDays(today,5));if(document.getElementById('csw-advf-cc'))setCS('advf-cc','NR-SALES-W · Sales West');if(document.getElementById('csw-advf-prj'))setCS('advf-prj','PRJ-PUNE · Pune store expansion');advFormHook();   // Cost Centre / Project are no longer on the form (12 Nov)
       setIn('advf-notes','Hotel booked near Hinjewadi. Client meetings on day 1 and day 2; unspent cash returned within 7 days of coming back.');
       if(document.getElementById('csw-advf-pcat')){const o=Array.prototype.map.call(document.querySelectorAll('#csw-advf-pcat .cs-option'),function(x){return x.textContent.trim();});const pc=o.find(function(t){return /Travel|Accommodation/.test(t);});if(pc){setCS('advf-pcat',pc);advFormHook();}}
       advForm.proof='Pune_client_visits_itinerary.pdf';

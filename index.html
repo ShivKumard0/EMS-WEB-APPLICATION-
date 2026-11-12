@@ -4,6 +4,18 @@
 <script>window.__resources = {"logo": "assets/bhaiyaa-logo.png"};</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* The published site is the presentation only (product owner, 12 Nov 2026): an address without env=presentation opens
+   the presentation. A local copy (localhost, 127.0.0.1 or a file) keeps both modes - the regression suites need them. */
+(function(){
+  var h=location.hostname;
+  if(location.protocol==='file:'||h===''||h==='localhost'||h==='127.0.0.1')return;
+  if(/[?&]env=presentation\b/.test(location.search))return;
+  var q=location.search.replace(/^\?/,'').split('&').filter(function(p){return p&&!/^env=/.test(p);});
+  q.unshift('env=presentation');
+  history.replaceState(null,'',location.pathname+'?'+q.join('&')+location.hash);
+})();
+</script>
 <title>ADT Agent &amp; Support Mode — V2</title>
 
 
@@ -2413,7 +2425,7 @@
 <script src="js/history.js?v=20261110af1"></script>
 <!-- Sign in: the first view, and Sign Out in the profile menu. -->
 <script src="js/pres-names.js?v=20261111ds1"></script>
-<script src="js/presentation.js?v=20261111mc3"></script>
+<script src="js/presentation.js?v=20261112pb1"></script>
 <script src="js/card-load-flow.js?v=20261112lf3"></script>
 <script src="js/exp-panel-extras.js?v=20261112ep1"></script>
 <script src="js/ems-mycards-list.js?v=20261112rd1"></script>
