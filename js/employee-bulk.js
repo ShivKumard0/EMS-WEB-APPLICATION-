@@ -623,7 +623,7 @@ function embSampleRows(){
 function embDownloadSample(){
   if(!emsCan('h2r.employee.bulk')){emsDeny('download the sample');return;}
   const rows=embSampleRows();
-  if(!rows){showToast('Company Structure is not set up','error','Add departments and designations under Company Settings → Company Structure first.');return;}
+  if(!rows){showToast('Company Structure is not set up','error','Add departments and designations under Administration → Company Structure first.');return;}
   tsxSave(embFormatBook(rows),embFileName('Sample'));
   showToast('Sample downloaded','success',embFileName('Sample'));
 }

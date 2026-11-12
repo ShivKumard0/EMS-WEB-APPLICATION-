@@ -5,15 +5,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
-/* The published site is the presentation only (product owner, 12 Nov 2026): an address without env=presentation opens
-   the presentation. A local copy (localhost, 127.0.0.1 or a file) keeps both modes - the regression suites need them. */
+/* The application opens the presentation (OpenDhi's Dhi Hyperlocal and the client company Nova Retail): published site
+   since 12 Nov 2026, a local copy too since 12 Nov 2026 (product owner: the local file showed Closedhi, not Nova).
+   The standard application without the presentation stays reachable at index.html?env=standard - regression suites
+   that need it must open that address. */
 (function(){
-  var h=location.hostname;
-  if(location.protocol==='file:'||h===''||h==='localhost'||h==='127.0.0.1')return;
-  if(/[?&]env=presentation\b/.test(location.search))return;
+  if(/[?&]env=(presentation|standard)\b/.test(location.search))return;
   var q=location.search.replace(/^\?/,'').split('&').filter(function(p){return p&&!/^env=/.test(p);});
   q.unshift('env=presentation');
-  history.replaceState(null,'',location.pathname+'?'+q.join('&')+location.hash);
+  var url=location.pathname+'?'+q.join('&')+location.hash;
+  /* A file address is reloaded with the parameter (a history change to a file: URL can be refused). */
+  if(location.protocol==='file:'){location.replace(url);return;}
+  history.replaceState(null,'',url);
 })();
 </script>
 <title>ADT Agent &amp; Support Mode — V2</title>
@@ -30,7 +33,7 @@
      on top of the finished component set; neither redefines a colour or a
      size, so order only matters for the transitions they layer on. -->
 <link rel="stylesheet" href="css/motion.css?v=20261108l">
-<link rel="stylesheet" href="css/sidebar-icons.css?v=20261108l">
+<link rel="stylesheet" href="css/sidebar-icons.css?v=20261112ic1">
 <link rel="stylesheet" href="css/quick-actions.css?v=20261108l">
 <!-- The timesheet's export drawer. Additive: it defines only .tsx-* selectors
      and reuses the shared tokens, so it can load anywhere after main.css. -->
@@ -2331,7 +2334,7 @@
 <script src="js/leaves-holidays.js?v=20261108l"></script>
 <!-- Reads csAtt (the shift and its grace) and the entity holiday calendar. -->
 <script src="js/day-status.js?v=20261108l"></script>
-<script src="js/pages.js?v=20261112ra1"></script>
+<script src="js/pages.js?v=20261112mg1"></script>
 <!-- All Timesheet Salary tab + payslip. Reads atPeriod/atEmp (pages.js, core.js)
      and payheadsData for the PF / PT slabs. -->
 <script src="js/at-salary.js?v=20261110c1"></script>
@@ -2349,11 +2352,11 @@
 <!-- Pay Run and Create Invoice forms. After pages.js (customSelect, apCD,
      lpLanded) and before renderer.js, whose listings read their open flags. -->
 <script src="js/pay-create.js?v=20261108l"></script>
-<script src="js/cs-agreements.js?v=20261109pres1"></script>
+<script src="js/cs-agreements.js?v=20261112nv1"></script>
 <script src="js/cs-roles.js?v=20261109pres2"></script>
 <!-- Company Structure: Departments and Designation masters (benefit policies scope by them). -->
 <script src="js/cs-structure.js?v=20261109pres1"></script>
-<script src="js/esign.js?v=20261109pres1"></script>
+<script src="js/esign.js?v=20261112nv1"></script>
 <script src="js/esign-settings.js?v=20261108l"></script>
 <script src="js/admin-access.js?v=20261109pres1"></script>
 <script src="js/hr-docs.js?v=20261110c1"></script>
@@ -2371,21 +2374,21 @@
 <!-- Module Control and role scoping: replaces getSidebarItems, guards pages, scopes data. -->
 <script src="js/ems-access.js?v=20261112tm1"></script>
 <!-- ONC / corporate card enrollment: wizard step 5, the ONC Card tab, the two settings tabs. -->
-<script src="js/onc-enrollment.js?v=20261110lg2"></script>
-<script src="js/employee-bulk.js?v=20261108emp7"></script>
+<script src="js/onc-enrollment.js?v=20261112cs1"></script>
+<script src="js/employee-bulk.js?v=20261112st1"></script>
 <script src="js/employee-profile.js?v=20261108emp7"></script>
 <script src="js/company-setup.js?v=20261109mc1"></script>
 <!-- Expense approvals & reimbursement (FR-CA): after expenses, capping limit, RBAC, roles and ems-access; before renderer.js. -->
-<script src="js/expense-approvals.js?v=20261109ea1"></script>
+<script src="js/expense-approvals.js?v=20261112wf1"></script>
 <script src="js/expense-approvals-ui.js?v=20261111rp1"></script>
 <!-- Expense Management → Advances & Imprest (Build 5): engine, then page. -->
-<script src="js/advances.js?v=20261109ea1"></script>
+<script src="js/advances.js?v=20261112wf1"></script>
 <script src="js/advances-ui.js?v=20261111nn2"></script>
 <!-- Expense Management → Funding & Budgets (Build 6): engine (joins Builds 3-5 by wrapping), then page. -->
 <script src="js/budgets.js?v=20261110af1"></script>
-<script src="js/budgets-ui.js?v=20261111nn2"></script>
-<script src="js/cards.js?v=20261111dt1"></script>
-<script src="js/cards-ui.js?v=20261112ft1"></script>
+<script src="js/budgets-ui.js?v=20261112st2"></script>
+<script src="js/cards.js?v=20261112cs1"></script>
+<script src="js/cards-ui.js?v=20261112cs1"></script>
 <script src="js/actor-guard.js?v=20261109d2"></script>
 <script src="js/renderer.js?v=20261108emp3"></script>
 <!-- Expenses & Advances: one module (screens and navigation over the existing engines). -->
@@ -2411,6 +2414,10 @@
 <!-- EMS tidy: Manage actions for Budgets and Cards, EMS client chrome. -->
 <script src="js/ems-tidy.js?v=20261111nm1"></script>
 <script src="js/card-menu.js?v=20261111nr1"></script>
+<!-- After card-menu.js (its Corporate Cards dropdown): Card Setup, Card Programmes and Card Enrollment moved out of Company Settings. Super Admin only. -->
+<script src="js/card-setup.js?v=20261112cs8"></script>
+<!-- After card-setup.js and cards-ui.js (ccFilterBar, ccSplit): Company Structure as its own page under Administration. -->
+<script src="js/company-structure.js?v=20261112st2"></script>
 <script src="js/card-request-panel.js?v=20261112ft1"></script>
 <script src="js/card-requests-all.js?v=20261112cl1"></script>
 <!-- After renderer.js: it enhances what the renderer paints, and needs the
@@ -2430,8 +2437,8 @@
 <script src="js/ems-policies.js?v=20261112po5"></script>
 <script src="js/ems-list-tidy.js?v=20261112lt1"></script>
 <script src="js/ems-client-teams.js?v=20261112ct2"></script>
-<script src="js/pres-names.js?v=20261112po1"></script>
-<script src="js/presentation.js?v=20261112tm1"></script>
+<script src="js/pres-names.js?v=20261112mg1"></script>
+<script src="js/presentation.js?v=20261112mg1"></script>
 <script src="js/card-load-flow.js?v=20261112lf3"></script>
 <script src="js/exp-panel-extras.js?v=20261112ep1"></script>
 <script src="js/ems-mycards-list.js?v=20261112rd1"></script>

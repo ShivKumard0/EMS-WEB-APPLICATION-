@@ -161,7 +161,7 @@ function oncRegSave(){
 }
 function oncRegistryTabHTML(){
   if(!emsCan('onc.registry.manage'))return '<div class="wb-empty-sm">The card provider registry is managed by Opendhi.</div>';
-  if(!oncProgrammeOn())return '<div class="lp-sb-view-header"><span class="lp-sb-section-title">Card Provider Registry</span></div><div class="wb-empty-sm">Enable a card programme first (Company Settings → Card Programmes).</div>';
+  if(!oncProgrammeOn())return '<div class="lp-sb-view-header"><span class="lp-sb-section-title">Card Provider Registry</span></div><div class="wb-empty-sm">Enable a card programme first (Corporate Cards → Card Setup).</div>';
   const rows=oncFields().map(function(f,i){
     const r=oncProvReg(f.k)||{code:'',required:false,confirmed:false,rule:''};
     if(oncProgEdit.reg===f.k){
@@ -421,7 +421,7 @@ sbToneAdd({'not-enrolled':'idle','pending-hr-review':'wait','ready-for-card-enro
 
 function oncToggle(eid,what){
   if(!emsCan('onc.enroll.manage')){emsDeny('change enrollment switches');return;}
-  if(what==='enroll'&&!oncProgrammeOn()){showToast('No card programme enabled','error','Enable one under Company Settings → Card Programmes.');return;}
+  if(what==='enroll'&&!oncProgrammeOn()){showToast('No card programme enabled','error','Enable one under Corporate Cards → Card Setup.');return;}
   const emp=oncEmpOf(eid),r=oncRec(eid,true);
   const before=oncStatus(emp,r);
   r[what]=!(what==='enroll'?r.enroll:r.benefitsEligible!==false);
@@ -623,7 +623,7 @@ function oncFieldHTML(f,v){
 }
 function oncTabHTML(emp){
   if(!mcOn('expenses'))return '<div class="wb-empty-sm">ONC card enrollment is part of the Expenses module, which is switched off for this entity.</div>';
-  if(!oncProgrammeOn())return '<div class="wb-empty-sm">No card programme is enabled for this entity (Company Settings → Card Programmes).</div>';
+  if(!oncProgrammeOn())return '<div class="wb-empty-sm">No card programme is enabled for this entity (Corporate Cards → Card Setup).</div>';
   const r=oncRec(emp.eid,true);
   const status=oncStatus(emp,r),shown=oncShownRec(r),probs=oncProblems(emp,shown),me=oncIsSelf(emp);
   if(oncSelfOnly()&&!me)return '<div class="wb-empty-sm">You can only see your own enrollment.</div>';

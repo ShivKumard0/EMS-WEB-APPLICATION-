@@ -584,7 +584,7 @@ function bgAllocFormHTML(){
   let f=bgField('Department',false,apCS('bgaf-dept',['All departments'].concat(csDeptNames()),d.dept||'All departments','Select','bgAllocHook'))
     +bgField('Expense Category',false,apCS('bgaf-cat',['All categories'].concat(EXP_CATEGORIES),d.category||'All categories','Select','bgAllocHook'))
     +bgField('Subcategory',false,d.category?apCS('bgaf-sub',['Whole category'].concat(EXP_SUBCATS[d.category]||[]),d.subCat||'Whole category','Select','bgAllocHook'):bgRo('Pick a category first'))
-    +bgField('Cost Centre',false,apCS('bgaf-cc',['Any cost centre'].concat(cc.map(bgmLabel)),ccSel?bgmLabel(ccSel):'Any cost centre','Select','bgAllocHook'),cc.length?'':'No active cost centre (Company Settings → Company Structure).')
+    +bgField('Cost Centre',false,apCS('bgaf-cc',['Any cost centre'].concat(cc.map(bgmLabel)),ccSel?bgmLabel(ccSel):'Any cost centre','Select','bgAllocHook'),cc.length?'':'No active cost centre.')
     +bgField('Project',false,apCS('bgaf-prj',['Any project'].concat(pj.map(bgmLabel)),pjSel?bgmLabel(pjSel):'Any project','Select','bgAllocHook'),pj.length?'':'No active project.')
     +bgField('Parent Allocation',false,apCS('bgaf-parent',['None (top level)'].concat(parents.map(function(a){return a.key+' · '+bgScopeLabel(a);})),
         d.parentId?(function(){const p=bgAlloc(d.parentId);return p?p.key+' · '+bgScopeLabel(p):'None (top level)';})():'None (top level)','Select','bgAllocHook'),

@@ -313,7 +313,7 @@ function caRoute(r,iso){
   const hits=[],fx=[];
   caWorkflows.forEach(function(w){const m=caWfMatches(w,r,iso);if(m===true)hits.push(w);else if(m&&m.fx)fx.push(m.fx);});
   if(fx.length)return {error:fx[0]+' The route cannot be chosen until Opendhi adds the rate.'};
-  if(!hits.length)return {error:'No active approval workflow applies to this claim in '+caEntityName()+'. Ask an administrator to add a default route in Company Settings → Workflow.'};
+  if(!hits.length)return {error:'No active approval workflow applies to this claim in '+caEntityName()+'. Contact OpenDhi to set up an approval route.'};
   hits.sort(function(a,b){return caWfPriority(b)-caWfPriority(a);});
   const tied=hits.filter(function(w){return caWfPriority(w)===caWfPriority(hits[0]);});
   if(tied.length>1)return {error:'Approval workflows '+tied.map(caWfKey).join(' and ')+' both apply with the same priority. An administrator must resolve the conflict.'};

@@ -362,7 +362,7 @@ function advWorkflowOf(r){
 function advRoute(r,iso){
   iso=iso||wbToday();
   const w=advWorkflowOf(r),kind=r.kind==='imprest'?'Imprest':'Advance';
-  if(!w)return {error:'No '+kind.toLowerCase()+' approval route is set for this '+(r.kind==='imprest'?'fund':'advance type')+' (Company Settings → Workflow).'};
+  if(!w)return {error:'No '+kind.toLowerCase()+' approval route is set for this '+(r.kind==='imprest'?'fund':'advance type')+'. Contact OpenDhi to set up an approval route.'};
   if(caWfKindOf(w)!==kind)return {error:caWfKey(w)+' is not an '+kind+' route.'};
   if(!caWfInForce(w,iso))return {error:caWfKey(w)+' '+w.name+' is not active on '+cdLabel(iso)+'. Ask an administrator to activate it or set another route.'};
   return {wf:w};

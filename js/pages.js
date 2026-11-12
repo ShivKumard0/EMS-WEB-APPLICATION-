@@ -8310,6 +8310,9 @@ function renderCsSidebar(){
   const editBtn='<button class="lp-sb-view-edit-btn">'+editIcoSvg+' Edit</button>';
   const tabs=csVisibleTabs();
   /* A tab the role can no longer see (after a role switch) falls back to the first. */
+  /* Someone whose only tab was Workflow (now removed) has none left: say so rather than fail. */
+  if(!tabs.length)return '<div class="lp-isb-tabbar"><div class="lp-isb-tabs"></div><div class="lp-isb-right"><button class="lp-isb-close" onclick="closeCsSidebar()" title="Close">&times;</button></div></div>'
+    +'<div class="lp-isb-body"><div class="lp-wf-empty">No company setting is available to your role.</div></div>';
   if(!tabs.some(function(t){return t.id===csTab;}))csTab=tabs[0].id;
   /* Sections on the bar, the section's own tabs underneath (CS_GROUPS). */
   const groups=csVisibleGroups(tabs),cur=csGroupOf(csTab);
@@ -8369,7 +8372,11 @@ function renderCsSidebar(){
     body=csAttachmentsTabHTML();   // agreements + uploads, see cs-agreements.js
   }
   else if(csTab==='esign'){
-    body=typeof csEsignTabHTML==='function'?csEsignTabHTML():'';
+    /* The company's own header card first. The tab's DocuSeal card is the provider, not the record: as the first
+       card it was taken for the record's header and then shown on top of every other tab (Payroll, Leaves …). */
+    const row=csEntityRows().find(r=>r[0]===csSelectedItem)||[];
+    body=sbHero({icon:sbIco.building,name:row[1]||'Opendhi',meta:[row[2],row[3],row[4]],status:sbHeroBadge(row[7])})
+      +(typeof csEsignTabHTML==='function'?csEsignTabHTML():'');
   }
   else if(csTab==='banking-details'){
     const dlIco='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
@@ -8464,24 +8471,39 @@ function renderCsSidebar(){
     body=(typeof eaWfSectionHTML==='function'?eaWfSectionHTML():'')+wfTimelineHTML(csWorkflowData);   // approval routes: js/expenses-advances.js
   }
 
-  const subBar=cur?'<div class="cs-subtabs" role="tablist" aria-label="'+attrSafe(cur.label)+'">'
-    +tabs.filter(function(t){return cur.tabs.indexOf(t.id)>=0;}).map(function(t){
+  /* A section with a single tab needs no strip under it — the section tab says it all. */
+  const curTabs=cur?tabs.filter(function(t){return cur.tabs.indexOf(t.id)>=0;}):[];
+  const subBar=curTabs.length>1?'<div class="cs-subtabs" role="tablist" aria-label="'+attrSafe(cur.label)+'">'
+    +curTabs.map(function(t){
       return '<button type="button" class="cs-subtab'+(csTab===t.id?' active':'')+'" onclick="csSetTab(\''+t.id+'\')">'+t.label+'</button>';}).join('')
     +'</div>':'';
   return tabBar+'<div class="lp-isb-body">'+subBar+body+'</div>';
 }
 /* ── Company Settings: sections ──
    The entity panel's tabs, grouped. Each section opens on its first tab the
-   person may see; a section with none is not shown. Module Control lives in
-   Platform & Integrations and stays there whatever modules are switched off
+   person may see; a section with none is not shown. Module Control is its
+   own tab and stays there whatever modules are switched off
    (only its RBAC right, platform.module.control, decides who sees it). */
 const CS_GROUPS=[
-  {id:'company',label:'Company Information',tabs:['basic-details','banking-details','company-structure','attachments']},
-  {id:'people',label:'Roles & Access',tabs:['roles-access']},   // renamed from People & Access (product owner, 12 Nov 2026)
-  {id:'hr',label:'HR & Payroll',tabs:['payroll','leaves','attendance']},
-  {id:'cards',label:'Expense & Cards',tabs:['card-programmes','onc-enrollment','rbl-registry','exchange-rates']},
-  {id:'platform',label:'Platform & Integrations',tabs:['module-control','esign']},
-  {id:'audit',label:'Activity & Audit',tabs:['workflow','logs','history']}
+  /* Company Information is split: Basic Details is the entity's profile alone,
+     and Banking Details, Company Structure and Attachments are tabs of their own. */
+  {id:'company',label:'Basic Details',tabs:['basic-details']},
+  {id:'banking',label:'Banking Details',tabs:['banking-details']},
+  /* Company Structure is its own page now: Administration → Company Structure (js/company-structure.js). */
+  {id:'attachments',label:'Attachments',tabs:['attachments']},
+  {id:'people',label:'Roles & Access',tabs:['roles-access']},   // the product owner's name (12 Nov 2026), not "Users"
+  /* HR & Payroll is split the same way: Payroll, Leaves and Attendance are tabs of their own. */
+  {id:'hr',label:'Payroll',tabs:['payroll']},
+  {id:'leaves',label:'Leaves',tabs:['leaves']},
+  {id:'attendance',label:'Attendance',tabs:['attendance']},
+  /* No Expense & Cards section (12 Nov 2026): Exchange Rates is removed, and Card Programmes and Card Enrollment
+     moved to Corporate Cards → Card Setup (js/card-setup.js). */
+  /* Platform & Integrations is split: Module Control and E-Sign are tabs of their own. */
+  {id:'platform',label:'Module Control',tabs:['module-control']},
+  {id:'esign',label:'E-Sign',tabs:['esign']}
+  /* No Workflow, Logs or History tab (product owner, 12 Nov 2026). Workflow held the approval routes (Expense Claims,
+     Advance Requests, Imprest Requests): the routes already set keep applying, but none can be added or changed from
+     the app while this tab is gone. Logs held the entity status move and the ID migration report. */
 ];
 function csVisibleTabs(){
   const base=[

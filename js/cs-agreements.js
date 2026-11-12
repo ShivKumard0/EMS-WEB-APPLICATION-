@@ -41,7 +41,8 @@ const CSAG_ICO={
 
 /* The entity this panel describes - Basic Details names it. Generated files
    are named after it, which is what the mock-up's [Entity_Name_MSA] meant. */
-const CSAG_ENTITY='Closedhi';
+/* The company you are in, not a fixed name (it read Closedhi on every company, product owner, 12 Nov 2026). */
+function csagEntity(){const n=typeof idEntityName==='function'&&typeof idEntity==='function'?idEntityName(idEntity()):'';return n||'Company';}
 
 /* The two agreements. `purpose`/`term` are the only fields whose WORDING
    differs between them: an NDA states why information is disclosed, an MSA
@@ -55,7 +56,7 @@ const CS_AGREEMENTS=[
    status:'pending',values:null,docHtml:null,generatedOn:null}
 ];
 function csagFind(key){return CS_AGREEMENTS.find(function(a){return a.key===key;});}
-function csagFileName(a){return CSAG_ENTITY+'_'+a.key;}
+function csagFileName(a){return csagEntity().replace(/\s+/g,'_')+'_'+a.key;}
 
 /* Signatories come with their title, so picking one fills the next field in -
    the mock-up asked for both by hand, which is how they end up disagreeing. */
@@ -77,7 +78,7 @@ function csagSections(a){
      title - with the one unpaired field (Language) last. */
   return [
     {title:'Agreement',fields:[
-      {k:'entity',label:'ADT Entity',type:'select',req:true,opts:function(){return entitiesData.map(function(e){return e.name;});},ph:'Select Entity',def:CSAG_ENTITY},
+      {k:'entity',label:'ADT Entity',type:'select',req:true,opts:function(){return entitiesData.map(function(e){return e.name;});},ph:'Select Entity',def:csagEntity},
       {k:'entityIdLabel',label:'Entity ID Label',type:'text',ph:'e.g. PAN / CIN'},
       {k:'date',label:'Agreement Date',type:'date',req:true},
       {k:'term',label:a.termLabel,type:'number',req:true,ph:'e.g. 2',min:1},
@@ -148,7 +149,7 @@ function csagSigPicked(val){
 
 /* ── Step 1: the form ──────────────────────────────────────────────────── */
 function csagControl(f,v){
-  const id=csagId(f.k),val=v!=null?v:(f.def||'');
+  const id=csagId(f.k),val=v!=null?v:((typeof f.def==='function'?f.def():f.def)||'');
   if(f.type==='select')return apCS(id,f.opts(),val,f.ph||'Select',f.hook);
   if(f.type==='date')return apCD(id,val||csagTodayIso(),'Select date');
   if(f.type==='textarea')return '<textarea class="ep-form-input csag-textarea" id="'+id+'" rows="2" placeholder="'+attrSafe(f.ph||'')+'">'+sbEsc(val)+'</textarea>';
@@ -333,7 +334,7 @@ function csagModalHTML(){
       +'<button class="ct-modal-close" onclick="csagClose()" aria-label="Close">'+CSAG_X+'</button></div>'
     +'<div class="csag-subrow"><p class="ct-modal-sub">'+(csagState.readOnly
         ?sbEsc(csagFileName(a))+' &middot; generated '+sbEsc(a.generatedOn||'')+' by '+sbEsc(a.by)
-        :a.title+' for '+CSAG_ENTITY+'. Fields marked <span class="req">*</span> are required.')+'</p></div>'
+        :a.title+' for '+sbEsc(csagEntity())+'. Fields marked <span class="req">*</span> are required.')+'</p></div>'
     +'<div class="csag-body">'+body+'</div>'
     +foot
     +'</div></div>';
