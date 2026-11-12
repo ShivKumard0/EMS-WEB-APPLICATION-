@@ -2330,7 +2330,7 @@
 <script src="js/leaves-holidays.js?v=20261108l"></script>
 <!-- Reads csAtt (the shift and its grace) and the entity holiday calendar. -->
 <script src="js/day-status.js?v=20261108l"></script>
-<script src="js/pages.js?v=20261110lg2"></script>
+<script src="js/pages.js?v=20261112st1"></script>
 <!-- All Timesheet Salary tab + payslip. Reads atPeriod/atEmp (pages.js, core.js)
      and payheadsData for the PF / PT slabs. -->
 <script src="js/at-salary.js?v=20261110c1"></script>
@@ -2348,11 +2348,11 @@
 <!-- Pay Run and Create Invoice forms. After pages.js (customSelect, apCD,
      lpLanded) and before renderer.js, whose listings read their open flags. -->
 <script src="js/pay-create.js?v=20261108l"></script>
-<script src="js/cs-agreements.js?v=20261109pres1"></script>
+<script src="js/cs-agreements.js?v=20261112nv1"></script>
 <script src="js/cs-roles.js?v=20261109pres2"></script>
 <!-- Company Structure: Departments and Designation masters (benefit policies scope by them). -->
 <script src="js/cs-structure.js?v=20261109pres1"></script>
-<script src="js/esign.js?v=20261109pres1"></script>
+<script src="js/esign.js?v=20261112nv1"></script>
 <script src="js/esign-settings.js?v=20261108l"></script>
 <script src="js/admin-access.js?v=20261109pres1"></script>
 <script src="js/hr-docs.js?v=20261110c1"></script>
@@ -2370,8 +2370,8 @@
 <!-- Module Control and role scoping: replaces getSidebarItems, guards pages, scopes data. -->
 <script src="js/ems-access.js?v=20261110lg1"></script>
 <!-- ONC / corporate card enrollment: wizard step 5, the ONC Card tab, the two settings tabs. -->
-<script src="js/onc-enrollment.js?v=20261110lg2"></script>
-<script src="js/employee-bulk.js?v=20261108emp7"></script>
+<script src="js/onc-enrollment.js?v=20261112cs1"></script>
+<script src="js/employee-bulk.js?v=20261112st1"></script>
 <script src="js/employee-profile.js?v=20261108emp7"></script>
 <script src="js/company-setup.js?v=20261109mc1"></script>
 <!-- Expense approvals & reimbursement (FR-CA): after expenses, capping limit, RBAC, roles and ems-access; before renderer.js. -->
@@ -2382,9 +2382,9 @@
 <script src="js/advances-ui.js?v=20261111nn2"></script>
 <!-- Expense Management → Funding & Budgets (Build 6): engine (joins Builds 3-5 by wrapping), then page. -->
 <script src="js/budgets.js?v=20261110af1"></script>
-<script src="js/budgets-ui.js?v=20261111nn2"></script>
-<script src="js/cards.js?v=20261111dt1"></script>
-<script src="js/cards-ui.js?v=20261112ft1"></script>
+<script src="js/budgets-ui.js?v=20261112st1"></script>
+<script src="js/cards.js?v=20261112cs1"></script>
+<script src="js/cards-ui.js?v=20261112cs1"></script>
 <script src="js/actor-guard.js?v=20261109d2"></script>
 <script src="js/renderer.js?v=20261108emp3"></script>
 <!-- Expenses & Advances: one module (screens and navigation over the existing engines). -->
@@ -2410,6 +2410,10 @@
 <!-- EMS tidy: Manage actions for Budgets and Cards, EMS client chrome. -->
 <script src="js/ems-tidy.js?v=20261111nm1"></script>
 <script src="js/card-menu.js?v=20261111nr1"></script>
+<!-- After card-menu.js (its Corporate Cards dropdown): Card Setup, Card Programmes and Card Enrollment moved out of Company Settings. Super Admin only. -->
+<script src="js/card-setup.js?v=20261112cs5"></script>
+<!-- After card-setup.js and cards-ui.js (ccFilterBar, ccSplit): Company Structure as its own page under Administration. -->
+<script src="js/company-structure.js?v=20261112st1"></script>
 <script src="js/card-request-panel.js?v=20261112ft1"></script>
 <script src="js/card-requests-all.js?v=20261112cl1"></script>
 <!-- After renderer.js: it enhances what the renderer paints, and needs the
@@ -2425,7 +2429,7 @@
 <script src="js/history.js?v=20261110af1"></script>
 <!-- Sign in: the first view, and Sign Out in the profile menu. -->
 <script src="js/pres-names.js?v=20261111ds1"></script>
-<script src="js/presentation.js?v=20261112pb1"></script>
+<script src="js/presentation.js?v=20261112nv2"></script>
 <script src="js/card-load-flow.js?v=20261112lf3"></script>
 <script src="js/exp-panel-extras.js?v=20261112ep1"></script>
 <script src="js/ems-mycards-list.js?v=20261112rd1"></script>

@@ -8464,24 +8464,40 @@ function renderCsSidebar(){
     body=(typeof eaWfSectionHTML==='function'?eaWfSectionHTML():'')+wfTimelineHTML(csWorkflowData);   // approval routes: js/expenses-advances.js
   }
 
-  const subBar=cur?'<div class="cs-subtabs" role="tablist" aria-label="'+attrSafe(cur.label)+'">'
-    +tabs.filter(function(t){return cur.tabs.indexOf(t.id)>=0;}).map(function(t){
+  /* A section with a single tab needs no strip under it — the section tab says it all. */
+  const curTabs=cur?tabs.filter(function(t){return cur.tabs.indexOf(t.id)>=0;}):[];
+  const subBar=curTabs.length>1?'<div class="cs-subtabs" role="tablist" aria-label="'+attrSafe(cur.label)+'">'
+    +curTabs.map(function(t){
       return '<button type="button" class="cs-subtab'+(csTab===t.id?' active':'')+'" onclick="csSetTab(\''+t.id+'\')">'+t.label+'</button>';}).join('')
     +'</div>':'';
   return tabBar+'<div class="lp-isb-body">'+subBar+body+'</div>';
 }
 /* ── Company Settings: sections ──
    The entity panel's tabs, grouped. Each section opens on its first tab the
-   person may see; a section with none is not shown. Module Control lives in
-   Platform & Integrations and stays there whatever modules are switched off
+   person may see; a section with none is not shown. Module Control is its
+   own tab and stays there whatever modules are switched off
    (only its RBAC right, platform.module.control, decides who sees it). */
 const CS_GROUPS=[
-  {id:'company',label:'Company Information',tabs:['basic-details','banking-details','company-structure','attachments']},
-  {id:'people',label:'People & Access',tabs:['roles-access']},
-  {id:'hr',label:'HR & Payroll',tabs:['payroll','leaves','attendance']},
-  {id:'cards',label:'Expense & Cards',tabs:['card-programmes','onc-enrollment','rbl-registry','exchange-rates']},
-  {id:'platform',label:'Platform & Integrations',tabs:['module-control','esign']},
-  {id:'audit',label:'Activity & Audit',tabs:['workflow','logs','history']}
+  /* Company Information is split: Basic Details is the entity's profile alone,
+     and Banking Details, Company Structure and Attachments are tabs of their own. */
+  {id:'company',label:'Basic Details',tabs:['basic-details']},
+  {id:'banking',label:'Banking Details',tabs:['banking-details']},
+  /* Company Structure is its own page now: Administration → Company Structure (js/company-structure.js). */
+  {id:'attachments',label:'Attachments',tabs:['attachments']},
+  {id:'people',label:'Users',tabs:['roles-access']},
+  /* HR & Payroll is split the same way: Payroll, Leaves and Attendance are tabs of their own. */
+  {id:'hr',label:'Payroll',tabs:['payroll']},
+  {id:'leaves',label:'Leaves',tabs:['leaves']},
+  {id:'attendance',label:'Attendance',tabs:['attendance']},
+  /* No Expense & Cards section (12 Nov 2026): Exchange Rates is removed, and Card Programmes and Card Enrollment
+     moved to Corporate Cards → Card Setup (js/card-setup.js). */
+  /* Platform & Integrations is split: Module Control and E-Sign are tabs of their own. */
+  {id:'platform',label:'Module Control',tabs:['module-control']},
+  {id:'esign',label:'E-Sign',tabs:['esign']},
+  /* Activity & Audit is split: Workflow, Logs and History are tabs of their own. */
+  {id:'audit',label:'Workflow',tabs:['workflow']},
+  {id:'logs',label:'Logs',tabs:['logs']},
+  {id:'history',label:'History',tabs:['history']}
 ];
 function csVisibleTabs(){
   const base=[

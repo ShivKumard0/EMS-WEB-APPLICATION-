@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-11.4';
+const PRES_DATA_VERSION='2026-11-12.1';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -107,7 +107,11 @@ function presResetClick(){
 }
 if(PRES_ON){
   if(typeof csExtraTabs==='function'){const base=csExtraTabs;csExtraTabs=function(){return base().concat(presCanReset()?[{id:'presentation-data',label:'Presentation Data'}]:[]);};}
-  if(typeof CS_GROUPS!=='undefined'){const g=CS_GROUPS.find(function(x){return x.id==='platform';});if(g&&g.tabs.indexOf('presentation-data')<0)g.tabs.push('presentation-data');}
+  /* A tab of its own, after E-Sign (the panel shows one tab per section). */
+  if(typeof CS_GROUPS!=='undefined'&&!CS_GROUPS.some(function(x){return x.id==='presentation';})){
+    const at=CS_GROUPS.findIndex(function(x){return x.id==='esign';});
+    CS_GROUPS.splice(at>=0?at+1:CS_GROUPS.length,0,{id:'presentation',label:'Presentation Data',tabs:['presentation-data']});
+  }
   /* Switch Entity in the presentation does not offer Closedhi (ENT-00293), product owner, 10 Nov 2026. Its data is unchanged. */
   /* Payments post to their funding source like every payment: reimbursements, advance disbursements and card loads, so a
      funding source shows its money in, money out and balance (product owner, 10 Nov 2026). */
@@ -217,12 +221,13 @@ function presBuildBaseline(){
   return Promise.resolve().then(function(){
     /* 1 · OpenDhi onboards the company */
     step('company',function(){S(SA);setAppRole('Super Admin');navigatePage('settings');ncStart();setIn('nc-name',PRES_COMPANY);ncSave();P.ent=idEntity();if(idEntityName(P.ent)!==PRES_COMPANY)throw new Error(lastT);return P.ent;});
-    step('structure',function(){navigatePage('settings');openCsSidebar(1);csSetTab('company-structure');
+    /* Company Structure is its own page (Administration → Company Structure, js/company-structure.js), 12 Nov 2026. */
+    step('structure',function(){navigatePage('company-structure');
       [['departments','Administration','ADM'],['departments','Human Resources','HRD'],['departments','Finance','FIN'],['departments','Sales','SAL'],['departments','Operations','OPS'],['departments','Compliance','CMP'],
        ['designation','General Manager','GMG'],['designation','HR Manager','HRM'],['designation','Finance Manager','FMG'],['designation','Finance Executive','FEX'],['designation','Finance Controller','FCT'],
        ['designation','Sales Manager','SMG'],['designation','Sales Executive','SEX'],['designation','Operations Manager','OMG'],['designation','Operations Executive','OEX'],['designation','Compliance Officer','CMO'],['designation','IT Manager','ITM'],
        ['designation','Store Manager','STM'],['designation','Area Sales Manager','ASM'],['designation','Visual Merchandiser','VMD'],['designation','HR Executive','HRX']
-      ].forEach(function(x){csStructureTab=x[0];csStructOpen(x[0],null);setIn('css-name',x[1]);setIn('css-code',x[2]);csStructSave();});return csDeptNames().length+' departments, '+csDesigNames().length+' designations';});
+      ].forEach(function(x){cstSetTab(x[0]);csStructOpen(x[0],null);setIn('css-name',x[1]);setIn('css-code',x[2]);csStructSave();});return csDeptNames().length+' departments, '+csDesigNames().length+' designations';});
     step('card provider and illustrative mode',function(){oncProgrammeEnable('rbl');E('presentation mode',ccSetDemoMode(true,'Presentation company: bank-side events are recorded as Illustrative.'));return oncProg(P.ent).provider;});
     step('company admin',function(){const p=PRES_PEOPLE[0],nx=eaNextEmpId('de',P.ent);
       const r=eaCreateEmployee({empId:nx.prefix+nx.seq,dial:'+91',fname:p[0],lname:p[1],email:p[2],phone:'9820000100',gender:p[6],dob:p[7],nationality:'India',status:'Pending',doj:'2026-04-01',empType:'Full Time',

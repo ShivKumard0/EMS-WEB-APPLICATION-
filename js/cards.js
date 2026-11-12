@@ -109,7 +109,7 @@ function ccValidateProg(d,ent,selfId){
   if(!(d.models||[]).length||d.models.some(function(m){return CC_MODELS.indexOf(m)<0;}))return 'Pick the eligible employment models.';
   if(d.provider){
     if(!ccProvider(d.provider))return 'Pick a provider from the registry.';
-    if(oncProg(ent).provider!==d.provider)return ccProviderName(d.provider)+' is not this entity\'s connected provider. One provider per entity: enable it in Card Programmes first, or leave Provider empty.';
+    if(oncProg(ent).provider!==d.provider)return ccProviderName(d.provider)+' is not this entity\'s connected provider. One provider per entity: enable it in Corporate Cards → Card Setup first, or leave Provider empty.';
   }
   const max=Number(d.maxCards);if(!(max>=1&&max<=5&&Math.floor(max)===max))return 'Maximum Active Cards per Employee must be a whole number from 1 to 5.';
   if(CC_FUNDING_MODES.indexOf(d.fundingMode)<0)return 'Pick the funding mode.';
@@ -4697,7 +4697,7 @@ function ccClaimRemindSweep(ent,at){
         t.claimEsc=(t.claimEsc||[]).concat([{evt:ek,v:s.policy.v,recipient:ccClaimEscLabel(e),to:to,at:ccStamp(A),overdue:s.overdue}]);
         if(to.length)ccNotify(to,'Overdue card expense escalated to you ('+ccClaimEscLabel(e)+'): '+expKey(t)+demo+' of '+t.name+' ('+expMoney(t.amount,t.currency)+') was due on '+cdLabel(s.due)+' and is not claimed.',t,ek);
         ccLog(t,t.status,to.length?'Claim deadline escalation (policy v'+s.policy.v+', '+ccClaimEscLabel(e)+'): '+to.map(caN).join(', ')+' told that the claim due on '+cdLabel(s.due)+' is '+s.overdue+' day'+(s.overdue===1?'':'s')+' overdue.'
-          :'Claim deadline escalation not delivered: no active '+ccClaimEscLabel(e).toLowerCase()+' for '+t.name+' (policy v'+s.policy.v+'). Set the recipient in Card Programmes; nobody else was escalated to.',A);
+          :'Claim deadline escalation not delivered: no active '+ccClaimEscLabel(e).toLowerCase()+' for '+t.name+' (policy v'+s.policy.v+'). Set the recipient in Corporate Cards → Card Setup; nobody else was escalated to.',A);
       }
     }
     if(s.state==='Late Data')ccNotify(ccPeopleWith('card.transaction.match',ent),'Late transaction data: '+expKey(t)+' of '+t.name+' reached ADT on '+cdLabel(s.availableOn)+', after its claim due date '+cdLabel(s.due)+'. Not treated as the employee\'s delay.',t,'late-data');

@@ -916,7 +916,7 @@ function esModalHTML(){
     ?'Send '+(doc.kind==='agreement'?doc.key:'Document')+' to E-sign'
     :'E-Sign &mdash; '+sbEsc(doc.title);
   const sub=send
-    ?sbEsc(doc.title)+' for '+sbEsc(CSAG_ENTITY)+'. Fields marked <span class="req">*</span> are required.'
+    ?sbEsc(doc.title)+' for '+sbEsc(csagEntity())+'. Fields marked <span class="req">*</span> are required.'
     :sbEsc(doc.name)+' &middot; '+sbEsc(doc.size)+' &middot; '+sbEsc(ESIGN_CFG.provider)+' '+sbEsc(ESIGN_CFG.env);
 
   return '<div class="ct-modal-overlay">'

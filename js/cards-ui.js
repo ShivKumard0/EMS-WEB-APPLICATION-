@@ -994,7 +994,7 @@ function ccControlsHTML(){
       +'<td><div class="lp-c-plain">'+ccE(s?ccAmt(s.perTxn,cur):'Not set')+'</div><div class="lp-c-sub">monthly '+ccE(s?ccAmt(s.monthly,cur):'—')+'</div></td>'
       +'<td><div class="lp-c-plain">'+ccE(s?CC_CHANNELS.filter(function(ch){return s.channels[ch];}).join(', ')||'None':'—')+'</div><div class="lp-c-sub">'+ccE(s?'international '+(s.international==='Restrict'?'restricted':'allowed'):'')+'</div></td>'
       +'<td>'+(pend?'<span class="lp-status-badge tone-wait">'+ccE(expKey(pend))+' awaiting approval</span>':axBadge('idle',ccCtlEnforcement(prog)))+'</td></tr>';
-  }).join('')||ccEmpty(6,'No card programme yet. Programmes are set up in Company Settings → Card Programmes.');
+  }).join('')||ccEmpty(6,'No card programme yet. Programmes are set up in Corporate Cards → Card Setup.');
   return '<div class="lp-page">'+dashboardBackHTML()
     +'<div class="wb-note">A card is never looser than its programme. Tightening applies at once; a relaxation needs approval. '
       +'No provider is connected, so these are the <b>intended</b> controls, not enforcement at the payment network. Expense Capping Limits and Budgets keep applying on their own.</div>'
