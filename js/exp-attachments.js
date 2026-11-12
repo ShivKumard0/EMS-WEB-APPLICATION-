@@ -15,6 +15,30 @@
       +(typeof EXP_ICO!=='undefined'?EXP_ICO.clip:'')+'<span>'+esc(l.proof)+'</span></button>';
   };
   window.expAttChip=chip;
+  /* Adding or removing a claim attachment is written to the claim's Logs, with date and time. */
+  const logAtt=function(id,text){const r=typeof expRec==='function'?expRec(Number(id)):null;if(r&&typeof caLog==='function')caLog(r,r.status,text);};
+  if(typeof attachCommit==='function'){
+    const c0=attachCommit;
+    attachCommit=function(scope,id){
+      if(scope!=='exp')return c0.apply(this,arguments);
+      const rec=attachRec('exp',id),n0=rec?rec.attachments.length:0;
+      const out=c0.apply(this,arguments);
+      const now=attachRec('exp',id);
+      if(now&&now.attachments.length>n0){logAtt(id,'Attachment added: '+now.attachments.slice(0,now.attachments.length-n0).map(function(a){return a.name;}).join(', ')+'.');renderADTPage();}
+      return out;
+    };
+  }
+  if(typeof attachRemove==='function'){
+    const r0=attachRemove;
+    attachRemove=function(scope,id,i){
+      if(scope!=='exp')return r0.apply(this,arguments);
+      const rec=attachRec('exp',id),gone=rec&&rec.attachments[i]?rec.attachments[i].name:'',n0=rec?rec.attachments.length:0;
+      const out=r0.apply(this,arguments);
+      const now=attachRec('exp',id);
+      if(gone&&now&&now.attachments.length<n0){logAtt(id,'Attachment removed: '+gone+'.');renderADTPage();}
+      return out;
+    };
+  }
   /* 2 · The panel tab. */
   if(typeof axTabBar==='function'){
     const t0=axTabBar;
@@ -45,6 +69,18 @@
     const s0=renderExpSidebar;
     renderExpSidebar=function(){
       const out=s0.apply(this,arguments);
+      if(typeof expTab!=='undefined'&&expTab==='basic-details'){
+        /* Each line item's badge: the decision taken on it at the stage it is in (js/ea-approve-lines.js). */
+        const rb=typeof expRec==='function'?expRec(expSelectedId):null;if(!rb||typeof expLineShown!=='function')return out;
+        const tb=document.createElement('div');tb.innerHTML=out;
+        tb.querySelectorAll('.exp-line').forEach(function(card){
+          const a=card.querySelector('.exp-line-amt'),m=a&&/-L(\d+)/.exec(a.textContent);if(!m)return;
+          const l=rb.lines.find(function(x){return x.id===Number(m[1]);});if(!l)return;
+          const b=card.querySelector('.exp-line-hd .lp-status-badge'),v=expLineShown(rb,l);
+          if(b&&v&&b.textContent.trim()!==v){const t=document.createElement('span');t.innerHTML=axBadge(typeof statusTone==='function'?statusTone(v):'idle',v);b.replaceWith(t.firstChild);}
+        });
+        return tb.innerHTML;
+      }
       if(typeof expTab==='undefined'||expTab!=='attachments')return out;
       const r=typeof expRec==='function'?expRec(expSelectedId):null;if(!r)return out;
       const tmp=document.createElement('div');tmp.innerHTML=out;

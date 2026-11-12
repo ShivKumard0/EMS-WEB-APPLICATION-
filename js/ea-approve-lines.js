@@ -18,6 +18,41 @@
     const m0=caMoves;
     caMoves=function(r){const out=m0.apply(this,arguments);return mine(r)?out:out.filter(function(v){return v!=='Withdrawn';});};
   }
+  /* A line item reads the decision taken on it at the stage it is in (Approved, Rejected ...), until the claim's own
+     result is final - in this popup and on Basic Details (product owner, 12 Nov 2026). */
+  window.expLineShown=function(r,l){
+    if(!r||!l)return '';
+    const st=r.status==='Awaiting Approval'&&typeof caActiveStage==='function'?caActiveStage(r):null;
+    if(st&&typeof caStageResult==='function'){const d=caStageResult(st,l);if(d&&d.decision)return d.decision;if(st.lineIds&&st.lineIds.indexOf(l.id)>=0)return 'Pending';}
+    return l.status||'Pending';
+  };
+  /* Every decision is in the claim's Logs already (the engine writes it, with date and time); each line item's own log
+     gets the decisions taken on it too, wherever they are made. */
+  if(typeof caDecide==='function'){
+    const d0=caDecide;
+    caDecide=function(id){
+      const r=typeof caRec==='function'?caRec(id):null;
+      const before=r&&r.wf&&r.wf.stages?r.wf.stages.map(function(st){return (st.decisions||[]).length;}):[];
+      const err=d0.apply(this,arguments);
+      if(err||!r||!r.wf||!r.wf.stages)return err;
+      try{
+        r.wf.stages.forEach(function(st,i){
+          (st.decisions||[]).slice(before[i]||0).forEach(function(d){
+            const ids=d.lineId!=null?[d.lineId]:(st.lineIds||[]);
+            ids.forEach(function(lid){
+              const l=r.lines.find(function(x){return x.id===lid;});if(!l)return;
+              if(!l.logs&&typeof expSeedLineLogs==='function')expSeedLineLogs(r,l);
+              l.logs=l.logs||[];
+              const A=typeof caNow==='function'?caNow():{};
+              l.logs.unshift({date:A.date||'',time:A.time||'',user:typeof caN==='function'?caN(d.who||A.who):'',userId:d.who||A.who||'',status:d.decision,
+                action:'Stage '+st.n+' ('+st.name+'): '+d.decision+(d.reason?' - '+d.reason:'')+'.'});
+            });
+          });
+        });
+      }catch(e){}
+      return err;
+    };
+  }
   /* 2 · Approve with the line items. */
   let A=null;   // {id, sel:{lineId:true}}
   const esc=function(s){return typeof sbEsc==='function'?sbEsc(s):String(s);};
@@ -44,7 +79,7 @@
         +'<td class="csag-td">'+esc(l.start?(typeof cdLabel==='function'?cdLabel(l.start):l.start):'')+'</td>'
         +'<td class="csag-td" style="text-align:right;white-space:nowrap">'+(typeof expMoney==='function'?expMoney(l.amount,r.currency):esc(l.amount))+'</td>'
         +'<td class="csag-td">'+(typeof expAttChip==='function'?expAttChip(r,l):esc(l.proof||''))+'</td>'   // the line's attachment (js/exp-attachments.js)
-        +'<td class="csag-td">'+(x.open?axBadge('wait','Pending'):axBadge(typeof statusTone==='function'?statusTone(l.status||''):'idle',l.status||'Decided'))+'</td>'
+        +'<td class="csag-td">'+(function(){const v=expLineShown(r,l);return axBadge(typeof statusTone==='function'?statusTone(v):'idle',v);})()+'</td>'
         +'</tr>';
     }).join('');
     return '<div class="ct-modal-overlay" onclick="eaApClose()">'
@@ -54,13 +89,14 @@
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px">'
         +'<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--navy,#0f172a);cursor:pointer"><input type="checkbox"'+(all?' checked':'')+(open.length?'':' disabled')+' onchange="eaApAll(this.checked)" style="accent-color:#1a1a1a;width:15px;height:15px"> '
           +n+' of '+open.length+' selected'+(n?' · '+(typeof expMoney==='function'?expMoney(total,r.currency):total):'')+'</label>'
-        +'<div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" style="color:var(--st-bad-fg,#b42318)"'+(n?'':' disabled')+' onclick="eaApGo(\'Reject\')">Reject</button>'
+        /* The same pair as every form (Cancel / Save), Reject in red. */
+        +'<div style="display:flex;gap:8px"><button class="ep-cancel-btn" style="color:var(--st-bad-fg,#b42318);border-color:#f1c4bf"'+(n?'':' disabled')+' onclick="eaApGo(\'Reject\')">Reject</button>'
           +'<button class="ep-save-btn"'+(n?'':' disabled')+' onclick="eaApGo(\'Approve\')">Approve</button></div>'
       +'</div>'
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th></th><th>Expense Title</th><th>Category / Sub Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Attachment</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
       /* Deciding someone else's stage (an admin stepping in) always takes a reason - the engine asks for it. */
       +'<div class="ep-form-group ep-form-full" style="margin-top:12px"><label class="ep-form-label">Comment'+(inter?' <span class="req">*</span>':'')+'</label>'
-        +'<textarea id="eaap-comment" class="ep-form-input" rows="3" placeholder="'+(inter?'Required: you are deciding for '+esc(caNs(st.approvers)||'the approver'):'Required to reject')+'" style="resize:vertical;min-height:70px;height:auto;line-height:1.5"></textarea></div>'
+        +'<textarea id="eaap-comment" class="ep-form-input" rows="3" placeholder="'+(inter?'Required: you are deciding for '+esc(caNs(st.approvers)||'the approver'):'Required to reject')+'" style="resize:vertical;min-height:80px;height:auto;line-height:1.5;border-radius:8px;padding:10px 12px"></textarea></div>'
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="eaApClose()">Cancel</button></div></div>'
       +'</div></div>';
   }
