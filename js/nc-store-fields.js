@@ -63,6 +63,48 @@
       return v0.apply(this,arguments);
     };
   }
+  /* Sign up on the sign-in page (product owner, 12 Nov 2026): the same form; Create makes the company and opens the
+     platform as the OpenDhi Super Admin in Dhi Hyperlocal, whatever was entered. */
+  window.lgSignUp=function(){
+    nc={name:'',type:'EOR Entity',country:'India',tz:'Asia/Kolkata',cur:'INR',plan:'Enterprise',cards:true,budgets:true,error:'',
+      pass:'',pass2:'',storeName:'',storeCat:NC_STORE_CATS[0],acc:{tc:false,msa:false,fssai:false},signup:true};
+    ncRender();
+  };
+  if(typeof lgSoon==='function'){
+    const l0=lgSoon;
+    lgSoon=function(what){if(what==='Sign up'){lgSignUp();return;}return l0.apply(this,arguments);};
+  }
+  if(typeof ncHTML==='function'){
+    const t0=ncHTML;
+    ncHTML=function(){
+      const out=t0.apply(this,arguments);
+      return nc&&nc.signup?out.replace('<span class="ct-modal-title">Add Company</span>','<span class="ct-modal-title">Sign up</span>').replace('aria-label="Add Company"','aria-label="Sign up"'):out;
+    };
+  }
+  if(typeof ncSave==='function'){
+    const sv=ncSave;
+    ncSave=function(){
+      if(!nc||!nc.signup)return sv.apply(this,arguments);
+      if(typeof idMe==='function'&&!idMe()){
+        const em=typeof presStartEmail==='function'?presStartEmail():'';
+        const r=typeof idSignIn==='function'?idSignIn(em):null;
+        if(r&&r.error){nc.error=r.error;ncRender();return;}
+      }
+      /* The Super Admin's role, as signing in sets it, so the company may be created. */
+      if(typeof currentRole!=='undefined')currentRole='';if(typeof emsSyncIdentity==='function')emsSyncIdentity();
+      if(typeof emsClearCache==='function')emsClearCache();
+      const before=entitiesData.length,name=(document.getElementById('nc-name')||{}).value||'';
+      /* One message for sign up: the form's own 'Company created' is replaced by the one below. */
+      const t0=window.showToast;window.showToast=function(a){if(a==='Company created')return;return t0.apply(this,arguments);};
+      try{sv.apply(this,arguments);}finally{window.showToast=t0;}
+      if(entitiesData.length===before)return;   // something to correct: the form stays open
+      const made=entitiesData[entitiesData.length-1];
+      const dh=entitiesData.find(function(e){return /Dhi Hyperlocal/i.test(e.name);})||entitiesData[0];
+      if(dh){seSelectedEntity=dh.id;if(typeof appEntityChanged==='function')appEntityChanged();}
+      if(typeof lgEnter==='function')lgEnter();
+      showToast('Company created','success',(made.storeName||made.name||name)+' · '+made.entityId+' is ready. You are in Dhi Hyperlocal as the Super Admin.');
+    };
+  }
   /* The new company keeps its store name, category and acceptances (not the password). */
   if(typeof ncCreate==='function'){
     const c0=ncCreate;
