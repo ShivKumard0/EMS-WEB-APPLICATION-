@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.6';
+const PRES_DATA_VERSION='2026-11-12.7';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -278,7 +278,7 @@ function presBuildBaseline(){
     set:Object.assign({perTxn:'',daily:'',monthly:'',annual:'',allowedCats:[],blockedCats:[],channels:{Online:true,POS:true,ATM:false},international:'Allow',mccAllow:'',mccBlock:'',countryAllow:'',countryBlock:''},set)}));};
   return Promise.resolve().then(function(){
     /* 1 · OpenDhi onboards the company */
-    step('company',function(){S(SA);setAppRole('Super Admin');navigatePage('settings');ncStart();setIn('nc-name',PRES_COMPANY);ncSave();P.ent=idEntity();if(idEntityName(P.ent)!==PRES_COMPANY)throw new Error(lastT);return P.ent;});
+    step('company',function(){S(SA);setAppRole('Super Admin');navigatePage('settings');ncStart();setIn('nc-name',PRES_COMPANY);setIn('nc-store','Nova Retail');setIn('nc-pass','NovaRetail@2026');setIn('nc-pass2','NovaRetail@2026');ncSave();P.ent=idEntity();if(idEntityName(P.ent)!==PRES_COMPANY)throw new Error(lastT);return P.ent;});
     /* Company Structure is its own page (Administration → Company Structure, js/company-structure.js), 12 Nov 2026. */
     step('structure',function(){navigatePage('company-structure');
       [['departments','Administration','ADM'],['departments','Human Resources','HRD'],['departments','Finance','FIN'],['departments','Sales','SAL'],['departments','Operations','OPS'],['departments','Compliance','CMP'],

@@ -53,7 +53,7 @@
     const f0=expLineFieldsHTML;
     expLineFieldsHTML=function(cur,category){
       if(!inModal()||!expDraft||expDraft.lines)return f0.apply(this,arguments);   // drawn for an item (expDraft is the item here)
-      const line=expDraft,lc=line.category||'';
+      const line=expDraft,lc=line.category||category||'';   // an item without its own starts from the claim's
       let out=f0.call(this,cur,lc);
       const field='<div class="ep-form-group"><label class="ep-form-label">Sub Category <span class="req">*</span></label>'
         +apCS('exp-l-cat',cats(),lc,'Select Sub Category','expLineCatPick')+'</div>';
