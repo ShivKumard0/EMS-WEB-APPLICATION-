@@ -5,15 +5,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
-/* The published site is the presentation only (product owner, 12 Nov 2026): an address without env=presentation opens
-   the presentation. A local copy (localhost, 127.0.0.1 or a file) keeps both modes - the regression suites need them. */
+/* The application opens the presentation (OpenDhi's Dhi Hyperlocal and the client company Nova Retail): published site
+   since 12 Nov 2026, a local copy too since 12 Nov 2026 (product owner: the local file showed Closedhi, not Nova).
+   The standard application without the presentation stays reachable at index.html?env=standard - regression suites
+   that need it must open that address. */
 (function(){
-  var h=location.hostname;
-  if(location.protocol==='file:'||h===''||h==='localhost'||h==='127.0.0.1')return;
-  if(/[?&]env=presentation\b/.test(location.search))return;
+  if(/[?&]env=(presentation|standard)\b/.test(location.search))return;
   var q=location.search.replace(/^\?/,'').split('&').filter(function(p){return p&&!/^env=/.test(p);});
   q.unshift('env=presentation');
-  history.replaceState(null,'',location.pathname+'?'+q.join('&')+location.hash);
+  var url=location.pathname+'?'+q.join('&')+location.hash;
+  /* A file address is reloaded with the parameter (a history change to a file: URL can be refused). */
+  if(location.protocol==='file:'){location.replace(url);return;}
+  history.replaceState(null,'',url);
 })();
 </script>
 <title>ADT Agent &amp; Support Mode — V2</title>
@@ -2330,7 +2333,7 @@
 <script src="js/leaves-holidays.js?v=20261108l"></script>
 <!-- Reads csAtt (the shift and its grace) and the entity holiday calendar. -->
 <script src="js/day-status.js?v=20261108l"></script>
-<script src="js/pages.js?v=20261112st1"></script>
+<script src="js/pages.js?v=20261112wf1"></script>
 <!-- All Timesheet Salary tab + payslip. Reads atPeriod/atEmp (pages.js, core.js)
      and payheadsData for the PF / PT slabs. -->
 <script src="js/at-salary.js?v=20261110c1"></script>
@@ -2375,10 +2378,10 @@
 <script src="js/employee-profile.js?v=20261108emp7"></script>
 <script src="js/company-setup.js?v=20261109mc1"></script>
 <!-- Expense approvals & reimbursement (FR-CA): after expenses, capping limit, RBAC, roles and ems-access; before renderer.js. -->
-<script src="js/expense-approvals.js?v=20261109ea1"></script>
+<script src="js/expense-approvals.js?v=20261112wf1"></script>
 <script src="js/expense-approvals-ui.js?v=20261111rp1"></script>
 <!-- Expense Management → Advances & Imprest (Build 5): engine, then page. -->
-<script src="js/advances.js?v=20261109ea1"></script>
+<script src="js/advances.js?v=20261112wf1"></script>
 <script src="js/advances-ui.js?v=20261111nn2"></script>
 <!-- Expense Management → Funding & Budgets (Build 6): engine (joins Builds 3-5 by wrapping), then page. -->
 <script src="js/budgets.js?v=20261110af1"></script>

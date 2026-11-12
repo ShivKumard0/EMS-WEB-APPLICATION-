@@ -8310,6 +8310,9 @@ function renderCsSidebar(){
   const editBtn='<button class="lp-sb-view-edit-btn">'+editIcoSvg+' Edit</button>';
   const tabs=csVisibleTabs();
   /* A tab the role can no longer see (after a role switch) falls back to the first. */
+  /* Someone whose only tab was Workflow (now removed) has none left: say so rather than fail. */
+  if(!tabs.length)return '<div class="lp-isb-tabbar"><div class="lp-isb-tabs"></div><div class="lp-isb-right"><button class="lp-isb-close" onclick="closeCsSidebar()" title="Close">&times;</button></div></div>'
+    +'<div class="lp-isb-body"><div class="lp-wf-empty">No company setting is available to your role.</div></div>';
   if(!tabs.some(function(t){return t.id===csTab;}))csTab=tabs[0].id;
   /* Sections on the bar, the section's own tabs underneath (CS_GROUPS). */
   const groups=csVisibleGroups(tabs),cur=csGroupOf(csTab);
@@ -8493,11 +8496,10 @@ const CS_GROUPS=[
      moved to Corporate Cards → Card Setup (js/card-setup.js). */
   /* Platform & Integrations is split: Module Control and E-Sign are tabs of their own. */
   {id:'platform',label:'Module Control',tabs:['module-control']},
-  {id:'esign',label:'E-Sign',tabs:['esign']},
-  /* Activity & Audit is split: Workflow, Logs and History are tabs of their own. */
-  {id:'audit',label:'Workflow',tabs:['workflow']},
-  {id:'logs',label:'Logs',tabs:['logs']},
-  {id:'history',label:'History',tabs:['history']}
+  {id:'esign',label:'E-Sign',tabs:['esign']}
+  /* No Workflow, Logs or History tab (product owner, 12 Nov 2026). Workflow held the approval routes (Expense Claims,
+     Advance Requests, Imprest Requests): the routes already set keep applying, but none can be added or changed from
+     the app while this tab is gone. Logs held the entity status move and the ID migration report. */
 ];
 function csVisibleTabs(){
   const base=[
