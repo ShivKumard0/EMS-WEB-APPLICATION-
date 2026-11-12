@@ -87,6 +87,34 @@
       return tmp.innerHTML;
     };
   }
+  /* The employee's own KYC tab (product owner, 12 Nov 2026): no heading block, no "Enroll for ONC card" row and no
+     Corporate cards box - HR's view of the employee keeps them (HR enrolls from there). Submit reads "Submit for
+     verification". */
+  if(typeof oncTabHTML==='function'){
+    const s0=oncTabHTML;
+    oncTabHTML=function(emp){
+      let out=s0.apply(this,arguments).replace('>Resubmit for HR review<','>Resubmit for verification<').replace('>Submit for HR review<','>Submit for verification<');
+      if(!(typeof oncIsSelf==='function'&&oncIsSelf(emp)))return out;
+      const tmp=document.createElement('div');tmp.innerHTML=out;
+      const head=tmp.querySelector('.onc-head');if(head&&/KYC ·/.test(head.textContent))head.remove();
+      tmp.querySelectorAll('.onc-switch').forEach(function(x){if(/Enroll for ONC card/.test(x.textContent))x.remove();});
+      tmp.querySelectorAll('.cc-emp-cards').forEach(function(x){x.remove();});
+      return tmp.innerHTML;
+    };
+  }
+  /* No Card section in KYC (Name on Card, Card Delivery): not shown, so not asked for. Card requests keep their own
+     delivery choice. */
+  if(typeof oncShown==='function'){
+    const h0=oncShown;
+    oncShown=function(f){if(f&&(f.k==='nameOnCard'||f.k==='delivery'))return false;return h0.apply(this,arguments);};
+  }
+  if(typeof window.showToast==='function'){
+    const t0=window.showToast;
+    window.showToast=function(a){
+      if(a==='Sent for HR review'||a==='Updated for HR review'){const args=Array.prototype.slice.call(arguments);args[0]=a==='Sent for HR review'?'Sent for verification':'Updated for verification';return t0.apply(this,args);}
+      return t0.apply(this,arguments);
+    };
+  }
   if(typeof deExtraTabs==='function'){
     const d0=deExtraTabs;
     deExtraTabs=function(){return d0.apply(this,arguments).map(function(t){return t.id==='onc-card'?Object.assign({},t,{label:'KYC'}):t;});};
