@@ -162,7 +162,7 @@ function waSeedNova(){
   const today=typeof wbToday==='function'?wbToday():new Date().toISOString().slice(0,10);
   const day=function(k){return typeof wbAddDays==='function'?wbAddDays(today,k):today;};
   const have=waWallets(),br=typeof emsBranchNames==='function'?emsBranchNames(ent):[],dp=wbDepts();
-  const plan=[['MEAL','Branch',br,-30,'10:05:12 AM'],['FUEL','Branch',br,-30,'10:09:47 AM'],['TEL','Department',dp,-29,'11:20:03 AM'],['GIFT','Department',dp,-29,'11:26:40 AM']];
+  const plan=[['MEAL','Branch',br,-30,'10:05:12 AM'],['FUEL','Branch',br,-30,'10:09:47 AM'],['TEL','Department',dp,-29,'11:20:03 AM'],['GIFT','Department',dp,-29,'11:26:40 AM'],['HLTH','Department',dp,-28,'10:42:18 AM']];
   plan.forEach(function(x){
     if(have.indexOf(x[0])<0||!x[2].length)return;
     const iso=day(x[3]);

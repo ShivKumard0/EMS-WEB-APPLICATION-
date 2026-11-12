@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.4';
+const PRES_DATA_VERSION='2026-11-12.6';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -376,17 +376,23 @@ function presBuildBaseline(){
   }).then(function(){
     /* 3 · Company EMS configuration */
     stepOn('wallets',M1,'08:50',function(){presHoldAuto=true;S(KS);navigatePage('wallet-benefits');[['Corporate Expense'],['Meal'],['Fuel'],['Gift'],['Telecom'],['Reimbursement']].forEach(function(x){wbTab='wallets';renderADTPage();wbStartAdd();setCS('wbw-e-type',x[0]);wbFormHook();wbSubmitAdd(true);});
+      /* Nova's own Health wallet, funded each month with the others; the card programme takes it later (health wallet). */
+      wbTab='wallets';renderADTPage();wbStartAdd();setCS('wbw-e-type',WB_NEW_TYPE);wbFormHook();
+      setIn('wbw-e-newName','Health');setIn('wbw-e-newCode','HLTH');setIn('wbw-e-newDesc','Health and wellness: pharmacies, clinics, diagnostics and gyms.');setIn('wbw-e-effFrom','2026-04-01');wbSubmitAdd(true);
+      if(!wbType('HLTH'))throw new Error('Health wallet type: '+lastT);
       return wbWallets.filter(function(w){return w.entity===P.ent;}).map(function(w){return w.type+':'+w.status;}).join(',');});
     stepOn('benefit categories and policies',M1,'09:05',function(){
-      [['Meal Allowance','NR-MEAL','Meal'],['Fuel Allowance','NR-FUEL','Fuel'],['Telecom Allowance','NR-TEL','Telecom'],['Festival Gift','NR-GIFT','Gift']].forEach(function(x){wbTab='categories';renderADTPage();wbStartAdd();setIn('wbc-e-name',x[0]);setIn('wbc-e-code',x[1]);setCS('wbc-e-processing','Wallet-Funded');wbFormHook();
+      /* Health & Wellness on the Health wallet (product owner, 12 Nov 2026), funded in the month's batch with the others. */
+      [['Meal Allowance','NR-MEAL','Meal'],['Fuel Allowance','NR-FUEL','Fuel'],['Telecom Allowance','NR-TEL','Telecom'],['Festival Gift','NR-GIFT','Gift'],['Health & Wellness','NR-HLTH','Health']].forEach(function(x){wbTab='categories';renderADTPage();wbStartAdd();setIn('wbc-e-name',x[0]);setIn('wbc-e-code',x[1]);setCS('wbc-e-processing','Wallet-Funded');wbFormHook();
         const wopt=Array.prototype.map.call(document.querySelectorAll('#csw-wbc-e-wallet .cs-option'),function(o){return o.textContent.trim();}).find(function(t){return t.indexOf(x[2])===0;});if(wopt)setCS('wbc-e-wallet',wopt);
         const ec=document.getElementById('csw-wbc-e-expCat');if(ec){const o=Array.prototype.map.call(ec.querySelectorAll('.cs-option'),function(o){return o.textContent.trim();}).find(function(t){return t.indexOf({'Meal Allowance':'Meal','Fuel Allowance':'Fuel','Telecom Allowance':'Telephone'}[x[0]]||'~')===0;});if(o)setCS('wbc-e-expCat',o);}
         const ef=document.getElementById('wbc-e-effFrom');if(ef)ef.value='2026-04-01';wbSubmitAdd(true);});
       const cats=wbCategories.filter(function(c){return c.entity===P.ent;});if(cats.length<4)throw new Error('categories: '+lastT);
       [['Meal allowance - all employees',cats.find(function(c){return c.name==='Meal Allowance';}),'2200'],['Fuel allowance - all employees',cats.find(function(c){return c.name==='Fuel Allowance';}),'3000'],
-       ['Telecom allowance - all employees',cats.find(function(c){return c.name==='Telecom Allowance';}),'1000'],['Festival gift - all employees',cats.find(function(c){return c.name==='Festival Gift';}),'5000','One-time']].forEach(function(x){
+       ['Telecom allowance - all employees',cats.find(function(c){return c.name==='Telecom Allowance';}),'1000'],['Festival gift - all employees',cats.find(function(c){return c.name==='Festival Gift';}),'5000','One-time'],
+       ['Health & wellness - all employees',cats.find(function(c){return c.name==='Health & Wellness';}),'1500']].forEach(function(x){
         wbTab='policies';renderADTPage();wbStartAdd();setIn('wbp-e-name',x[0]);const lab=Array.prototype.map.call(document.querySelectorAll('#csw-wbp-e-category .cs-option'),function(o){return o.textContent.trim();}).find(function(t){return t.indexOf(x[1].name)===0;});
-        setCS('wbp-e-category',lab);setCS('wbp-e-scope','Entity');wbFormHook();setCS('wbp-e-frequency',x[3]||'Monthly');wbFormHook();setIn('wbp-e-amount',x[2]);if(x[3]){const oc=document.getElementById('wbp-e-occasion');if(oc)oc.value=wbToday();}const ef=document.getElementById('wbp-e-effFrom');if(ef)ef.value='2026-04-01';wbSubmitAdd(true);});
+        setCS('wbp-e-category',lab);setCS('wbp-e-scope','Entity');wbFormHook();setCS('wbp-e-frequency',x[3]||'Monthly');wbFormHook();setIn('wbp-e-amount',x[2]);if(x[3]){const oc=document.getElementById('wbp-e-occasion');if(oc)oc.value=wbToday();}const ef=document.getElementById('wbp-e-effFrom');if(ef)ef.value=/Health/.test(x[0])?today.slice(0,7)+'-01':'2026-04-01';wbSubmitAdd(true);});   // Health & Wellness is new this month
       const pols=wbPolicies.filter(function(p){return p.entity===P.ent;});if(pols.length<4)throw new Error('policies: '+lastT);return cats.length+' categories, '+pols.length+' policies';});
     stepOn('benefit allocation',M1,'09:30',function(){presHoldAuto=false;S(KS);navigatePage('wallet-benefits');   // every policy exists: the system prepares the month's batch
       const b=wbBatches.find(function(x){return x.entity===P.ent&&x.period===today.slice(0,7);});if(!b)throw new Error('no batch prepared');
@@ -502,8 +508,9 @@ function presBuildBaseline(){
       return expKey(cr)+' · '+expKey(d)+' '+d.status;});
     /* Nova creates its own Health wallet type and adds it to the card programme after Arjun's card was issued: his card does
        not have it, so he can ask for it with a Wallet Request (product owner, 10 Nov 2026). */
-    step('health wallet',function(){S(KS);navigatePage('wallet-benefits');wbTab='wallets';renderADTPage();wbStartAdd();setCS('wbw-e-type',WB_NEW_TYPE);wbFormHook();
-      setIn('wbw-e-newName','Health');setIn('wbw-e-newCode','HLTH');setIn('wbw-e-newDesc','Health and wellness: pharmacies, clinics, diagnostics and gyms.');setIn('wbw-e-effFrom','2026-04-01');wbSubmitAdd(true);
+    step('health wallet',function(){S(KS);navigatePage('wallet-benefits');
+      if(!wbType('HLTH')){wbTab='wallets';renderADTPage();wbStartAdd();setCS('wbw-e-type',WB_NEW_TYPE);wbFormHook();
+        setIn('wbw-e-newName','Health');setIn('wbw-e-newCode','HLTH');setIn('wbw-e-newDesc','Health and wellness: pharmacies, clinics, diagnostics and gyms.');setIn('wbw-e-effFrom','2026-04-01');wbSubmitAdd(true);}
       if(!wbType('HLTH'))throw new Error('Health wallet type: '+lastT);
       P.prog=E('add Health to the card',ccProgSave(Object.assign({},P.prog,{wallets:P.prog.wallets.concat(['HLTH'])}))).rec;
       return P.prog.code+' · '+P.prog.wallets.join(', ')+' · Arjun\'s card '+ccCardWallets(P.card).join(', ');});
