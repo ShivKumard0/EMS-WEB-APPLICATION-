@@ -7,12 +7,23 @@
    Members tab adds or removes people - the same records and rules as the workspace's own Teams and Members tabs, so
    both screens always agree. Like Employees, the page does not depend on the People module. */
 let ctmSel=null,ctmTab='basic-details',ctmQ='',ctmTplF='',ctmStatF='',ctmForm=null,ctmMemOpen=false;
+/* A member's designation in the team (product owner, 12 Nov 2026): a label only. Approvers are numbered in the order
+   they were added - Approver 1, Approver 2 ... */
+const CTM_DESIGS=['Reporting Manager','Approver','Finance Approver','Manager','Reviewer','Verifier','Member'];
+function ctmDesigOf(t,uid){
+  const d=(t.desig||{})[uid]||'';if(d!=='Approver')return d;
+  const n=t.members.filter(function(u){return (t.desig||{})[u]==='Approver';}).indexOf(uid)+1;
+  return 'Approver '+n;
+}
 function ctmOn(){return typeof emsClientOnly==='function'&&emsClientOnly();}
 function ctmCanManage(){return typeof emsCan==='function'&&(emsCan('h2r.team.create')||emsCan('platform.access.manage'));}
 function ctmWorkspaces(){
   return (typeof rbacWorkspacesData!=='undefined'?rbacWorkspacesData:[]).filter(function(w){return w.status!=='Deleted'&&w.entityId===idEntity();});
 }
-function ctmAll(){const out=[];ctmWorkspaces().forEach(function(w){(w.teams||[]).forEach(function(t){out.push({w:w,t:t});});});return out;}
+/* Not listed (product owner, 12 Nov 2026: "just to show"): the card approval and card load teams keep working for the
+   card routes, they are only left out of this list. */
+const CTM_HIDDEN=['Card Approval Team','Card Operations Team','Card Approvers','Card Load Verifiers'];
+function ctmAll(){const out=[];ctmWorkspaces().forEach(function(w){(w.teams||[]).forEach(function(t){if(CTM_HIDDEN.indexOf(t.name)<0)out.push({w:w,t:t});});});return out;}
 function ctmFind(id){return ctmAll().find(function(x){return x.t.id===id;})||null;}
 /* A department team carries no access template (its people's own roles give their access): shown as "—". */
 function ctmTplName(t){const tp=typeof wsTpl==='function'?wsTpl(t):null;return tp?tp.name:'—';}
@@ -118,15 +129,17 @@ function ctmMembersHTML(x){
   let form='';
   if(ctmMemOpen&&manage){
     const pool=ctmPool(x);
-    form=axInlineFormHTML('<div class="ep-form-group ep-form-full"><label class="ep-form-label">Member <span class="req">*</span></label>'
+    form=axInlineFormHTML('<div class="ep-form-group"><label class="ep-form-label">Member <span class="req">*</span></label>'
       +axCS('ctm-m-person',idLabels(pool),'','Search Employee')
-      +(pool.length?'':'<div class="ea-hint">Everyone in this company is already in '+sbEsc(x.t.name)+'.</div>')+'</div>','ctmMemCancel()','ctmMemSave('+x.t.id+')');
+      +(pool.length?'':'<div class="ea-hint">Everyone in this company is already in '+sbEsc(x.t.name)+'.</div>')+'</div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Designation</label>'+apCS('ctm-m-desig',CTM_DESIGS,'','Select designation')
+      +'<div class="ea-hint">Approvers are numbered in the order they are added.</div></div>','ctmMemCancel()','ctmMemSave('+x.t.id+')');
   }
   if(!x.t.members.length)return head+form+(form?'':'<div class="lp-wf-empty">No members yet.'+(manage?' Add the people who should have '+sbEsc(ctmTplName(x.t))+' access.':'')+'</div>');
   return head+form
-    +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>S. No</th><th>Name</th><th>Email</th>'+(manage?'<th class="csag-act">Action</th>':'')+'</tr></thead><tbody>'
-    +x.t.members.slice().sort(function(a,b){return idName(a).localeCompare(idName(b));}).map(function(u,i){
-      return '<tr><td class="csag-td">'+(i+1)+'</td><td class="csag-td">'+sbEsc(idName(u))+'</td><td class="csag-td">'+sbEsc(idEmail(u)||'—')+'</td>'
+    +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>S. No</th><th>Name</th><th>Designation</th><th>Email</th>'+(manage?'<th class="csag-act">Action</th>':'')+'</tr></thead><tbody>'
+    +x.t.members.slice().map(function(u,i){
+      return '<tr><td class="csag-td">'+(i+1)+'</td><td class="csag-td">'+sbEsc(idName(u))+'</td><td class="csag-td">'+sbEsc(ctmDesigOf(x.t,u)||'—')+'</td><td class="csag-td">'+sbEsc(idEmail(u)||'—')+'</td>'
         +(manage?'<td class="csag-td csag-act"><button class="att-row-btn is-danger" title="Remove from team" onclick="ctmMemRemove('+x.t.id+',\''+attrSafe(u)+'\')">'+AX_ICO.trash+'</button></td>':'')+'</tr>';
     }).join('')+'</tbody></table></div>';
 }
@@ -141,8 +154,9 @@ function ctmMemSave(teamId){
   const pool=ctmPool(x),uid=idFromLabel(getCSValue('ctm-m-person'),pool);
   if(!uid){showToast('Pick a member','error','Search for the employee to add.');return;}
   x.t.members.push(uid);
+  const dg=getCSValue('ctm-m-desig');if(dg){x.t.desig=x.t.desig||{};x.t.desig[uid]=dg;}
   if(typeof emsClearCache==='function')emsClearCache();
-  if(typeof wsNote==='function')wsNote(x.w,idName(uid)+' added to '+x.t.name+'.');
+  if(typeof wsNote==='function')wsNote(x.w,idName(uid)+' added to '+x.t.name+(dg?' as '+ctmDesigOf(x.t,uid):'')+'.');
   ctmMemOpen=false;renderADTPage();
   showToast('Member added','success',idName(uid)+' now has '+ctmTplName(x.t)+' access through '+x.t.name+'.');
 }

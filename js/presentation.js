@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.7';
+const PRES_DATA_VERSION='2026-11-12.8';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -336,6 +336,13 @@ function presBuildBaseline(){
       PRES_TEAMS.forEach(function(x){
         const m=PRES_PEOPLE.filter(function(p){return x[1].indexOf(p[4])>=0;}).map(function(p){return U(p[2]);});
         w.teams.push({id:wsTeamNext++,name:x[0],tpl:null,members:m});wsNote(w,'Team '+x[0]+' added with '+m.length+' member'+(m.length===1?'':'s')+'.');});
+      /* The Expense Management Team (product owner, 12 Nov 2026): the people who approve and check expenses, each with a
+         designation label; it carries no access of its own and no route uses it. */
+      const EMT=[['ritu.sen','Reporting Manager'],['ananya.iyer','Reporting Manager'],['aditya.shah','Approver'],['nikhil.bansal','Approver'],
+        ['rohan.mehta','Finance Approver'],['vivek.menon','Finance Approver'],['neel.arora','Verifier'],['karan.shah','Manager']];
+      const emt={id:wsTeamNext++,name:'Expense Management Team',tpl:null,members:[],desig:{}};
+      EMT.forEach(function(x){const u=U(x[0]+'@novaretail.in');if(u){emt.members.push(u);emt.desig[u]=x[1];}});
+      w.teams.push(emt);wsNote(w,'Team Expense Management Team added with '+emt.members.length+' members.');
       /* Access for three department teams (product owner, 12 Nov 2026): the Admin Team everything a company administrator
          has; the Finance Team every finance right; the Compliance Team the Compliance Hub and every compliance review and
          audit right. Each is its own template in RBAC → Templates, applied through the team. */
