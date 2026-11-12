@@ -338,8 +338,8 @@ function presBuildBaseline(){
         w.teams.push({id:wsTeamNext++,name:x[0],tpl:null,members:m});wsNote(w,'Team '+x[0]+' added with '+m.length+' member'+(m.length===1?'':'s')+'.');});
       /* The Expense Management Team (product owner, 12 Nov 2026): the people who approve and check expenses, each with a
          designation label; it carries no access of its own and no route uses it. */
-      const EMT=[['ritu.sen','Reporting Manager'],['ananya.iyer','Reporting Manager'],['aditya.shah','Approver'],['nikhil.bansal','Approver'],
-        ['rohan.mehta','Finance Approver'],['vivek.menon','Finance Approver'],['neel.arora','Verifier'],['karan.shah','Manager']];
+      const EMT=[['ritu.sen','Reporting Manager'],['ananya.iyer','Reporting Manager'],['aditya.shah','Approver 1'],['nikhil.bansal','Approver 2'],
+        ['rohan.mehta','Finance Approver'],['vivek.menon','Finance Approver'],['neel.arora','Verifier 1'],['karan.shah','Manager']];
       const emt={id:wsTeamNext++,name:'Expense Management Team',tpl:null,members:[],desig:{}};
       EMT.forEach(function(x){const u=U(x[0]+'@novaretail.in');if(u){emt.members.push(u);emt.desig[u]=x[1];}});
       w.teams.push(emt);wsNote(w,'Team Expense Management Team added with '+emt.members.length+' members.');

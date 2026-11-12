@@ -7,13 +7,17 @@
    Members tab adds or removes people - the same records and rules as the workspace's own Teams and Members tabs, so
    both screens always agree. Like Employees, the page does not depend on the People module. */
 let ctmSel=null,ctmTab='basic-details',ctmQ='',ctmTplF='',ctmStatF='',ctmForm=null,ctmMemOpen=false;
-/* A member's designation in the team (product owner, 12 Nov 2026): a label only. Approvers are numbered in the order
-   they were added - Approver 1, Approver 2 ... */
-const CTM_DESIGS=['Reporting Manager','Approver','Finance Approver','Manager','Reviewer','Verifier','Member'];
+/* A member's designation in the team (product owner, 12 Nov 2026): a label only, picked as it reads - Approver 1, 2 and 3
+   and Verifier 1 and 2 are designations of their own (no automatic numbering). A team saved before carries plain
+   Approver / Verifier: they take the number they were shown with, in the order the members were added. */
+const CTM_DESIGS=['Reporting Manager','Approver 1','Approver 2','Approver 3','Finance Approver','Manager','Reviewer','Verifier 1','Verifier 2','Member'];
 function ctmDesigOf(t,uid){
-  const d=(t.desig||{})[uid]||'';if(d!=='Approver')return d;
-  const n=t.members.filter(function(u){return (t.desig||{})[u]==='Approver';}).indexOf(uid)+1;
-  return 'Approver '+n;
+  const ds=t.desig||{};
+  ['Approver','Verifier'].forEach(function(k){
+    if(!t.members.some(function(u){return ds[u]===k;}))return;
+    let n=0;t.members.forEach(function(u){if(ds[u]===k)ds[u]=k+' '+(++n);});
+  });
+  return ds[uid]||'';
 }
 function ctmOn(){return typeof emsClientOnly==='function'&&emsClientOnly();}
 function ctmCanManage(){return typeof emsCan==='function'&&(emsCan('h2r.team.create')||emsCan('platform.access.manage'));}

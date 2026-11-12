@@ -21,7 +21,7 @@
         if(w.status==='Deleted'||w.entityId!==ent)return;
         (w.teams||[]).forEach(function(x){
           if(x.name!==(t.emsTeam||'Expense Management Team'))return;
-          const who=x.members.filter(function(u){return (x.desig||{})[u]===t.emsDesig;}).map(idName);
+          const who=x.members.filter(function(u){const d=(x.desig||{})[u]||'';return d===t.emsDesig||d.indexOf(t.emsDesig+' ')===0;}).map(idName);   // Approver 1, 2, 3 hold the Approver template
           out.push(x.name+(who.length?': '+who.join(', '):''));
         });
       });
