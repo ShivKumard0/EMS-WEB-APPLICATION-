@@ -1,0 +1,67 @@
+/* ══ REQUIRED DOCUMENTS POPUP (js/req-docs-popup.js) ══════════════════════
+   Dashboard only. Same dialog furniture as the app's other small dialogs
+   (HR Docs › Send in Mail): a dimmed overlay, a 14px card, a head with an
+   icon tile, and the standard buttons. */
+.rd-ov{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(15,23,42,.45);opacity:0;transition:opacity .2s ease}
+.rd-ov.is-shown{opacity:1}
+.rd-pop{width:100%;max-width:520px;max-height:calc(100vh - 40px);box-sizing:border-box;display:flex;flex-direction:column;
+  padding:22px 24px 18px;background:#fff;border-radius:var(--r-card,14px);box-shadow:0 20px 50px rgba(15,23,42,.25);
+  transform:translateY(8px) scale(.99);transition:transform .22s var(--e-out,ease-out)}
+.rd-ov.is-shown .rd-pop{transform:none}
+
+.rd-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.rd-head-ico{width:38px;height:38px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:var(--navy);color:#fff}
+.rd-head-ico svg{width:17px;height:17px}
+.rd-head-txt{flex:1;min-width:0}
+.rd-head-txt h3{margin:0;font-size:16px;font-weight:700;color:var(--navy)}
+.rd-head-txt p{margin:3px 0 0;font-size:12.5px;line-height:1.45;color:var(--gray)}
+.rd-x{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:0;border-radius:8px;
+  background:none;color:var(--gray);cursor:pointer}
+.rd-x svg{width:15px;height:15px}
+.rd-x:hover{background:var(--ol,#f1f5f9);color:var(--navy)}
+
+/* Progress: the one number that matters, and a thin bar under it. */
+.rd-progress{margin-bottom:12px}
+.rd-progress-txt{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--gray);margin-bottom:6px}
+.rd-progress-txt b{font-weight:700;color:var(--navy)}
+.rd-progress-ok{font-size:12px;font-weight:600;color:var(--st-ok-fg)}
+.rd-bar{height:5px;border-radius:999px;background:#eef1f5;overflow:hidden}
+.rd-bar span{display:block;height:100%;border-radius:inherit;background:var(--navy);transition:width .35s var(--e-out,ease-out)}
+
+/* One row per document: icon, name and file/type, status, its own Upload. */
+.rd-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;margin:0 -2px;padding:0 2px}
+.rd-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.rd-row-ico{width:32px;height:32px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  background:#f1f5f9;color:#64748b}
+.rd-row-ico svg{width:15px;height:15px}
+.rd-row-body{flex:1;min-width:0}
+.rd-row-name{font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-row-meta{margin-top:2px;font-size:11.5px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-row-why{display:inline-flex;align-items:center;gap:4px;color:var(--st-bad-fg)}
+.rd-row-why svg{width:11px;height:11px}
+.rd-row .lp-status-badge{flex-shrink:0}
+.rd-up-btn{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:32px;padding:0 12px;font-size:12px}
+.rd-up-btn svg{width:13px;height:13px}
+/* Keeps the status column lined up on rows that no longer need a button. */
+.rd-up-done{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--st-ok-fg)}
+.rd-up-done svg{width:15px;height:15px}
+.rd-row.is-rejected{border-color:var(--st-bad-bd,#fca5a5)}
+
+.rd-empty{padding:18px 8px 6px;text-align:center}
+.rd-empty-ico{width:40px;height:40px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.rd-empty-ico svg{width:18px;height:18px}
+.rd-empty-title{font-size:14px;font-weight:600;color:var(--navy)}
+.rd-empty p{margin:4px 0 0;font-size:12.5px;color:var(--gray)}
+
+.rd-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px}
+.rd-link{border:0;background:none;padding:0;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer}
+.rd-link:hover{text-decoration:underline;text-underline-offset:2px}
+
+@media (max-width:560px){
+  .rd-row{flex-wrap:wrap}
+  .rd-row-body{flex-basis:calc(100% - 44px)}
+}
+@media (prefers-reduced-motion:reduce){.rd-ov,.rd-pop,.rd-bar span{transition:none}}

@@ -1,0 +1,81 @@
+/* ══ EXPENSES · APPROVALS & REIMBURSEMENT (js/expense-approvals-ui.js) ═════
+   Only what the approval stages, the Review popup and the payment panel add;
+   everything else is the standard listing, panel and form kit. */
+
+/* Listing: the stage column carries two lines */
+.exp-table .ca-c-stage{max-width:170px}
+.exp-table .ca-c-stage .ax-c-trunc{max-width:165px}
+.exp-top .lp-filter-bar-row .segmented{flex:0 0 auto}
+
+/* Approval tab: route line, actions, stage cards */
+.ca-actions{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ca-route{font-size:12px;color:var(--gray);margin:4px 0 10px}
+.ca-route b{color:var(--navy);font-weight:600}
+.ca-stage{border:1px solid var(--border);border-radius:var(--r-card);background:#fff;padding:12px 14px;margin-bottom:10px}
+.ca-stage.is-active{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy) inset}
+.ca-stage.is-void{opacity:.62;background:var(--light)}
+.ca-stage-hd{display:flex;align-items:center;gap:10px}
+.ca-stage-meta{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;font-size:12px;color:var(--gray)}
+.ca-stage-meta b{color:var(--navy);font-weight:600}
+.ca-stage-sub{margin-top:6px;font-size:12px;color:var(--gray);line-height:1.5}
+.ca-stage .ea-hint{margin-top:6px}
+.ca-decs{margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
+.ca-dec{font-size:12px;line-height:1.55;color:var(--navy);padding:6px 0;border-bottom:1px dashed var(--border)}
+.ca-dec:last-child{border-bottom:0}
+.ca-dec.is-void{opacity:.6}
+.ca-dec-hd{color:var(--gray);font-size:11.5px}
+.ca-dec-hd b{color:var(--navy);font-weight:600}
+.ca-dec .lp-status-badge{margin:0 4px}
+.ca-dec-why{color:var(--gray)}
+
+/* Review popup */
+.ca-rev-modal{max-width:980px}
+.ca-rev-sum{margin-bottom:10px}
+.ca-rev-scope{margin:14px 0 10px}
+.ca-rev-table .ca-rev-dec .cs-wrap{min-width:150px}
+.ca-rev-table .ca-rev-amt{width:110px}
+.ca-rev-table input.ep-form-input{min-width:0}
+.ca-rev-table .exp-proof{margin-top:4px}
+.ca-review-btn{white-space:nowrap}
+
+/* Approval Settings: a stage block inside the workflow form */
+.ca-stage-form{border:1px solid var(--border);border-radius:var(--r-card);background:#fbfbfc;padding:12px 14px}
+.ca-stage-form .ep-form-grid{margin-top:10px}
+.ca-chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--navy);margin-left:auto;cursor:pointer}
+
+/* Reimbursement tab */
+.ca-pay-cards{grid-template-columns:repeat(5,minmax(0,1fr))}
+.ep-save-btn.is-danger{background:var(--st-bad-fg);border-color:var(--st-bad-fg)}
+
+/* Compact listing cells and filter widths */
+.exp-table .ca-pay-sub{margin-top:3px}
+.exp-top .lp-filter-bar-row #csw-exp-f-reimb,.exp-top .lp-filter-bar-row #csw-carb-f-status{width:180px}
+.exp-top .lp-filter-bar-row #csw-exp-f-appr,.exp-top .lp-filter-bar-row #csw-exp-f-dept{width:160px}
+.ca-rev-table{table-layout:fixed;width:100%}
+.ca-rev-table th:nth-child(2),.ca-rev-table th:nth-child(3){width:86px}
+.ca-rev-table th:nth-child(4){width:150px}
+.ca-rev-table th:nth-child(5){width:104px}
+.ca-rev-table th:nth-child(6){width:150px}
+.ca-rev-table td input.ep-form-input{width:100%;min-width:0}
+.exp-table .ca-c-stage,.exp-table .ca-c-stage .ax-c-trunc{max-width:140px}
+.exp-table:not(.ca-queue-table) .exp-c-cat{max-width:105px}
+
+/* Super Admin intervention */
+.ca-iv-tag{display:inline-block;padding:0 6px;border-radius:999px;font-size:10.5px;font-weight:600;background:var(--st-wait-bg);color:var(--st-wait-fg);border:1px solid var(--st-wait-bd)}
+.ca-iv .ep-form-grid{margin-bottom:0}
+
+/* Read-only values look read-only (as on the older screens) */
+.ep-form-input.ca-ro{background:var(--light);color:var(--gray);cursor:default}
+/* Line-review controls share one shape */
+.ca-rev-table td .ep-form-input{border-radius:var(--r-control);height:38px}
+/* Amount headers sit over their right-aligned figures */
+.csag-table th.wb-num{text-align:right}
+/* Policy table: the policy name gets room */
+.ep-eval-table{table-layout:fixed;width:100%}
+.ep-eval-table th:nth-child(1){width:28%}.ep-eval-table th:nth-child(2){width:14%}.ep-eval-table th:nth-child(3){width:13%}
+.ep-eval-table th:nth-child(4){width:15%}.ep-eval-table th:nth-child(5){width:12%}
+/* Longer hints inside Expense Management keep readable contrast */
+.ep-eval .ea-hint,.ca-stage .ea-hint,.ca-rev-modal .ea-hint,.ca-act-modal .ea-hint,.wb-note .ea-hint,.ca-stage-form .ea-hint,#exp-e-dup .ea-hint,#exp-e-policy .ea-hint{color:var(--gray)}
+/* Add Expense: no gap where there is no policy or duplicate notice */
+#exp-e-policy:empty,#exp-e-dup:empty{display:none}
+#exp-m-items>.exp-modal-sec:first-child{margin-top:26px}

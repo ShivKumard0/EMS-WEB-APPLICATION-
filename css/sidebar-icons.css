@@ -1,0 +1,176 @@
+/* ══ SIDEBAR ICON HOVER ANIMATIONS ════════════════════════════════════════
+   Every sidebar icon plays a short animation of its own when its row is
+   hovered (or reached by keyboard): the clock's hand sweeps, the gear turns,
+   the coin flips, the key turns in a lock. Each one plays ONCE per hover and
+   lands back where it started, so the rail is still at rest the moment the
+   pointer leaves.
+
+   Keyed by data-ico on .sb-ico-wrap, stamped by buildSidebar() with
+   sbIcoKey() in js/core.js: the page id for an item, "grp-<name>" for a
+   dropdown parent. A new sidebar item with no rule here gets the default
+   hop at the bottom of this file, so nothing is ever left without one.
+
+   Motion stays inside the 28px tile: small rotations, a few px of travel,
+   and only transform/opacity, so it stays on the compositor. */
+
+/* Parts of an icon scale and turn about their own centre. */
+.sb-ico-wrap svg *{transform-box:fill-box;transform-origin:center}
+
+/* ── Default: a small hop ── */
+@keyframes sbi-hop{0%,100%{transform:none}35%{transform:translateY(-3px)}60%{transform:translateY(0)}78%{transform:translateY(-1px)}}
+.sb-item:hover .sb-ico-wrap svg,.sb-parent:hover .sb-ico-wrap svg,
+.sb-item:focus-visible .sb-ico-wrap svg,.sb-parent:focus-visible .sb-ico-wrap svg{animation:sbi-hop .55s var(--e-out,ease-out)}
+
+/* Below, each icon replaces the default with its own. The selector prefix is
+   repeated so every rule has the same weight and wins over the default. */
+
+/* Dashboard - the four tiles pop in turn. */
+@keyframes sbi-tile{0%,100%{transform:none}40%{transform:scale(.6)}70%{transform:scale(1.12)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="dashboard"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="dashboard"] rect{animation:sbi-tile .5s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="dashboard"] rect:nth-of-type(2){animation-delay:.06s}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="dashboard"] rect:nth-of-type(4){animation-delay:.12s}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="dashboard"] rect:nth-of-type(3){animation-delay:.18s}
+
+/* People / Teams - the two figures hop one after the other. */
+@keyframes sbi-bob{0%,100%{transform:none}40%{transform:translateY(-2.5px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-people"],[data-ico="teams"]) svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-people"],[data-ico="teams"]) svg>:nth-child(-n+2){animation:sbi-bob .45s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-people"],[data-ico="teams"]) svg>:nth-child(n+3){animation:sbi-bob .45s var(--e-out) .12s}
+
+/* Employees - a nod. */
+@keyframes sbi-nod{0%,100%{transform:none}30%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="employees"] svg{animation:sbi-nod .55s var(--e-out)}
+
+/* Users - the tick pops. */
+@keyframes sbi-pop{0%,100%{transform:none}45%{transform:scale(1.35)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="all-users"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="all-users"] polyline{animation:sbi-pop .45s var(--e-spring)}
+
+/* Contracts - the page lifts and the check pops. */
+@keyframes sbi-lift{0%,100%{transform:none}40%{transform:translateY(-2px) rotate(-6deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-contracts"],[data-ico="contracts"]) svg{animation:sbi-lift .5s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-contracts"],[data-ico="contracts"]) svg>:last-child{animation:sbi-pop .45s var(--e-spring) .1s}
+
+/* Templates / Leave Policies - the page tips and its lines write themselves
+   in, the same move as the Policies quick link. (These used to flip in 3D,
+   which at 15px just squashed the icon.) qli-book and qli-write are defined
+   in the quick-links section below. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="contract-templates"],[data-ico="leave-policies"]) svg{transform-origin:20% 90%;animation:qli-book .6s var(--e-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="contract-templates"],[data-ico="leave-policies"]) line{transform-origin:left center;animation:qli-write .42s var(--e-out) .12s backwards}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="contract-templates"],[data-ico="leave-policies"]) line:last-child{animation-delay:.26s}
+
+/* HR Docs - the folder tips open. */
+@keyframes sbi-tip{0%,100%{transform:none}40%{transform:rotate(-9deg) translateY(-1px)}70%{transform:rotate(3deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="hr-docs"] svg{transform-origin:20% 90%;animation:sbi-tip .55s var(--e-out)}
+
+/* Time & Attendance / Timesheets - the hand sweeps a full turn. */
+@keyframes sbi-sweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-time-and-attendance"],[data-ico="timesheet"]) svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-time-and-attendance"],[data-ico="timesheet"]) polyline{
+  transform-box:view-box;transform-origin:12px 12px;animation:sbi-sweep .8s var(--e-in-out)}
+
+/* Leave Requests - the calendar page swings on its rings. */
+@keyframes sbi-swing{0%,100%{transform:none}25%{transform:rotate(9deg)}55%{transform:rotate(-6deg)}80%{transform:rotate(2deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="all-leaves"] svg{transform-origin:50% 10%;animation:sbi-swing .65s var(--e-out)}
+
+/* Holidays - the star spins. */
+@keyframes sbi-spin{from{transform:rotate(0)}to{transform:rotate(144deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="holidays"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="holidays"] svg>:last-child{animation:sbi-spin .6s var(--e-spring)}
+
+/* Payroll - the coin flips. */
+@keyframes sbi-coin{from{transform:perspective(60px) rotateY(0)}to{transform:perspective(60px) rotateY(360deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-payroll-management"],[data-ico="payroll"]) svg{animation:sbi-coin .7s var(--e-in-out)}
+
+/* Payheads - the receipt prints out. */
+@keyframes sbi-print{0%,100%{transform:none}35%{transform:translateY(-3px)}65%{transform:translateY(1px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="payheads"] svg{animation:sbi-print .55s var(--e-out)}
+
+/* Finance / Leave Balance - the wallet gives a little shake. */
+@keyframes sbi-shake{0%,100%{transform:none}20%{transform:translateX(-2px) rotate(-4deg)}40%{transform:translateX(2px) rotate(4deg)}60%{transform:translateX(-1px) rotate(-2deg)}80%{transform:translateX(1px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-finance"],[data-ico="leave-balance"]) svg{animation:sbi-shake .5s var(--e-out)}
+
+/* Payments - the card swipes. */
+@keyframes sbi-swipe{0%,100%{transform:none}40%{transform:translateX(3px) rotate(-6deg)}70%{transform:translateX(-1px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="payments"] svg{animation:sbi-swipe .5s var(--e-out)}
+
+/* Compliance Hub / Compliance Item - the shield pulses. */
+@keyframes sbi-guard{0%,100%{transform:none}40%{transform:scale(1.18)}70%{transform:scale(.96)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) :is([data-ico="grp-compliance-hub"],[data-ico="compliance"]) svg{animation:sbi-guard .5s var(--e-spring)}
+
+/* Rates & Rules - the three slider knobs move. */
+@keyframes sbi-knob-up{0%,100%{transform:none}50%{transform:translateY(-4px)}}
+@keyframes sbi-knob-dn{0%,100%{transform:none}50%{transform:translateY(4px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="rates-rules"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="rates-rules"] svg>:nth-child(7){animation:sbi-knob-up .6s var(--e-in-out)}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="rates-rules"] svg>:nth-child(8){animation:sbi-knob-dn .6s var(--e-in-out) .06s}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="rates-rules"] svg>:nth-child(9){animation:sbi-knob-up .6s var(--e-in-out) .12s}
+
+/* Administration - the gear turns. */
+@keyframes sbi-gear{from{transform:rotate(0)}to{transform:rotate(180deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="grp-administration"] svg{animation:sbi-gear .7s var(--e-in-out)}
+
+/* Company Settings - the building rises. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="settings"] svg{animation:sbi-print .5s var(--e-out)}
+
+/* Admin Access - the shackle lifts, as if unlocking. */
+@keyframes sbi-shackle{0%,100%{transform:none}40%{transform:translateY(-2.5px)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="grp-admin-access"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="grp-admin-access"] svg>:nth-child(2){animation:sbi-shackle .55s var(--e-out)}
+
+/* Assets - the laptop lid tips back. */
+@keyframes sbi-lid{0%,100%{transform:none}40%{transform:perspective(40px) rotateX(18deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="asset-allocation"] svg{animation:none}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="asset-allocation"] svg>:first-child{transform-origin:50% 100%;animation:sbi-lid .55s var(--e-out)}
+
+/* IT Accesses - the key turns. */
+@keyframes sbi-turn{0%,100%{transform:none}45%{transform:rotate(-35deg)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="it-access"] svg{transform-origin:30% 70%;animation:sbi-turn .6s var(--e-in-out)}
+
+/* Chats - the bubble wobbles, like a new message. */
+@keyframes sbi-wobble{0%,100%{transform:none}25%{transform:scale(1.12) rotate(-6deg)}50%{transform:scale(.96) rotate(4deg)}75%{transform:scale(1.03)}}
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="chats"] svg{animation:sbi-wobble .55s var(--e-out)}
+
+/* Tickets - the ticket tilts. */
+:is(.sb-item,.sb-parent):is(:hover,:focus-visible) [data-ico="support-tickets"] svg{animation:sbi-swipe .5s var(--e-out)}
+
+@media (prefers-reduced-motion:reduce){
+  .sb-ico-wrap svg,.sb-ico-wrap svg *{animation:none!important}
+}
+
+/* ══ DASHBOARD QUICK LINKS ═════════════════════════════════════════════════
+   The same idea for the shortcut row on the employee dashboard, reusing the
+   keyframes above. Keyed by data-ql on .hr-link-ico (index.html). Each plays
+   once per hover or keyboard focus. */
+.hr-link-ico svg *{transform-box:fill-box;transform-origin:center}
+.hr-link:is(:hover,:focus-visible) .hr-link-ico{background:#e8edf3;color:var(--navy);transition:background var(--t-micro,110ms) ease,color var(--t-micro,110ms) ease}
+
+/* My Profile - a nod. */
+.hr-link:is(:hover,:focus-visible) [data-ql="profile"] svg{animation:sbi-nod .55s var(--e-out)}
+/* Policies - the page turns. */
+/* Policies - the book tips up off its spine while the two lines of text on
+   its cover write themselves in, left to right, one after the other. No 3D:
+   at this size a perspective flip just squashes the icon. */
+@keyframes qli-book{0%,100%{transform:none}40%{transform:translateY(-1.5px) rotate(-7deg)}70%{transform:rotate(2deg)}}
+@keyframes qli-write{0%{transform:scaleX(0);opacity:.2}60%{opacity:1}100%{transform:scaleX(1);opacity:1}}
+.hr-link:is(:hover,:focus-visible) [data-ql="policies"] svg{transform-origin:20% 90%;animation:qli-book .6s var(--e-out)}
+.hr-link:is(:hover,:focus-visible) [data-ql="policies"] line{transform-origin:left center;animation:qli-write .42s var(--e-out) .12s backwards}
+.hr-link:is(:hover,:focus-visible) [data-ql="policies"] line:last-child{animation-delay:.26s}
+/* Calendar - swings on its rings. */
+.hr-link:is(:hover,:focus-visible) [data-ql="calendar"] svg{transform-origin:50% 10%;animation:sbi-swing .65s var(--e-out)}
+/* Leaves & Application - the clip on the clipboard snaps. */
+.hr-link:is(:hover,:focus-visible) [data-ql="leaves"] svg{animation:sbi-lift .5s var(--e-out)}
+.hr-link:is(:hover,:focus-visible) [data-ql="leaves"] svg>:nth-child(2){animation:sbi-shackle .45s var(--e-out) .08s}
+/* Holidays - the palm sways from its base. */
+@keyframes qli-sway{0%,100%{transform:none}25%{transform:rotate(-12deg)}55%{transform:rotate(8deg)}80%{transform:rotate(-3deg)}}
+.hr-link:is(:hover,:focus-visible) [data-ql="holidays"] svg{transform-origin:50% 100%;animation:qli-sway .8s var(--e-out)}
+/* Expense - the dollar on the receipt flips like a coin. */
+.hr-link:is(:hover,:focus-visible) [data-ql="expense"] svg>:not(:first-child){animation:sbi-coin .7s var(--e-in-out)}
+/* Signout - the arrow heads out of the door and comes back. */
+@keyframes qli-out{0%,100%{transform:none}45%{transform:translateX(3px)}}
+.hr-link:is(:hover,:focus-visible) [data-ql="signout"] svg>:nth-child(n+2){animation:qli-out .55s var(--e-out)}
+
+@media (prefers-reduced-motion:reduce){
+  .hr-link-ico svg,.hr-link-ico svg *{animation:none!important}
+}

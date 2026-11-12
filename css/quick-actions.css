@@ -1,0 +1,272 @@
+/* ==========================================================================
+   THE ACTION COLUMN, AND THE CONFIRM DIALOG.
+
+   This file once styled a cluster of commit buttons injected into every
+   listing row - a labelled pill for the decision a row was waiting on, icon
+   buttons for the rest. That is gone: a listing row is for reading, and the
+   hamburger is the only control in the ACTION cell again.
+
+   What is left is the two things that outlived it. The ACTION column still
+   pins itself to the right edge of its card, because the hamburger is the
+   one cell that must never scroll off screen; and the confirm dialog is
+   still how a support ticket changes state, from the detail panel.
+   ========================================================================== */
+
+/* Keep the ACTION cell from wrapping onto two lines on a narrow table. */
+.lp-table td:last-child,.listing-table td:last-child{white-space:nowrap}
+
+/* ==========================================================================
+   THE ACTION COLUMN NEVER SCROLLS AWAY
+
+   Every listing here runs eight to ten columns inside a card that is narrower
+   than that - narrower still once a detail panel slides over 68% of it - so
+   ACTION, being last, was the first cell to fall off the right edge. That is
+   the one cell that must never be off screen: it is the only door into the
+   record, so "scroll right, then click" was the cost of opening any row on a
+   table wide enough to need it - a door you cannot see is barely a door.
+
+   So the last column pins itself to the right edge of the card and the other
+   columns travel underneath it. Nothing about the row moves and no builder
+   changes - it is the same <td>, in the same place, that just stops leaving.
+
+   TWO THINGS THIS HAS TO PATCH UP, both of them consequences of these tables
+   being border-collapse:collapse:
+
+     1. Collapsed borders are painted by the TABLE, not by the cell, so they
+        do not travel with a sticky cell. The row rule would stay behind at
+        the cell's unscrolled x and the pinned cell would sit over a gap. It
+        draws its own rule as an inset box-shadow instead, in --sa-rule, set
+        per table to whatever that table's real border-bottom already uses.
+     2. A pinned cell has to be opaque or the columns sliding under it show
+        straight through. "Opaque" is not one colour though: a row can be at
+        rest, hovered, selected, or selected AND hovered. Rather than restate
+        that cascade cell-side - a second copy of leaves.css's row rules, free
+        to drift out of step with the first - each ROW publishes whatever it
+        is currently painted as --cell-bg, and the pinned cell just paints it.
+   ========================================================================== */
+
+/* -- the pinned cell ---------------------------------------------------- */
+.lp-table th:last-child,      .lp-table td:last-child,
+.listing-table th:last-child, .listing-table td:last-child,
+.at-table th:last-child,      .at-table td:last-child,
+/* the attachments tab's file list - same six-column-in-a-narrow-panel problem */
+.att-table th:last-child,     .att-table td:last-child{
+  position:sticky;right:0;z-index:3;
+  background:var(--cell-bg,var(--card));
+  /* the row rule, plus the edge shadow - which is transparent until there is
+     actually something hidden underneath the column. See .sa-cut below. */
+  box-shadow:inset 0 -1px 0 var(--sa-rule,transparent),var(--sa-edge,0 0 transparent);
+  transition:background var(--t-fast) ease,box-shadow var(--t-fast) ease;
+}
+
+/* -- the head row while it is pinned under the top bar ------------------
+   The card's top border scrolls away with the page and a collapsed border
+   does not travel with a sticky cell, so a pinned head had no line above or
+   below it. sticky-actions.js adds .is-stuck only while the head is actually
+   pinned; at rest the card's own border is the line, so nothing doubles. The
+   ACTION head keeps its edge shadow alongside the two lines. */
+.lp-table.is-stuck thead th,.at-table.is-stuck thead th{
+  box-shadow:inset 0 1px 0 var(--border),inset 0 -1px 0 var(--border)}
+.lp-table.is-stuck thead th:last-child,.at-table.is-stuck thead th:last-child{
+  box-shadow:inset 0 1px 0 var(--border),inset 0 -1px 0 var(--sa-rule,var(--border)),var(--sa-edge,0 0 transparent)}
+
+/* A POPOVER INSIDE A PINNED CELL HAS TO LIFT THE CELL WITH IT.
+   z-index above turns every ACTION cell into a stacking context, and a
+   stacking context is a ceiling: the stage menu on Contracts and Payments is
+   position:fixed at z-index 1000 and STILL came out painted underneath the
+   pinned cells of the rows below it, because those cells are later siblings at
+   the same level and 1000 counts for nothing across that boundary. Lifting the
+   whole cell is the fix - the menu rides up inside it.
+
+   9, not 1000: it has to clear the sibling cells (3) and nothing else. The
+   detail panel sits at 10 and must keep winning, since a menu belonging to a
+   row the panel is covering has no business painting over the panel. */
+.lp-table td:has(.ct-action-menu.open),
+.listing-table td:has(.ct-action-menu.open){z-index:9}
+
+/* The "no records match this filter" row is one colspan cell that already
+   spans every column. There is no action in it to keep on screen, and pinning
+   a cell as wide as the table only risks it drifting inside its own row. */
+.lp-table td[colspan],.listing-table td[colspan],.at-table td[colspan],.att-table td[colspan]{
+  position:static;background:none;box-shadow:none;
+}
+
+/* -- the row rule each table draws under its own pinned cell ------------ */
+.lp-table tbody tr{--sa-rule:#f1f3f5}
+.listing-table tbody tr{--sa-rule:#f0f1f3}
+.at-table tbody tr{--sa-rule:var(--border)}
+/* every one of these tables drops the rule on its last row */
+.lp-table tbody tr:last-child,
+.listing-table tbody tr:last-child,
+.at-table tbody tr:last-child{--sa-rule:transparent}
+/* the header keeps the heavier --border it already had, and its own fill */
+.lp-table th:last-child,.listing-table th:last-child{--cell-bg:#fafbfc;--sa-rule:var(--border)}
+.at-table th:last-child{--cell-bg:var(--light);--sa-rule:var(--border)}
+
+/* -- what the row is currently painted, published for the pinned cell ----
+   Ordered and weighted to match leaves.css exactly: rest, hover, selected,
+   selected+hover, pressed. If a row colour changes there, change it here. */
+.lp-table tbody tr,.listing-table tbody tr,.at-table tbody tr{--cell-bg:var(--card)}
+.lp-table tbody tr:hover,.listing-table tbody tr:hover,.at-table tbody tr:hover{--cell-bg:var(--row-hover)}
+tbody tr.lp-row-selected{--cell-bg:var(--row-sel)}
+tbody tr.lp-row-selected:hover{--cell-bg:var(--row-sel-hover)}
+.lp-table tbody tr[onclick]:active,.listing-table tbody tr[onclick]:active{--cell-bg:var(--row-sel-hover)}
+
+/* -- the edge, and only while there is something behind it ---------------
+   .sa-cut is put on the scrolling card by js/sticky-actions.js for exactly as
+   long as content remains hidden to the right. Scrolled to the end there is
+   nothing underneath the column, so the shadow would be claiming a depth that
+   isn't there - and on a table narrow enough not to scroll at all it would be
+   a permanent vertical line down a column that is doing nothing special. */
+.sa-cut{--sa-edge:-13px 0 15px -11px rgba(15,23,42,.26)}
+
+@media (prefers-reduced-motion:reduce){
+  .lp-table th:last-child,.lp-table td:last-child,
+  .listing-table th:last-child,.listing-table td:last-child,
+  .at-table th:last-child,.at-table td:last-child{transition:none}
+}
+
+/* ==========================================================================
+   CONFIRM STEP
+
+   The dialog every inline action goes through. It exists to make the action
+   deliberate: it says what is about to change, it takes the reason, and the
+   reason is required. Deliberately small and centred rather than a full-page
+   modal - the row you clicked is still visible behind it, which is the whole
+   context needed to answer "why".
+   ========================================================================== */
+.qa-ask-overlay{
+  position:fixed;inset:0;z-index:5000;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(15,23,42,.42);
+  animation:qa-ask-fade var(--t-fast) ease both;
+}
+@keyframes qa-ask-fade{from{opacity:0}to{opacity:1}}
+.qa-ask-card{
+  width:100%;max-width:420px;
+  background:#fff;border-radius:14px;
+  box-shadow:0 20px 60px rgba(15,23,42,.28);
+  overflow:hidden;
+  animation:qa-ask-in var(--t-base) var(--e-out) both;
+}
+@keyframes qa-ask-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.qa-ask-head{padding:16px 18px 0}
+.qa-ask-title{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+.qa-ask-subject{margin-top:3px;font-size:12.5px;color:var(--gray);line-height:1.4}
+
+/* The transition, stated. Reading "Resolved -> Closed" before you type is
+   what turns a tick into a decision. */
+.qa-ask-move{display:flex;align-items:center;gap:8px;padding:14px 18px 0}
+.qa-ask-chip{
+  display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;
+  background:var(--st-idle-bg);color:var(--st-idle-fg);border:1.5px solid var(--st-idle-bd);
+  font-size:11px;font-weight:600;white-space:nowrap}
+.qa-ask-chip-ok{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-bd)}
+.qa-ask-chip-bad{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+.qa-ask-chip-wait{background:var(--st-wait-bg);color:var(--st-wait-fg);border-color:var(--st-wait-bd)}
+.qa-ask-chip-info{background:var(--st-info-bg);color:var(--st-info-fg);border-color:var(--st-info-bd)}
+.qa-ask-arrow{display:inline-flex;color:#b0b8c4}
+.qa-ask-arrow svg{width:15px;height:15px}
+
+.qa-ask-body{padding:14px 18px 4px}
+.qa-ask-label{display:block;font-size:11.5px;font-weight:600;color:#1e293b;margin:0 0 5px}
+.qa-ask-label+.qa-ask-input{margin-bottom:12px}
+.qa-ask-req{color:#b83a3a}
+.qa-ask-input{
+  width:100%;box-sizing:border-box;
+  border:1.5px solid #e2e8f0;border-radius:var(--r-control);
+  padding:9px 12px;
+  font-family:inherit;font-size:13px;color:#1e293b;background:#fff;
+  outline:none;transition:border-color var(--t-fast) var(--e-out);
+}
+select.qa-ask-input{height:38px;padding:0 12px;cursor:pointer}
+.qa-ask-area{height:76px;resize:none;line-height:1.5}
+.qa-ask-input::placeholder{color:#b0b8c4}
+/* One quiet ring, same rule as every other field in the app. */
+.qa-ask-input:focus{border-color:#94a3b8}
+.qa-ask-input.qa-ask-bad{border-color:#b83a3a}
+.qa-ask-hint{font-size:11px;color:#9ca3af;line-height:1.45;margin:2px 0 0}
+.qa-ask-hint-bad{color:#b83a3a;font-weight:600}
+
+.qa-ask-foot{display:flex;gap:10px;padding:16px 18px 18px}
+.qa-ask-btn{
+  flex:1;height:38px;border-radius:var(--r-control);
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  transition:background var(--t-micro) ease,border-color var(--t-micro) ease,color var(--t-micro) ease}
+.qa-ask-cancel{background:#fff;border:1.5px solid var(--border);color:var(--navy)}
+.qa-ask-cancel:hover{background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.qa-ask-go{background:var(--navy);border:1.5px solid var(--navy);color:#fff}
+.qa-ask-go:hover{background:var(--btn-accent);border-color:var(--btn-accent);color:#fff}
+
+/* ==========================================================================
+   COMMAND PALETTE  (Ctrl/Cmd-K)
+
+   Lives in this file rather than main.css for historical reasons: it was
+   written alongside the row actions that used to sit here, as the same idea
+   one level up - shortening the distance between wanting to do a thing and
+   doing it, across the whole product rather than inside one table.
+
+   The overlay shell - backdrop, box, input row, footer - is already styled in
+   main.css. Everything here is the results list that replaced the five fixed
+   suggestion chips. Note main.css also had .search-hints / .search-hint-chip
+   rules for those chips; they are left in place and simply no longer match
+   anything, so reverting this file cannot leave the overlay unstyled.
+   ========================================================================== */
+.search-results{
+  max-height:340px;
+  overflow-y:auto;
+  padding:6px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,0,0,.08) transparent;
+}
+.search-results::-webkit-scrollbar{width:3px}
+.search-results::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:99px}
+
+.search-group{
+  padding:10px 12px 5px;
+  font-size:10px;font-weight:700;
+  letter-spacing:.7px;text-transform:uppercase;
+  color:#b0b8c4;
+}
+
+.search-result{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;
+  padding:9px 12px;
+  border:0;border-radius:var(--r-control);
+  background:transparent;
+  font-family:inherit;font-size:13px;
+  color:var(--navy);
+  text-align:left;cursor:pointer;
+  transition:background var(--t-micro) ease,color var(--t-micro) ease;
+}
+/* One highlight, driven by the arrow keys - NOT a separate :hover style.
+   Two competing highlights in a keyboard list is the classic way to lose
+   track of what Enter is about to do, so hover just moves the same one. */
+.search-result.active{background:var(--row-sel)}
+.search-result.active .search-result-label{font-weight:600}
+.search-result:hover{background:var(--row-hover)}
+.search-result.active:hover{background:var(--row-sel)}
+
+.search-result-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-result-kind{
+  flex-shrink:0;
+  font-size:10px;font-weight:600;letter-spacing:.3px;
+  color:#a3aab8;
+  opacity:0;
+  transition:opacity var(--t-micro) ease;
+}
+.search-result.active .search-result-kind{opacity:1}
+
+.search-empty{padding:26px 16px;text-align:center;font-size:12.5px;color:#a3aab8}
+
+/* The footer keys sit tighter now that there are three of them. */
+#search-overlay .search-footer kbd+kbd{margin-left:2px}
+
+/* ALL TIMESHEETS draws its row lines as the cells' own borders (separate, not
+   collapsed - main.css), so they travel with the pinned ACTION cell. The
+   painted rule above would sit a pixel over that border and read as one dark,
+   double-thick line under the action buttons, so this table does without it. */
+.at-table tbody tr,.at-table th:last-child{--sa-rule:transparent}
+.at-table.is-stuck thead th{box-shadow:inset 0 1px 0 var(--border)}
+.at-table.is-stuck thead th:last-child{box-shadow:inset 0 1px 0 var(--border),var(--sa-edge,0 0 transparent)}

@@ -1,0 +1,104 @@
+/* ══ EXPENSES (js/expenses.js) ══════════════════════════════════════════════
+   The page is the standard listing + detail panel (lp-*, .ax-table, sbHero,
+   lpLogsView, wfTimelineHTML). Only what the line items add is here. */
+
+/* Listing */
+.exp-table .exp-c-amt .lp-c-plain{font-variant-numeric:tabular-nums;font-weight:600}
+.exp-table .lp-c-plain.is-none{color:var(--gray)}
+.exp-table .exp-c-nw{white-space:nowrap}
+.exp-table .ax-c-trunc{max-width:165px}
+.exp-table .exp-c-cat,.exp-table .exp-c-emp{max-width:120px}
+
+/* Filters beside the status tiles, laid out as on Contracts: each control
+   keeps a width that shows its whole placeholder (shrinking them clipped
+   the text and pushed the chevron out of the box), and when the row is
+   full - Clear Filters appearing, say - it wraps onto a second line inside
+   the filter bar instead of squeezing. */
+.exp-top .lp-filter-bar-row>*{flex:0 0 auto}
+.lp-page .exp-top .lp-filter-bar .lp-filter-bar-row .lp-search-input{width:150px}
+.exp-top .lp-filter-bar-row .cs-wrap,.exp-top .lp-filter-bar-row .cd-wrap{width:140px}
+/* Status holds "Awaiting Approval", the longest value a filter can show. */
+.exp-top .lp-filter-bar-row #csw-exp-f-status{width:170px}
+/* Status tiles: the standard strip, equal widths, full-size counts. */
+.exp-top .exp-stats .listing-stat{padding:12px 16px}
+
+/* Expense Summary: one card per line item */
+.exp-sum-total{font-size:12px;color:var(--gray)}
+.exp-sum-total b{color:var(--navy);font-weight:700;font-variant-numeric:tabular-nums;margin-left:4px}
+.exp-line{border:1px solid var(--border);border-radius:var(--r-card);background:#fff;padding:14px;margin-bottom:12px}
+.exp-line.is-editing{background:#fbfbfc}
+.exp-line .lp-sb-detail-grid{margin-top:12px}
+.exp-line .ep-form-grid{margin-top:12px}
+.exp-line-hd{display:flex;align-items:center;gap:10px}
+.exp-line-n{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--light);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gray)}
+.exp-line-ttl{flex:1;min-width:0}
+.exp-line-name{font-size:13.5px;font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-line-amt{font-size:12px;color:var(--gray);margin-top:2px;font-variant-numeric:tabular-nums}
+.exp-add-line{width:100%;justify-content:center;gap:6px}
+
+/* Expense proof: the file as a link-like chip */
+.exp-proof{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 9px;border:1px solid var(--border);
+  border-radius:var(--r-control);background:#fff;font:inherit;font-size:12px;font-weight:500;color:var(--navy);cursor:pointer}
+.exp-proof span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-proof:hover{border-color:var(--navy)}
+.exp-proof-row svg{flex-shrink:0;color:var(--gray)}
+
+/* Logs: Expense / Line Item strip, and the line picker */
+.exp-log-scope{margin-bottom:14px}
+.exp-log-line{margin-bottom:14px}
+
+/* Basic Details note when the claim is closed */
+.exp-note{margin-bottom:14px}
+
+/* A field that does not apply yet: dimmed, with a hint saying why */
+.exp-dim .cs-wrap{opacity:.45;pointer-events:none}
+
+/* + Add popup: two sections, Claim and First Line Item */
+.exp-modal-sec{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray);
+  margin:4px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.ep-form-grid+.exp-modal-sec{margin-top:26px}
+
+/* Expense Category: the capping limit the claim falls under */
+.exp-cap b{color:var(--navy);font-weight:600}
+.exp-cap-over{color:var(--st-bad-fg)}
+.exp-opt{color:var(--gray);font-weight:400}
+
+/* + Add popup: items already added, then the one being typed */
+.exp-mline{padding:10px 12px;margin-bottom:10px}
+.exp-mline .exp-line-amt{white-space:normal}
+.exp-mline-add{display:flex;justify-content:flex-end;margin-top:14px}
+
+/* ── Expense policy evaluation (js/capping-limit.js, FR-EP) ─────────────── */
+.ep-eval{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.ep-eval-row{padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-control);background:var(--light);font-size:12px;line-height:1.5;color:var(--navy)}
+.ep-eval-row.is-wait{border-color:var(--st-wait-bd);background:var(--st-wait-bg)}
+.ep-eval-row.is-bad{border-color:var(--st-bad-bd);background:var(--st-bad-bg)}
+.ep-eval-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.ep-eval-name{font-weight:600}
+.ep-eval-nums{display:flex;flex-wrap:wrap;gap:4px 16px}
+.ep-eval-nums b{font-weight:600}
+.ep-eval-row .ea-hint{margin-top:6px}
+.ep-just{margin-top:8px}
+.ep-just .ax-notes{min-height:56px}
+.ep-just .lp-sb-field-label{display:block;margin-bottom:2px}
+.cap-table .cap-c-amt .lp-c-plain{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Horizontal scroll on the Expense Management listings (product owner, 8 Nov 2026) - the treatment Wallet &
+   Benefits got in css/wallet-benefits.css. At laptop widths (measured at 1280 px with the sidebar open) these
+   tables are wider than their card, and the shared listing card (overflow:clip, main.css) cut the columns next
+   to the pinned Action column off instead of scrolling. Here the card scrolls sideways: Action stays pinned at
+   the right and sticky-actions.js draws its edge shadow while columns remain behind it. The cost, accepted for
+   these paged lists: the column heads scroll with the table rather than pinning to the page. Row menus are
+   position:fixed, so the scrolling card does not clip them. exp-table is used only by the Expense Management
+   listings (Expenses, Approval Settings, Advances & Imprest, Funding & Budgets, Corporate Cards); cap-table is
+   Capping Limit. The shared rule itself is unchanged. */
+.lp-table-card:has(> table.exp-table),.lp-table-card:has(> table.cap-table){overflow-x:auto;overscroll-behavior-x:contain}
+/* ...and first, fit the card (8 Nov 2026): a sideways scroll on a tall card puts its scrollbar below the
+   screen, so these listings let their text cells wrap to at most two lines (then "…"; the full text is in the
+   detail panel) - only on a table that does not fit in one line: js/listing-fit.js marks it .is-tight. A
+   table that fits keeps its one-line layout (allowing wrap there would re-balance its columns). S. No, status pills, the Action column and any cell holding a button, link or field never wrap or
+   clip. Measured at 1280 px with the sidebar open: every listing fits; the scroll above stays as the fallback. */
+.lp-table.is-tight:is(.exp-table,.cap-table) td:not(:first-child):not(:last-child) :is(.lp-c-main,.lp-c-plain,.lp-c-sub):not(:has(button,a,input,select,.lp-status-badge)){
+  white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+.lp-table.is-tight:is(.exp-table,.cap-table) td[colspan]{white-space:normal}

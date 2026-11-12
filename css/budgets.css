@@ -1,0 +1,16 @@
+/* Expense Management → Funding & Budgets (js/budgets-ui.js).
+   Built from the Advances & Imprest, Expenses and Wallet & Benefits
+   components; only the few arrangements those lack are defined here. */
+.bg-table td{vertical-align:top}
+.bg-figs{grid-template-columns:repeat(6,minmax(0,1fr));margin:0 0 12px}
+@media (max-width:1280px){.bg-figs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.bg-cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:1280px){.bg-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.bg-tree{display:flex;align-items:flex-start;gap:6px}
+.bg-tree-mark{color:var(--gray,#94a3b8);font-size:12px;line-height:18px}
+.bg-reserve td{background:#f8fafc}
+.bg-alloc-table .wb-num{white-space:nowrap}
+.bg-newline{display:grid;grid-template-columns:1.2fr 1.2fr 1.5fr .8fr auto;gap:8px;align-items:center;margin:0 0 8px}
+.bg-basecur-edit{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:4px;font-weight:400}
+.bg-basecur-edit .cs-wrap{width:100%}
+.bg-basecur-btns{display:flex;gap:8px}

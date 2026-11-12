@@ -1,0 +1,399 @@
+/* ══ EMPLOYEE LIFECYCLE ════════════════════════════════════════════════════
+   The Logs tab is the shared .lp-logs-* timeline and form (leaves.css), the
+   row menu is the Contracts .ct-action-* menu and the popup is .ct-modal.
+   What lives here is only what the lifecycle adds: the per-log blocks, the
+   pickers, the Asset / IT sections, and the employee's tracker and Requested
+   Docs. Colours are the --st-* tones and corners are --r-control, so nothing
+   here introduces a new look. */
+
+/* ── Logs tab: two columns that scroll on their own ──────────────────────
+   The panel body used to be the only scroller, with the form sticky beside
+   the timeline - so a form taller than the panel could not be scrolled until
+   the timeline had reached its end. Now the body is fixed and each column
+   scrolls itself; the form keeps Cancel / Submit pinned at its foot. */
+.lp-isb-body:has(> .emp-logs){overflow:hidden;display:flex;flex-direction:column}
+.lp-logs-wrap.emp-logs{flex:1;min-height:0;grid-template-rows:minmax(0,1fr);align-items:stretch}
+.emp-logs-col{min-height:0;overflow-y:auto;padding:2px 6px 8px 0;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.12) transparent}
+.emp-logs .emp-logs-form{position:static;display:flex;flex-direction:column;min-height:0;max-height:100%;align-self:start;padding:0;overflow:hidden}
+.emp-logs-form-scroll{min-height:0;overflow-y:auto;padding:16px 16px 4px;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.12) transparent}
+.emp-logs-form-foot{display:flex;gap:10px;padding:12px 16px;border-top:1px solid #eef0f3;background:#fff;flex-shrink:0}
+
+/* ── Per-type blocks in the log form ──────────────────────────────────── */
+/* No `display` on purpose: blocks are swapped with the hidden ATTRIBUTE. */
+.emp-log-input{margin-bottom:12px}
+.emp-log-input:empty{margin:0}
+.emp-log-check{display:flex;align-items:flex-start;gap:8px;padding:4px 2px;cursor:pointer;
+  font-size:12px;color:#374151;line-height:1.4;user-select:none}
+.emp-log-check:hover{color:#1e293b}
+.emp-log-check input{position:absolute;opacity:0;width:0;height:0}
+.emp-log-box{width:15px;height:15px;border-radius:4px;border:1.5px solid #cbd5e1;background:#fff;
+  display:flex;align-items:center;justify-content:center;color:transparent;flex-shrink:0;margin-top:1px;transition:.15s}
+.emp-log-check input:checked+.emp-log-box,.emp-dp-opt input:checked+.emp-log-box{background:var(--orange);border-color:var(--orange);color:#fff}
+.emp-log-check input:focus-visible+.emp-log-box{box-shadow:0 0 0 3px rgba(148,163,184,.35)}
+
+.emp-log-fields{display:flex;flex-direction:column;gap:10px}
+.emp-log-fields.is-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.emp-log-fields.is-grid .emp-log-field.is-full,.emp-log-fields.is-grid .emp-log-field:has(textarea){grid-column:1/-1}
+.emp-log-fields+.emp-log-fields,.emp-log-field+.emp-log-fields{margin-top:10px}
+.emp-log-field{min-width:0}
+.emp-log-text,.emp-log-textarea{width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;
+  border-radius:var(--r-control);background:#fff;font-family:inherit;font-size:12.5px;color:#1e293b;
+  padding:0 10px;height:36px;outline:none;transition:.15s}
+.emp-log-textarea{height:64px;padding:8px 10px;resize:none;line-height:1.45}
+.emp-log-text:focus,.emp-log-textarea:focus{border-color:#94a3b8}
+.emp-log-text.is-readonly{background:#f8fafc;color:#64748b}
+.emp-log-textarea.is-invalid{border-color:var(--st-bad-fg);background:var(--st-bad-bg)}
+.emp-log-field .cs-wrap{margin-bottom:0!important}
+.emp-log-field .cs-trigger,.emp-log-field .cd-trigger{height:36px;font-size:12.5px}
+.emp-log-fhint{font-size:10.5px;color:#94a3b8;margin-top:4px;line-height:1.4}
+.emp-issue-extra{margin-top:12px}
+
+/* Notices inside the form */
+.emp-log-alert,.emp-log-note,.emp-log-ok{display:flex;align-items:flex-start;gap:7px;border-radius:var(--r-control);
+  padding:8px 11px;font-size:11.5px;line-height:1.45;margin:0 0 12px}
+.emp-log-alert{background:var(--st-bad-bg);border:1px solid var(--st-bad-bd);color:var(--st-bad-fg)}
+.emp-log-note{background:var(--st-wait-bg);border:1px solid var(--st-wait-bd);color:var(--st-wait-fg)}
+.emp-log-ok{background:var(--st-ok-bg);border:1px solid var(--st-ok-bd);color:var(--st-ok-fg)}
+.emp-log-alert svg,.emp-log-note svg,.emp-log-ok svg{flex-shrink:0;margin-top:1px}
+
+/* Timeline additions: what was recorded, the status move, the emails sent */
+.lp-log-comment-row.emp-log-extra{margin-top:5px;background:#f8fafc}
+.lp-log-comment-row.emp-log-extra b{font-weight:600;color:var(--navy)}
+.lp-log-comment-row.is-bad{background:var(--st-bad-bg);color:var(--st-bad-fg);margin-top:5px}
+.lp-log-comment-row.is-bad .lp-log-comment-label{color:var(--st-bad-fg);opacity:.75}
+.emp-sys-chip{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+  color:#64748b;background:#f1f5f9;border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+.emp-phase-chip{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 9px;
+  background:var(--st-wait-bg);color:var(--st-wait-fg);border:1px solid var(--st-wait-bd);margin-left:6px}
+.emp-log-move{display:inline-flex;align-items:center;gap:4px;font-weight:600;color:var(--navy)}
+.emp-log-move svg{color:#94a3b8}
+.emp-log-mail{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.emp-log-mail span{display:inline-flex;align-items:flex-start;gap:5px;font-size:11px;line-height:1.4;color:#64748b;
+  background:#f8fafc;border:1px solid #eef0f3;border-radius:6px;padding:3px 8px}
+.emp-log-mail svg{color:#94a3b8;flex-shrink:0;margin-top:2px}
+.emp-log-mail b{font-weight:600;color:#475569}
+/* Logs > Remarks: what a step recorded and who it emailed, as one card */
+.emp-log-card{margin-top:8px;padding:4px 10px;border:1px solid #eef0f3;border-radius:8px;background:#fff;max-width:340px}
+.emp-log-kv{margin:0}
+.emp-log-kv>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #f1f3f5}
+.emp-log-kv>div:last-child{border-bottom:none}
+.emp-log-kv dt{font-size:11.5px;color:var(--gray)}
+.emp-log-kv dd{margin:0;font-size:12px;font-weight:600;color:var(--navy);text-align:right;white-space:nowrap}
+.emp-log-card-head{padding:7px 0 4px;line-height:1;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9ca3af}
+.emp-log-kv+.emp-log-card-head{margin-top:2px;border-top:1px solid #eef0f3;padding-top:9px}
+.emp-log-notif{list-style:none;margin:0;padding:0 0 4px}
+.emp-log-notif li{display:flex;align-items:flex-start;gap:8px;padding:4px 0}
+.emp-log-notif svg{flex-shrink:0;margin-top:2px;color:#94a3b8}
+.emp-log-notif span{display:flex;flex-direction:column;min-width:0;line-height:1.35}
+.emp-log-notif b{font-size:12px;font-weight:600;color:var(--navy)}
+.emp-log-notif em{font-style:normal;font-size:11.5px;color:var(--gray)}
+.emp-log-notif em.is-bad{color:var(--st-bad-fg)}
+
+.emp-trk-bar{height:6px;border-radius:999px;background:#eef0f3;overflow:hidden}
+.emp-trk-bar span{display:block;height:100%;border-radius:inherit;background:var(--st-ok-fg);transition:width .4s ease}
+
+/* ── Pickers: Required Documents (multi) and Rejected Document (single) ── */
+.emp-dp,.emp-ss{position:relative;margin-bottom:8px}
+.emp-ss{margin-bottom:0}
+.emp-dp-field{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:36px;box-sizing:border-box;
+  border:1.5px solid #e2e8f0;border-radius:var(--r-control);background:#fff;padding:4px 8px;cursor:text;transition:.15s}
+.emp-dp-field:focus-within{border-color:#94a3b8}
+.emp-dp-field.is-invalid{border-color:var(--st-bad-fg);background:var(--st-bad-bg)}
+.emp-ss-field{flex-wrap:nowrap}
+.emp-ss-field svg{color:#94a3b8;flex-shrink:0}
+.emp-dp-input{flex:1;min-width:120px;border:none;outline:none;font:inherit;font-size:12.5px;color:#1e293b;height:26px;background:transparent}
+.emp-dp-menu{margin-top:4px;border:1px solid var(--border);border-radius:var(--r-control);background:#fff;
+  box-shadow:0 8px 24px rgba(15,23,42,.10);max-height:230px;overflow:auto;padding:4px 0;scrollbar-width:thin}
+.emp-dp-group-label{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#94a3b8;padding:7px 12px 3px}
+.emp-dp-opt{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;color:var(--navy);cursor:pointer}
+.emp-dp-opt:hover,.emp-ss-opt:hover{background:#f8fafc}
+.emp-dp-opt input{position:absolute;opacity:0;width:0;height:0}
+.emp-dp-opt.is-taken{color:#94a3b8;cursor:default}
+.emp-dp-name{flex:1}
+.emp-dp-tag{font-size:10px;font-weight:600;color:#94a3b8}
+.emp-dp-none{padding:10px 12px;font-size:12px;color:#94a3b8}
+/* Required Documents: the app's dropdown trigger, a search box inside the
+   menu over a scrolling list, and the picked documents listed under the field. */
+.emp-dp-trigger{width:100%;height:36px;font-size:12.5px}
+.emp-dp-trigger.is-invalid{border-color:var(--st-bad-fg);background:var(--st-bad-bg)}
+.emp-dp.is-off .emp-dp-trigger{background:#f8fafc;opacity:.55;cursor:not-allowed}
+.emp-dp .emp-dp-menu{max-height:none;overflow:hidden;padding:0}
+.emp-dp-search{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#94a3b8}
+.emp-dp-search .emp-dp-input{min-width:0}
+.emp-dp-list{max-height:220px;overflow:auto;padding:4px 0;scrollbar-width:thin}
+.emp-dp-picked{margin-top:8px;border:1px solid #eef0f3;border-radius:var(--r-control);overflow:hidden}
+.emp-dp-item{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 10px;border-bottom:1px solid #f1f5f9;background:#fff}
+.emp-dp-item:last-child{border-bottom:none}
+.emp-dp-item-ico{width:26px;height:26px;border-radius:7px;background:#f1f5f9;color:#64748b;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.emp-dp-item-ico svg{width:13px;height:13px}
+.emp-dp-item-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.emp-dp-item-name{font-size:12.5px;font-weight:600;color:var(--navy)}
+.emp-dp-item-type{font-size:11px;color:#94a3b8}
+.emp-dp-item-del{width:26px;height:26px;border:none;background:none;border-radius:6px;color:#94a3b8;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.emp-dp-item-del:hover{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+.emp-dp-nodocs{margin-bottom:8px}
+.emp-ss-opt{display:flex;flex-direction:column;gap:1px;padding:7px 12px;cursor:pointer}
+.emp-ss-opt.is-sel{background:#f1f5f9}
+.emp-ss-name{font-size:12.5px;font-weight:500;color:var(--navy)}
+.emp-ss-sub{font-size:11px;color:#94a3b8}
+
+/* ── Sections: Document Review, Asset Allocation, IT Access, Recovery ──── */
+.emp-sec{border:1px solid #eef0f3;border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff}
+.emp-sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;background:#f8fafc;border-bottom:1px solid #eef0f3}
+.emp-sec-head .emp-log-check{padding:0;font-size:11.5px}
+.emp-sec-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--navy)}
+.emp-sec-title svg{color:#64748b}
+.emp-sec-count{font-size:11px;font-weight:600;color:#64748b}
+.emp-sec-body{padding:10px 11px;display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.emp-sec-body.is-flush{padding:0;gap:0}
+.emp-sec.is-skipped .emp-sec-body{opacity:.45;pointer-events:none}
+.emp-sec-empty{font-size:12px;color:#94a3b8}
+.emp-sec-empty.is-ok{display:inline-flex;align-items:center;gap:6px;color:var(--st-ok-fg);font-weight:600}
+.emp-sec-btns{display:flex;gap:8px;flex-wrap:wrap}
+/* Same shape as .ep-cancel-btn, the app's secondary button, at the panel's
+   smaller size. */
+.emp-sec-btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:var(--r-control);
+  border:1px solid var(--border);background:var(--card);color:var(--navy);font:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;transition:.15s}
+.emp-sec-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+.emp-sec-btn svg{color:#64748b}
+.emp-sec-link{display:inline-flex;align-items:center;gap:4px;border:none;background:none;color:var(--orange);
+  font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap}
+.emp-sec-link:hover{text-decoration:underline}
+.emp-res-list{display:flex;flex-direction:column;gap:8px;width:100%}
+.emp-res-txt{min-width:0;flex:1}
+.emp-res-name{font-size:12.5px;font-weight:600;color:var(--navy)}
+.emp-res-sub{font-size:11px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* A held asset / access, with the FR's fields as a compact two-column list */
+.emp-res-card{border:1px solid #eef0f3;border-radius:8px;padding:9px 11px}
+.emp-res-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.emp-res-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin:0}
+.emp-res-dl div{min-width:0}
+.emp-res-dl dt{font-size:10.5px;color:#94a3b8;font-weight:500}
+.emp-res-dl dd{margin:0;font-size:12px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Assign Existing Asset: the picked list, then one row of buttons. */
+.emp-assign{display:flex;flex-direction:column;gap:8px}
+.emp-assign-title{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8;margin-top:2px}
+.emp-assign-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.emp-pick-list{display:flex;flex-direction:column;gap:6px}
+.emp-pick-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 8px 7px 11px;border:1px dashed #cbd5e1;border-radius:8px;background:#fcfcfd}
+.emp-pick-row .emp-res-txt{display:flex;align-items:baseline;gap:8px;min-width:0}
+.emp-pick-x{width:24px;height:24px;flex-shrink:0;border:none;border-radius:6px;background:none;color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.emp-pick-x:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.emp-pick-x svg{width:12px;height:12px}
+/* Assign: the step's one primary action - solid once something is picked. */
+.emp-sec-btn.is-primary{margin-left:auto;background:var(--btn-accent);border-color:var(--btn-accent);color:#fff}
+.emp-sec-btn.is-primary:hover{background:#000;border-color:#000}
+.emp-sec-btn.is-primary:disabled{background:#f1f5f9;border-color:#e2e8f0;color:#94a3b8;cursor:not-allowed}
+/* Select Assets popup */
+.ct-modal.emp-asg{width:min(520px,92vw)}
+.emp-asg-search{margin:4px 0 10px;border-radius:var(--r-control)!important}
+.emp-asg>.emp-sec-empty{margin-bottom:22px}
+.emp-asg-list{max-height:min(320px,46vh);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--border);border-radius:10px;margin-bottom:22px}
+.emp-asg-row{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;position:relative}
+.emp-asg-row:last-of-type{border-bottom:none}
+.emp-asg-row:hover{background:#f8fafc}
+.emp-asg-row[hidden]{display:none}
+.emp-asg-row input{position:absolute;opacity:0;width:0;height:0}
+.emp-asg-row input:checked+.emp-log-box{background:var(--orange);border-color:var(--orange);color:#fff}
+.emp-asg-row input:focus-visible+.emp-log-box{box-shadow:0 0 0 3px rgba(148,163,184,.35)}
+.emp-asg-txt{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
+.emp-asg-cat{font-size:11.5px;color:#94a3b8;white-space:nowrap}
+.emp-asg-none{padding:18px;text-align:center;font-size:12.5px;color:var(--gray)}
+.emp-asg-count{font-size:12px;font-weight:600;color:var(--gray)}
+.emp-asg .ct-modal-foot{justify-content:space-between}
+/* Document Review rows: name, status, Accept / Reject */
+.emp-rev-row{display:flex;flex-direction:column;gap:5px;padding:9px 11px;border-bottom:1px solid #f1f5f9}
+.emp-rev-row:last-child{border-bottom:none}
+.emp-rev-line{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.emp-rev-line .emp-res-sub{flex:1;min-width:0}
+.emp-rev-acts{display:flex;gap:6px;flex-shrink:0}
+.emp-mini-btn{height:26px;padding:0 10px;border-radius:var(--r-control);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:#fff;color:var(--navy);transition:.15s}
+.emp-mini-btn.is-ok:hover{background:var(--st-ok-bg);border-color:var(--st-ok-bd);color:var(--st-ok-fg)}
+.emp-mini-btn.is-bad:hover{background:var(--st-bad-bg);border-color:var(--st-bad-bd);color:var(--st-bad-fg)}
+/* Compliance Clearance: Issue Details / Resolution pairs */
+.emp-pairs{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.emp-pair{display:grid;grid-template-columns:1fr 1fr 30px;gap:8px;align-items:start;padding:9px;border:1px solid #eef0f3;border-radius:8px;background:#fcfcfd}
+.emp-pair-f{min-width:0}
+.emp-pair-del{margin-top:22px;width:30px;height:30px;border-radius:var(--r-control);border:1px solid var(--border);background:#fff;
+  color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.emp-pair-del:hover{color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+
+/* ── Row menu ──────────────────────────────────────────────────────────── */
+/* A plain menu: just the steps, as text rows on one even rhythm - no heading,
+   no step icons, no rule under every row. Steps that can be taken now read in
+   ink, the rest in grey. */
+/* Sized to its longest row, so the gap on the right matches the 16px on the
+   left - no wide empty tail after short lists like "Offboarding / Mark Inactive". */
+.emp-act-menu{min-width:0;width:max-content;max-width:calc(100vw - 32px);padding:6px 0}
+.emp-act-menu .ct-act-item{padding:8px 16px;font-size:13px;border-bottom:none;gap:16px;white-space:nowrap}
+/* Keep both sides even on hover too (motion.css nudges the left padding). */
+.emp-act-menu .ct-act-item:hover{padding-left:16px}
+.emp-act-item .emp-act-label{flex:1;min-width:0}
+.emp-act-item em{font-style:normal;font-size:10.5px;color:#94a3b8;font-weight:500;white-space:nowrap}
+.ct-act-item.wait,.ct-act-item.auto,.ct-act-item.skipped{color:#94a3b8;cursor:default}
+.ct-act-item.wait:hover,.ct-act-item.auto:hover,.ct-act-item.skipped:hover{background:none;color:#94a3b8}
+.ct-act-item.branch.next{color:var(--st-bad-fg)}
+.emp-act-menu .ct-act-item.done{color:#94a3b8}
+
+/* ── Add Log popup ────────────────────────────────────────────────────── */
+.emp-sm .lp-logs-form-label{font-size:12px;color:var(--navy);margin-bottom:6px}
+.emp-sm .emp-log-input{margin-bottom:0}
+.emp-sm .emp-sm-inputs:not(:has(.emp-log-input:not([hidden]):not(:empty))){display:none}
+.emp-sm .lp-logs-form-textarea{margin-bottom:0}
+.emp-sm .emp-log-note{margin:0}
+/* The Contracts popup this one borrows (.ct-sm) zeroes the form's bottom
+   margin, which put the Comment box flush against the footer. */
+.ct-modal.emp-sm>.ep-form-grid{margin-bottom:26px}
+
+/* Cancel Onboarding blocking popup */
+.emp-block-overlay{z-index:600}
+.emp-block{width:min(460px,92vw);text-align:left}
+.emp-block-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:var(--st-wait-bg);color:var(--st-wait-fg);margin-bottom:12px}
+.emp-block-ico svg{width:20px;height:20px}
+.emp-block .ct-modal-title{display:block;margin-bottom:6px}
+.emp-block .ct-modal-sub{margin-bottom:14px}
+.emp-block-sec{border:1px solid #eef0f3;border-radius:10px;padding:9px 12px;margin-bottom:10px}
+.emp-block-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.emp-block-list{margin:0;padding-left:20px;font-size:12px;color:#475569;line-height:1.6}
+.emp-block .ct-modal-foot{margin-top:26px}
+
+/* Return-to-employee bar on the Assets / IT Access listings */
+/* The way back to the employee's log: a card at the top of Assets / IT
+   Accesses - whose log and which step on the left, a solid button home on the
+   right - with a blue edge so it reads apart from the filters under it. */
+.emp-return-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--st-info-bd);
+  border-left:4px solid var(--st-info-fg);border-radius:12px;padding:12px 14px 12px 16px;margin-bottom:16px;
+  box-shadow:0 2px 10px rgba(37,99,235,.08)}
+.emp-return-av{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--st-info-bg);color:var(--st-info-fg);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.emp-return-txt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
+.emp-return-title{font-size:14px;color:var(--navy)}
+.emp-return-title b{font-weight:700}
+.emp-return-id{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--light);border:1px solid var(--border);
+  font-size:11px;font-weight:600;color:var(--gray);vertical-align:1px}
+.emp-return-sub{font-size:12.5px;color:var(--gray)}
+.emp-return-sub b{color:var(--navy);font-weight:600}
+.emp-return-btn{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;height:34px;padding:0 18px;border:none;border-radius:var(--r-control);
+  background:var(--btn-accent);color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.emp-return-btn:hover{background:#000}
+.emp-return-btn svg{flex-shrink:0}
+/* Super Admin picked a log that is not open yet: the note says when it will be. */
+.emp-next-why{margin:10px 0 0}
+
+/* ── Employee Dashboard tracker ────────────────────────────────────────── */
+#emp-life-dash:empty{display:none}
+#emp-life-dash{margin-bottom:22px}
+.emp-trk-status{display:inline-flex;align-items:center;gap:10px;font-size:12px;color:var(--gray);font-weight:500}
+.emp-trk-count{white-space:nowrap}
+.emp-trk .emp-trk-bar{height:8px;margin-bottom:16px}
+/* One column per applicable milestone - four to six of them. */
+.emp-trk-steps{display:grid;grid-template-columns:repeat(var(--n,6),minmax(0,1fr));gap:10px}
+.emp-trk-steps:not(:last-child){margin-bottom:16px}
+.emp-trk-step{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:11px 12px;border:1px solid var(--border);
+  border-radius:10px;background:#fff;min-width:0}
+.emp-trk-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;
+  background:#f1f5f9;color:#64748b}
+.emp-trk-lbl{font-size:12px;font-weight:600;color:var(--navy);line-height:1.3}
+.emp-trk-step.is-done{border-color:var(--st-ok-bd);background:#fbfefc}
+.emp-trk-step.is-done .emp-trk-dot{background:var(--st-ok-fg);color:#fff}
+.emp-trk-action{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--st-wait-bd);background:var(--st-wait-bg)}
+.emp-trk-action-ico{width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;
+  color:var(--st-wait-fg);flex-shrink:0;border:1px solid var(--st-wait-bd)}
+.emp-trk-action-txt{flex:1;min-width:0}
+.emp-trk-action-title{font-size:13px;font-weight:700;color:var(--st-wait-fg)}
+.emp-trk-action-sub{font-size:12px;color:#64748b;margin-top:2px}
+.emp-trk-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+@media(max-width:1100px){.emp-trk-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.emp-trk-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-trk-action{flex-wrap:wrap}}
+
+/* ── My Profile → Attachments → Requested Docs ────────────────────────── */
+.emp-rq-sub{font-size:12px;color:var(--gray);margin:-6px 0 14px;line-height:1.5}
+.emp-rq-list{display:flex;flex-direction:column;gap:8px}
+.emp-rq-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.emp-rq-row.is-rejected{border-color:var(--st-bad-bd);background:#fffafa}
+.emp-rq-row.is-accepted{border-color:var(--st-ok-bd)}
+.emp-rq-ico{width:34px;height:34px;border-radius:10px;background:#f1f5f9;color:#64748b;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.emp-rq-body{flex:1;min-width:0}
+.emp-rq-name{font-size:13px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.emp-rq-type{font-size:11px;font-weight:500;color:#94a3b8}
+.emp-rq-file{font-size:11.5px;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emp-rq-reason{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--st-bad-fg);margin-top:3px}
+.emp-rq-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;min-width:104px;justify-content:center}
+.emp-rq-btn-ph{min-width:104px}
+.emp-flash{animation:empFlash 1.4s ease}
+@keyframes empFlash{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 4px rgba(245,158,11,.25)}}
+@media(max-width:640px){.emp-rq-row{flex-wrap:wrap}.emp-rq-btn,.emp-rq-btn-ph{min-width:0}}
+
+/* The filter pill: the Status dropdown is four short words now. */
+#csw-de-f-status .cs-dropdown,#csw-ge-f-status .cs-dropdown{min-width:160px}
+
+/* Employee creation: Pending / Onboarding */
+.emp-start-grid{grid-template-columns:1fr 1fr;margin-bottom:0}
+@media(max-width:640px){.emp-start-grid{grid-template-columns:1fr}}
+
+/* The grouped middle stage lists the steps inside it. */
+.emp-trk-subs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.emp-trk-subs li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748b;line-height:1.35}
+.emp-trk-subs li svg{color:var(--st-ok-fg);flex-shrink:0}
+.emp-trk-subs li.is-done{color:var(--navy)}
+.emp-trk-subdot{width:6px;height:6px;border-radius:50%;background:#cbd5e1;flex-shrink:0;margin:0 2px}
+/* An asset in the log: one line - name, code, status. */
+.emp-res-card.is-line .emp-res-top{margin-bottom:0}
+.emp-res-card.is-line .emp-res-txt{display:flex;align-items:baseline;gap:8px;min-width:0}
+.emp-res-code{font-size:11px;color:#94a3b8;white-space:nowrap}
+
+/* ── Logs tab: the NEXT STEP card ───────────────────────────────────────
+   In place of a form: the step to do next, what it involves and who owns it,
+   with Fill Details under it (the popup holds the fields). Steps open at the
+   same time, and the way out of the process, are plain links below. */
+.emp-next .emp-logs-form-scroll{padding-bottom:14px}
+.emp-next-card{border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;background:#fff}
+.emp-next-card.is-wait{background:#fcfcfd;border-style:dashed}
+.emp-next-k{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8;margin-bottom:6px}
+.emp-next-title{font-size:15px;font-weight:700;color:var(--navy);line-height:1.35}
+.emp-next-hint{margin:5px 0 0;font-size:12.5px;line-height:1.55;color:var(--gray)}
+.emp-next-owner{margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9;font-size:12px;color:var(--gray)}
+.emp-next-owner b{color:var(--navy);font-weight:600}
+.emp-next-more{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.emp-next-more .emp-next-k{margin-bottom:0}
+.emp-next-link{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:9px 12px;
+  border:1px solid #e2e8f0;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04);
+  font:inherit;font-size:13px;font-weight:500;color:var(--navy);cursor:pointer;text-align:left;
+  transition:background .15s,border-color .15s,color .15s}
+.emp-next-link svg{color:#94a3b8;flex-shrink:0;transition:transform .15s}
+.emp-next-link:hover{color:var(--btn-accent);border-color:var(--btn-accent);background:#f8fafc}
+.emp-next-link:hover svg{transform:translateX(2px);color:var(--btn-accent)}
+.emp-next-link:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+.emp-next-link.is-danger{border-color:var(--st-bad-bd)}
+.emp-next-link.is-danger,.emp-next-link.is-danger svg{color:var(--st-bad-fg)}
+.emp-next-link.is-danger:hover{background:var(--st-bad-bg);border-color:var(--st-bad-fg)}
+.emp-logs .emp-log-note{margin-bottom:12px}
+/* The step popup: one line on what the step involves, under its title. */
+.emp-sm-hint{margin:-4px 0 16px;font-size:12.5px;line-height:1.55;color:var(--gray)}
+/* Cancel Onboarding / Offboarding and Reject Document: the one button is in
+   the soft red of a status badge - pale fill, red text - rather than a solid
+   red block; it deepens a step on hover. */
+.ep-save-btn.is-danger{background:var(--st-bad-bg);border:1px solid var(--st-bad-bd);color:var(--st-bad-fg)}
+.ep-save-btn.is-danger:hover{background:#fecaca;border-color:#fca5a5;color:#962f2f}
+/* An asset line that opens to its details: the whole line is the toggle, the
+   arrow turns when open, and the details sit under a hairline. */
+.emp-res-toggle{width:100%;border:none;background:none;padding:0;margin:0;font:inherit;text-align:left;cursor:pointer;gap:10px}
+.emp-res-toggle .emp-res-txt{flex:1}
+.emp-res-chev{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:#94a3b8;flex-shrink:0;transition:transform .18s,background .15s,color .15s}
+.emp-res-toggle:hover .emp-res-chev{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.emp-res-card.is-open .emp-res-chev{transform:rotate(180deg);color:var(--navy)}
+.emp-res-toggle:focus-visible{outline:2px solid var(--navy);outline-offset:4px;border-radius:4px}
+.emp-res-more{margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9}
+.emp-res-more[hidden]{display:none}
+/* Super Admin's step dropdown above the card, and the "waiting on" note a
+   role sees on a step owned by someone else. */
+.emp-next-pick{margin-bottom:12px}
+.emp-next-wait{display:inline-flex;align-items:center;margin-left:8px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;
+  background:var(--st-wait-bg);color:var(--st-wait-fg);border:1px solid var(--st-wait-bd)}
+.emp-sm .ct-modal-foot>.emp-next-wait{margin-left:auto}
+.lp-logs-save-btn.is-danger{background:var(--st-bad-bg);border:1px solid var(--st-bad-bd);color:var(--st-bad-fg)}
+.lp-logs-save-btn.is-danger:hover{background:#fecaca;border-color:#fca5a5;color:#962f2f}

@@ -1,0 +1,159 @@
+/* ══ ADMIN ACCESS (IT Access + Asset Allocation) ══════════════════════════
+   The listings, panels, logs and form shell are the app's own parts. This
+   sheet adds only what they have no part for: the asset image field,
+   the "+ Add" link beside a select, the panel header, the assignment history
+   table and the warranty / validity bar. */
+
+/* ── Add / Edit popups ──────────────────────────────────────────────────── */
+/* Label with "+ Add" on its right edge. */
+.ax-label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ax-add-link{display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0;
+  font-family:inherit;font-size:11.5px;font-weight:600;color:var(--btn-accent);cursor:pointer;line-height:1}
+.ax-add-link:hover{text-decoration:underline}
+.ax-inline-add{display:flex;gap:6px;margin-top:8px}
+.ax-inline-add .ep-form-input{flex:1;min-width:0}
+.ax-inline-btn{--btn-h:36px;--btn-px:12px;flex-shrink:0}
+
+/* Status and assignment are not edited here; this says where they are. */
+.ax-locked-note{padding:10px 13px;border:1px dashed var(--border);border-radius:9px;background:var(--light);
+  font-size:12px;line-height:1.5;color:#64748b}
+.ax-locked-note b{color:var(--navy)}
+
+/* Asset image: one row across the popup. Empty, it is the shared .att-zone
+   drop target laid out on one line; filled, a thumbnail with its name. */
+.ax-img-zone{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 16px}
+.ax-img-zone .att-zone-ico{margin-bottom:0;width:36px;height:36px}
+.ax-img-zone .att-zone-title{font-size:13px}
+.ax-img-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.ax-img-row img{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:var(--light);flex-shrink:0}
+.ax-img-name{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Who holds the asset now. */
+.ax-holder{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #eef0f3;border-radius:10px;background:#f8f9fb}
+.ax-holder-av{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--st-info-bg);color:var(--st-info-fg);
+  display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;letter-spacing:.3px}
+.ax-holder-txt{flex:1;min-width:0}
+.ax-holder-name{font-size:13.5px;font-weight:700;color:var(--navy)}
+.ax-holder-sub{font-size:11.5px;color:var(--gray);margin-top:2px}
+.ax-holder-right{text-align:right;flex-shrink:0}
+.ax-holder-k{font-size:11px;color:#9ca3af;font-weight:500}
+.ax-holder-v{font-size:13.5px;font-weight:700;color:var(--navy);margin-top:3px}
+
+.ax-count{font-size:11.5px;color:var(--gray);font-weight:500}
+.ax-empty{font-size:12px;line-height:1.5;color:#64748b;padding:12px 14px;background:#f8fafc;border:1px dashed var(--border);border-radius:9px}
+.ax-empty b{color:var(--navy)}
+
+.ax-hist{width:100%;border-collapse:collapse;font-size:12.5px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ax-hist th{text-align:left;font-size:11px;font-weight:600;color:#64748b;background:#f8fafc;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ax-hist td{padding:10px 12px;border-bottom:1px solid #f1f3f5;color:var(--navy);white-space:nowrap}
+.ax-hist tr:last-child td{border-bottom:0}
+.ax-hist b{font-weight:600}
+
+/* Warranty / access-period bar: how much of the window has gone. */
+.ax-warranty{margin:0 0 14px}
+.ax-warranty-bar{height:6px;border-radius:99px;background:#eef1f5;overflow:hidden}
+.ax-warranty-bar span{display:block;height:100%;border-radius:99px;background:var(--st-idle-fg)}
+.ax-warranty-bar span.tone-ok{background:var(--st-ok-fg)}
+.ax-warranty-bar span.tone-wait{background:var(--st-wait-fg)}
+.ax-warranty-bar span.tone-bad{background:var(--st-bad-fg)}
+.ax-warranty-ends{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray)}
+
+@media (max-width:640px){
+  .sb-hero{flex-wrap:wrap}
+}
+
+/* Same room above the footer bar as every other creation popup's last row. */
+.ax-modal>.ep-form-grid{margin-bottom:26px}
+
+/* ── FR-10 additions ──────────────────────────────────────────────────────
+   Purchase Cost carries its currency; Comment / Notes is a plain textarea;
+   + Add System / Application opens a small panel (name, domain, logo) under
+   the dropdown, in the same place the one-line + Add panels open. */
+.ax-currency{display:flex;align-items:stretch}
+.ax-currency>span{display:flex;align-items:center;padding:0 12px;border:1px solid var(--border);border-right:0;
+  border-radius:var(--r-control) 0 0 var(--r-control);background:var(--light);color:var(--gray);font-size:13px;font-weight:600}
+.ax-currency .ep-form-input{border-top-left-radius:0;border-bottom-left-radius:0;flex:1;min-width:0}
+.ax-notes{height:auto;min-height:76px;padding:10px 14px;resize:vertical;line-height:1.5;border-radius:var(--r-control)}
+.ax-sys-add{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:10px;border:1px solid var(--border);
+  border-radius:var(--r-control);background:var(--light)}
+.ax-sys-add-row{display:flex;align-items:center;gap:6px}
+.ax-sys-upload{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ax-sys-upload svg{width:14px;height:14px}
+.ax-sys-add-logo{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--gray);min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ax-sys-add-logo img{width:22px;height:22px;object-fit:contain;border-radius:4px;background:#fff;border:1px solid var(--border)}
+.ax-sys-cell{display:inline-flex;align-items:center;gap:7px}
+.ax-sys-logo{object-fit:contain;border-radius:4px}
+.ax-sub{font-size:11px;color:var(--gray);font-weight:400;margin-left:4px}
+
+/* Listings fit their card (.lp-table-card clips, it does not scroll): paired
+   fields share a cell, main value over a grey .lp-c-sub line. */
+.ax-table{width:100%}
+.ax-table .ax-c-link{color:var(--orange)}
+.ax-table .ax-c-trunc{max-width:180px;overflow:hidden;text-overflow:ellipsis}
+/* Two-field headings wrap to two lines rather than widening their column. */
+.ax-table thead th{white-space:normal;line-height:1.35;vertical-align:bottom}
+.ax-table .ax-sys-cell{display:flex}
+.ax-table thead th:first-child,.ax-table thead th:last-child{white-space:nowrap}
+
+/* ── Assets listing: the asset cell (image, or the asset icon, beside its name) ── */
+.ax-asset-cell{display:flex;align-items:center;gap:10px;min-width:0}
+.ax-asset-txt{min-width:0}
+.ax-thumb{flex-shrink:0;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--light);
+  display:flex;align-items:center;justify-content:center;color:#94a3b8;object-fit:cover}
+.ax-thumb svg{width:16px;height:16px}
+/* The tabs sit flush with the filters under them. */
+.lp-page>.mod-page .mod-tabs-row{margin-bottom:4px}
+/* Employee Confirmation in Basic Details: record the employee's confirmation. */
+.ax-confirm-btn{margin-left:8px;height:24px;padding:0 10px;border-radius:var(--r-control);border:1px solid var(--border);background:#fff;
+  font:inherit;font-size:11.5px;font-weight:600;color:var(--navy);cursor:pointer;vertical-align:middle}
+.ax-confirm-btn:hover{border-color:var(--btn-accent);color:var(--btn-accent)}
+/* ── Asset Types tab ── */
+.ax-type-act{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:var(--r-control);border:1px solid var(--border);
+  background:#fff;font:inherit;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;transition:.15s}
+.ax-type-act svg{width:12px;height:12px}
+.ax-type-act:hover{border-color:var(--btn-accent);color:var(--btn-accent)}
+.ax-type-act.is-danger{color:var(--st-bad-fg);border-color:var(--st-bad-bd);background:var(--st-bad-bg)}
+.ax-type-act.is-danger:hover{background:#fecaca;border-color:#fca5a5;color:#962f2f}
+.lp-table tr.ax-row-off td{color:#94a3b8}
+.lp-table tr.ax-row-off .lp-c-main{color:#94a3b8}
+.ct-modal.ax-type-modal{width:min(460px,92vw)}
+
+/* ── Assets search type-ahead (astSuggest, js/admin-access.js) ──
+   Hangs under the search box, over the page. One row per asset: what it is on
+   the left, who has it and its status on the right. */
+.ax-suggest{position:fixed;z-index:950;max-width:calc(100vw - 24px);padding:6px;background:#fff;
+  border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.14);
+  animation:ax-sug-in .16s var(--e-out,ease-out) both}
+@keyframes ax-sug-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ax-sug-row{display:flex;align-items:center;gap:14px;width:100%;padding:9px 10px;border:0;border-radius:8px;background:none;
+  font-family:inherit;text-align:left;cursor:pointer}
+.ax-sug-row.is-on{background:#f1f5f9}
+.ax-sug-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ax-sug-name{font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ax-sug-sub{font-size:11.5px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ax-sug-side{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ax-sug-who{font-size:12px;color:#475569;white-space:nowrap}
+.ax-suggest mark{background:#fef3c7;color:inherit;border-radius:3px;padding:0 1px}
+.ax-sug-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px -6px -6px;padding:8px 14px;
+  border-top:1px solid #f1f3f5;font-size:11px;color:#94a3b8}
+.ax-sug-foot kbd{display:inline-block;min-width:16px;margin:0 2px;padding:0 4px;border:1px solid var(--border);border-radius:4px;
+  background:#f8fafc;font-family:inherit;font-size:10px;line-height:16px;text-align:center;color:var(--gray)}
+.ax-sug-none{padding:16px 12px;text-align:center;font-size:12.5px;color:var(--gray)}
+@media (max-width:640px){.ax-sug-side .ax-sug-who{display:none}}
+
+/* ── Asset identifiers in the listing ──
+   Key ID and barcode as two small chips under the asset name, so the two
+   numbers read as labelled facts rather than one run-on grey line. The
+   barcode is monospaced: NFA codes line up down the column and are easy to
+   compare against a sticker. */
+.ax-ids{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.ax-id{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:6px;
+  background:#f8fafc;border:1px solid #eef1f5;color:#475569;
+  font-size:11px;font-weight:600;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ax-id svg{width:11px;height:11px;flex-shrink:0;color:#94a3b8}
+.lp-row-selected .ax-id,tr:hover .ax-id{background:#fff}
+
+/* Barcode column: plain text like the columns beside it; tabular digits so
+   the numbers line up down the column. */
+.ax-barcode{font-variant-numeric:tabular-nums;letter-spacing:.2px}

@@ -1,0 +1,98 @@
+/* ══ GOVERNANCE → ANNOUNCEMENTS (js/announcement-admin.js) ═════════════════
+   Only what the shared lp-* listing, panel and .ct-modal--form do not already
+   give it. Same tokens, same five status tones. */
+
+/* ── Listing cells ── */
+.anm-cell-title{display:flex;align-items:center;gap:7px;min-width:0}
+.anm-cell-name{color:var(--orange);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.anm-cell-sub{margin-top:2px;font-size:11px;color:#94a3b8;font-variant-numeric:tabular-nums}
+.anm-pin{display:inline-flex;flex-shrink:0;color:#d97706}
+.anm-pin svg{width:13px;height:13px;transform:rotate(30deg)}
+.anm-aud{display:inline-block;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:2px 9px;border-radius:999px;background:var(--st-info-bg);color:var(--st-info-fg);font-size:11.5px;font-weight:500}
+.anm-aud.is-all{background:var(--ol);color:#475569}
+
+/* ── Panel ── */
+.anm-sec-title{margin:18px 0 8px;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#94a3b8}
+.anm-msg{padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;
+  font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap;overflow-wrap:anywhere}
+/* The visibility sentence under the header: the one line that says whether
+   employees can see this right now. */
+.anm-window,.anm-when{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:9px;
+  font-size:12.5px;line-height:1.45;border:1px solid var(--st-idle-bd);background:var(--st-idle-bg);color:#475569}
+.anm-window{margin-top:12px}
+.anm-window svg,.anm-when svg{flex-shrink:0;margin-top:1px}
+.anm-window.tone-ok,.anm-when.tone-ok{background:var(--st-ok-bg);border-color:var(--st-ok-bd);color:#166534}
+.anm-window.tone-wait,.anm-when.tone-wait{background:var(--st-wait-bg);border-color:var(--st-wait-bd);color:var(--st-wait-fg)}
+.anm-when.tone-bad{background:var(--st-bad-bg);border-color:var(--st-bad-bd);color:var(--st-bad-fg)}
+
+/* ── Form ── */
+/* Flat sections split by a rule: the page already puts the form in a card,
+   and a card per section inside it drew a border inside a border. */
+.anm-form .anm-sec{padding:0 0 22px;margin:0 0 22px;border:0;border-bottom:1px solid var(--border);
+  border-radius:0;background:none;box-shadow:none}
+.anm-sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
+.anm-sec-head .ep-form-title{margin:0;padding:0;border:0;font-size:14px}
+.anm-sec-sub{font-size:12px;color:var(--gray)}
+.anm-form .ep-form-group{position:relative}
+.anm-ta{min-height:120px;resize:vertical;line-height:1.5}
+.anm-count{display:block;margin-top:4px;text-align:right;font-size:11px;color:#94a3b8;font-variant-numeric:tabular-nums}
+.anm-count.is-near{color:var(--st-wait-fg)}
+.anm-hint{margin-top:6px;font-size:11.5px;line-height:1.4;color:var(--gray)}
+/* Date and time side by side in one field. */
+.anm-dt{display:grid;grid-template-columns:minmax(0,1fr) 116px;gap:8px}
+.anm-dt .cs-trigger{height:42px}
+/* Audience groups: tick chips, same 16px box and ink as the app's checkboxes. */
+.anm-chips{display:flex;flex-wrap:wrap;gap:8px}
+.anm-chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:var(--r-control);
+  border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--navy);cursor:pointer;
+  transition:border-color .15s ease,background .15s ease}
+.anm-chip:hover{border-color:#cbd5e1}
+.anm-chip-box{width:16px;height:16px;border-radius:4px;border:1.5px solid #cbd5e1;background:#fff center/10px 10px no-repeat;flex-shrink:0}
+.anm-chip.is-on{border-color:var(--btn-ink);background:#f8fafc}
+.anm-chip.is-on .anm-chip-box{background-color:var(--btn-ink);border-color:var(--btn-ink);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.2 5 8.6 9.5 3.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.anm-aud-all{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9px;background:var(--ol);font-size:12.5px;color:#475569}
+.anm-static{display:flex;align-items:center;gap:10px;min-height:42px;font-size:12.5px;color:var(--gray)}
+/* The four stamps the save writes, said once at the foot of the form. */
+.anm-audit{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:4px 0 16px;padding:10px 14px;
+  border-radius:9px;background:var(--ol);font-size:12px;color:var(--gray)}
+.anm-audit svg{flex-shrink:0}
+.anm-audit b{font-weight:600;color:#475569;margin-right:4px}
+@media (max-width:720px){.anm-dt{grid-template-columns:1fr}}
+
+/* Target Audience: a compact switch, then (for Specific Groups) one panel
+   with a row per kind of group - label and its state on the left, the
+   tick-chips on the right - and the live reach line as the panel's foot. */
+.anm-aud-mode .segmented{width:100%}
+.anm-aud-all b{color:var(--navy);font-weight:600}
+.anm-aud-box{border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden}
+.anm-aud-row{display:grid;grid-template-columns:168px minmax(0,1fr);gap:16px;align-items:start;padding:14px 16px}
+.anm-aud-row+.anm-aud-row{border-top:1px solid #f0f2f5}
+.anm-aud-lbl{display:flex;flex-direction:column;gap:3px;padding-top:7px}
+.anm-aud-lbl>span:first-child{font-size:13px;font-weight:600;color:var(--navy)}
+.anm-aud-state{font-size:11.5px;color:#94a3b8}
+.anm-aud-state.is-set{color:var(--navy);font-weight:600}
+.anm-aud-box .anm-chips{gap:8px}
+.anm-aud-box .anm-chip{height:34px}
+/* Reach sits in the column beside the switch, the same height as it, so the
+   pair reads as one row. */
+.anm-reach{display:flex;align-items:center;gap:8px;min-height:44px;box-sizing:border-box;padding:8px 14px;
+  border:1px solid var(--border);border-radius:var(--r-control);background:#f8fafc;font-size:12.5px;line-height:1.45;color:#475569}
+.anm-reach svg{flex-shrink:0;width:15px;height:15px}
+.anm-reach b{font-weight:600;color:var(--navy)}
+.anm-reach.is-none{background:var(--st-wait-bg);border-color:var(--st-wait-bd);color:var(--st-wait-fg)}
+.anm-reach .anm-reach-none{color:var(--st-wait-fg)}
+@media (max-width:720px){
+  .anm-aud-row{grid-template-columns:1fr;gap:8px}
+  .anm-aud-lbl{flex-direction:row;align-items:baseline;justify-content:space-between;padding-top:0}
+}
+
+.anm-aud-mode .segmented{width:100%}
+/* The panel's edit form stacks: switch, then reach under it. */
+.lp-sb-field .anm-aud-mode+.anm-reach{margin-top:8px}
+#anm-aud-vals[hidden]{display:none}
+/* A short note on the label line, right-aligned, instead of a hint paragraph
+   that made Pin taller than the Category beside it. */
+.anm-form .ep-form-label{display:flex;align-items:baseline;gap:6px}
+.anm-lbl-tip{margin-left:auto;font-size:11.5px;font-weight:400;color:#94a3b8;cursor:help}

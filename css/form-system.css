@@ -1,0 +1,161 @@
+/* ══ FORM SYSTEM: ONE DESIGN PER FORM FAMILY ════════════════════════════════
+   The product has exactly two kinds of creation form and they must each look
+   like one thing:
+
+     POPUP  .ct-modal            Add Leave, Create Compliance, Create Rule,
+                                 Create Template, Create Payhead, Add Holidays,
+                                 Add Leave Policy, Create Ticket
+     PAGE   .ep-page / .ci-page  EOR/PEO, Immigration, Contractor,
+                                 Add Employee, Add Team, Edit Leave Policy
+
+   They had drifted. Measured across all fourteen, three things disagreed:
+
+     1. CONTROL HEIGHT. Text inputs came out 36px (padding-driven, main.css)
+        while every dropdown component stood 42px - .cs-trigger, .cd-trigger and
+        .custom-select-trigger all default to 42. So in a single modal a text
+        field and the dropdown beside it differed by 6px, which reads as a
+        rendering fault rather than as a design. employee-add.css had already
+        spotted this and fixed it locally by pulling its dropdowns DOWN to 36;
+        the contract intake forms had fixed it by pushing everything UP to 42.
+        Two local fixes, two different answers, and every other form left
+        broken.
+
+     2. BUTTON SHAPE. Form footers offered four radii: 8px (Add Team, Edit
+        Leave Policy, all eight modals), 99px (EOR/PEO, Add Employee) and 999px
+        (Immigration, Contractor).
+
+     3. NATIVE <select>. Edit Leave Policy still drew four, so its lists were
+        painted by the operating system.
+
+   This sheet settles 1 and 2 for every form at once, at the CSS layer, without
+   touching markup. 42px is the number because it is what the three shared
+   dropdown components already are: moving inputs up costs four rules, moving
+   dropdowns down would mean overriding all three components in every context
+   forever. 8px is the radius because --r-control is what the shape system says
+   a button is, and it was already the majority.
+
+   Loaded last, so it wins over the per-screen sheets that disagree. */
+
+/* ── 1. One control height in every form ───────────────────────────────────
+   Scoped to form containers on purpose. A filter bar or a toolbar search is
+   not a form and keeps its own compact sizing. */
+.ep-form-card .ep-form-input,
+.ep-form-grid .ep-form-input,
+.ct-modal .ep-form-input,
+.ea-page .ep-form-input{
+  height:42px;padding:0 12px}
+
+/* A multi-line box is the one control that cannot take a fixed height. It
+   keeps the same horizontal padding so its text still lines up with the single
+   line fields above it. */
+.ep-form-card textarea.ep-form-input,
+.ep-form-grid textarea.ep-form-input,
+.ct-modal textarea.ep-form-input,
+.ea-page textarea.ep-form-input{
+  height:auto;min-height:84px;padding:11px 12px;line-height:1.55}
+
+/* The three shared dropdown/date components already stand 42px; these rules
+   exist to beat the per-screen overrides that had pulled them off it. */
+.ep-form-card .cs-trigger,.ep-form-grid .cs-trigger,.ct-modal .cs-trigger,.ea-page .cs-trigger,
+.ep-form-card .cd-trigger,.ep-form-grid .cd-trigger,.ct-modal .cd-trigger,.ea-page .cd-trigger{
+  height:42px}
+.ep-form-card .custom-select-trigger,
+.ep-form-grid .custom-select-trigger,
+.ct-modal .custom-select-trigger{
+  min-height:42px;height:42px;padding-top:0;padding-bottom:0}
+
+/* Date inputs sit ~2px taller than a text input at identical padding, which
+   shows up as a step in the row they share. main.css pinned them to 36; the
+   number moved, so this moves with it. */
+.ep-form-card input[type="date"].ep-form-input,
+.ep-form-card input[type="time"].ep-form-input,
+.ep-form-card input[type="month"].ep-form-input,
+.ep-form-card input[type="datetime-local"].ep-form-input,
+.ct-modal input[type="date"].ep-form-input,
+.ct-modal input[type="time"].ep-form-input{height:42px}
+
+/* The date trigger is drawn at 1.5px in leaves.css while every field beside it
+   is 1px; that half-pixel reads as a heavier field rather than as nothing. */
+.ep-form-card .cd-trigger,.ep-form-grid .cd-trigger,
+.ct-modal .cd-trigger,.ea-page .cd-trigger{border-width:1px}
+
+/* ── 2. One button shape in every form footer ──────────────────────────────
+   --r-control, because the shape system says a button is something you press
+   and pressable things are square-cornered. The pill variants below were three
+   separate local decisions; they are all the same button. */
+.ep-cancel-btn,.ep-save-btn,
+.ci-btn-back,.ci-btn-draft,.ci-btn-next,
+.ea-btn-ghost,.ea-btn-primary{border-radius:var(--r-control)}
+/* The contract wizard sets its footer radius inline, which no class can beat.
+   The attribute selector can. */
+.ct-form-page [style*="border-radius:99px"]{border-radius:var(--r-control) !important}
+
+/* ── 3. Dropdowns in a form are never native ───────────────────────────────
+   A native <select> hands its list to the operating system, so it ignores the
+   product's type, spacing, radius and colour. Any that remain are at least
+   given the field's shape, so a screen still not converted does not also sit
+   at the wrong height. Converting the control is the real fix - see
+   buildEditLeavePolicyHTML. */
+.ep-form-card select.ep-form-select,
+.ep-form-grid select.ep-form-select,
+.ct-modal select.ep-form-select{
+  height:42px;padding:0 34px 0 12px;box-sizing:border-box;width:100%;
+  border:1px solid var(--border);border-radius:var(--r-control);
+  font-family:inherit;font-size:13px;color:var(--navy);
+  background-color:var(--card);outline:none;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a7282' stroke-width='2.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;background-size:14px}
+
+/* ── 4. The required mark ──────────────────────────────────────────────────
+   main.css colours .req inside .ep-form-label but not on its own, and several
+   modals put the asterisk outside a label. One colour for all of them. */
+.ct-modal .req,.ep-form-card .req,.ci-label .req,.lp-sb-field .req{color:#b83a3a}
+
+/* ── 5. Compound controls ──────────────────────────────────────────────────
+   A few fields are a wrapper with the border and bare children inside it: the
+   employee search (icon + input), the value-with-suffix (input + "%"), and the
+   currency-and-amount pair. They looked off because the SHAPE lives on the
+   wrapper, so the rules above - which target the input - never reached them.
+   .ep-emp-search stood at a 999px pill, .pay-group at 10px and 1.5px, and
+   .input-suffix at a pill and 1.5px, all inside form cards full of 8px/1px
+   fields. Same height, same border, same radius as every other field. */
+.ep-form-card .ep-emp-search,.ep-form-grid .ep-emp-search,.ct-modal .ep-emp-search,.ea-page .ep-emp-search,
+.ep-form-card .input-suffix,.ep-form-grid .input-suffix,.ct-modal .input-suffix,
+.ep-form-card .pay-group,.ep-form-grid .pay-group,.ct-modal .pay-group{
+  height:42px;box-sizing:border-box;border-width:1px;border-radius:var(--r-control)}
+/* The children stretch to the wrapper instead of setting their own height. */
+.ep-form-card .ep-emp-search input,.ep-form-grid .ep-emp-search input,
+.ct-modal .ep-emp-search input,.ea-page .ep-emp-search input,
+.ep-form-card .input-suffix input,.ct-modal .input-suffix input,
+.ep-form-card .pay-group input,.ct-modal .pay-group input{
+  height:100%;padding-top:0;padding-bottom:0;border:0;outline:0;background:none;
+  font-family:inherit;font-size:13px;color:var(--navy);min-width:0}
+.ep-form-card .ep-emp-search,.ep-form-grid .ep-emp-search,
+.ct-modal .ep-emp-search,.ea-page .ep-emp-search{padding:0 12px}
+/* The currency picker welded into .pay-group keeps its seam but takes the
+   wrapper's height rather than its own. */
+.ct-modal .pay-group .custom-select-trigger,
+.ep-form-card .pay-group .custom-select-trigger{
+  height:100%;min-height:0;padding-top:0;padding-bottom:0;border-radius:var(--r-control) 0 0 var(--r-control)}
+
+/* ── 6. Standalone radio questions in a form card ──────────────────────────
+   A question that is not a labelled field in the grid - the EOR/PEO wizard's
+   work-authorisation and visa-assistance answers, its employment term and
+   type - still has to sit on the same rhythm as the fields above it: one
+   label, one optional hint, one row of answers, then the same 20px gap the
+   grid rows use. The answers themselves are a .segmented strip; only the block
+   around them is new. */
+.peo-elig-q{margin-bottom:20px}
+.peo-elig-q:last-child{margin-bottom:0}
+.peo-elig-lbl{display:block;margin-bottom:9px}
+.peo-elig-hint{display:block;margin:-3px 0 10px}
+/* An answer strip is a control on the same row rhythm as the fields above it,
+   so it stands the same 42px they do rather than its own 40. */
+.ep-form-card .segmented .seg-btn{min-height:36px}
+/* A Conditional question whose trigger has not fired. Dimmed and sealed
+   rather than hidden: the reader can still see what they would be asked if
+   they answered the question above differently, and the card does not resize
+   under the cursor on every click. */
+.peo-gated{opacity:.45;pointer-events:none;transition:opacity .18s ease}
+.peo-gated .segmented{background:#eceef1}

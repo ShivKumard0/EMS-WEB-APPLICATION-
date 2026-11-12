@@ -1,0 +1,62 @@
+/* ══ WALLET & BENEFITS (js/wallet-benefits.js) ═══════════════════════════════
+   The page is the standard listing kit; this sheet only adds what the kit
+   does not have: the entity/role context line, the period picker, the cost
+   projection cards and the notes. Colours are the theme tokens and the five
+   status tones - nothing new. */
+
+/* Context: entity, scope of Phase 1, and who you are acting as. */
+.wb-context{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--gray)}
+.wb-context svg{width:14px;height:14px;flex-shrink:0}
+.wb-context b{color:var(--navy);font-weight:600}
+.wb-context-who{margin-left:auto;font-size:11.5px}
+
+.wb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.wb-period{display:inline-flex;align-items:center;gap:10px;margin:0 0 12px;font-size:12px;color:var(--gray)}
+.wb-period .cs-wrap{width:200px}
+
+/* Cost projection: what a period and its year come to. Planned, never a balance. */
+.wb-proj{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:12px}
+.wb-proj-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px;align-items:start}
+.wb-proj>.wb-proj-cards{flex:1 1 420px}
+.wb-proj-card{border:1px solid var(--border);border-radius:var(--r-card);background:var(--card);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.wb-proj-card span{font-size:11.5px;color:var(--gray)}
+.wb-proj-card b{font-size:18px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+.wb-proj-card em{font-style:normal;font-size:11px;color:var(--gray)}
+.wb-proj-tbl{flex:1 1 220px;min-width:200px}
+.wb-proj-tbl .att-table{min-width:0}
+.wb-proj-tbl .csag-td:first-child{white-space:normal}
+.wb-proj-h{font-size:12px;font-weight:600;color:var(--navy);margin:10px 0 6px}
+.wb-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.wb-muted{font-size:11px;color:var(--gray)}
+.wb-warn{font-size:11px;color:var(--st-wait-fg)}
+
+/* Notes: info by default, amber for advisories, red for conflicts and flags. */
+.wb-note{margin:10px 0;padding:10px 12px;border:1px solid var(--st-info-bd);background:var(--st-info-bg);border-radius:var(--r-control);font-size:12px;line-height:1.5;color:var(--navy)}
+.wb-note b{font-weight:600}
+.wb-note.is-wait{border-color:var(--st-wait-bd);background:var(--st-wait-bg)}
+.wb-note.is-wait b{color:var(--st-wait-fg)}
+.wb-note.is-bad{border-color:var(--st-bad-bd);background:var(--st-bad-bg)}
+.wb-note.is-bad b{color:var(--st-bad-fg)}
+.wb-note-sub{margin-top:4px;font-size:11px;color:var(--gray)}
+
+.wb-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:56px 20px;text-align:center;font-size:13px;color:var(--gray)}
+.wb-empty b{color:var(--navy);font-weight:600}
+.wb-empty-sm{padding:16px;text-align:center;font-size:12px;color:var(--gray)}
+
+/* The generate preview carries a table; it gets more room than a form. */
+.ct-modal.wb-modal-wide{max-width:880px;width:min(880px,94vw)}
+
+/* Horizontal scroll on the Wallet & Benefits listings. Their pinned Action column carries the status menu, so
+   these tables need more width than most: on a laptop-width window (with the menu open) they were wider than
+   their card, and the shared listing card (overflow:clip, main.css) cut the Status column off under the pinned
+   Action column instead of scrolling. Here, and only here, the card scrolls sideways: Action stays pinned at the
+   right and sticky-actions.js draws its edge shadow while columns remain behind it. The cost, accepted for these
+   short lists: the column heads scroll with the table rather than pinning to the page. Row menus are
+   position:fixed, so the scrolling card does not clip them. */
+.mod-page [id^="wb"][id$="-split-wrap"] .lp-table-card{overflow-x:auto;overscroll-behavior-x:contain}
+/* ...and first, fit the card: text cells wrap to at most two lines (then "…") only when the one-line table does not
+   fit its card (.is-tight, js/listing-fit.js), as on the Expense Management listings (css/expenses.css). */
+.lp-table.is-tight.wb-table td:not(:first-child):not(:last-child) :is(.lp-c-main,.lp-c-plain,.lp-c-sub):not(:has(button,a,input,select,.lp-status-badge)){
+  white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+.lp-table.is-tight.wb-table td[colspan]{white-space:normal}

@@ -1,0 +1,46 @@
+/* ══ THE CARDHOLDER'S CARD (product owner, 10 Nov 2026) ═══════════════════
+   My Cards shows each card as a card. The number and the expiry are blurred;
+   they show while the card is hovered, focused or tapped. */
+.emsvc-list{display:flex;flex-wrap:wrap;gap:24px;margin:4px 0 16px}
+.emsvc-item{width:340px}
+.emsvc-card{position:relative;width:340px;height:214px;box-sizing:border-box;padding:18px 20px;border-radius:16px;overflow:hidden;
+  color:#fff;cursor:pointer;outline:none;isolation:isolate;
+  background:
+    radial-gradient(120% 95% at 100% 0%,rgba(255,70,110,.55) 0%,rgba(255,70,110,0) 55%),
+    radial-gradient(95% 85% at 0% 100%,rgba(122,52,214,.55) 0%,rgba(122,52,214,0) 62%),
+    linear-gradient(135deg,#25093f 0%,#4f0f5c 48%,#930f43 100%);
+  box-shadow:0 10px 24px rgba(37,9,63,.26),inset 0 0 0 1px rgba(255,255,255,.06);
+  transition:transform .2s ease,box-shadow .2s ease}
+.emsvc-card:hover,.emsvc-card:focus-visible{transform:translateY(-2px);box-shadow:0 16px 32px rgba(37,9,63,.34),inset 0 0 0 1px rgba(255,255,255,.08)}
+.emsvc-waves{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.emsvc-top{display:flex;justify-content:space-between;align-items:center}
+.emsvc-brand{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;letter-spacing:.2px}
+.emsvc-mark{width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.emsvc-bank{font-size:12px;font-weight:800;letter-spacing:1.6px}
+.emsvc-prog{margin-top:5px;font-size:11px;letter-spacing:.3px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emsvc-mid{display:flex;align-items:center;gap:10px;margin-top:13px}
+.emsvc-chip{position:relative;width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f6e3a1 0%,#d9b456 55%,#b98f2e 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.emsvc-chip::before{content:'';position:absolute;inset:6px 9px;border:1px solid rgba(90,60,10,.35);border-radius:3px}
+.emsvc-chip::after{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px solid rgba(90,60,10,.35)}
+.emsvc-flag{margin-left:auto;background:rgba(255,255,255,.92);color:#1f1530;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
+.emsvc-num{margin-top:13px;font-size:19px;font-weight:600;letter-spacing:2.4px;font-variant-numeric:tabular-nums;text-shadow:0 1px 1px rgba(0,0,0,.25);white-space:nowrap}
+.emsvc-secret{filter:blur(6px);transition:filter .25s ease;user-select:none}
+.emsvc-card:hover .emsvc-secret,.emsvc-card:focus-visible .emsvc-secret,.emsvc-card.is-shown .emsvc-secret{filter:none;user-select:text}
+.emsvc-row{position:absolute;left:20px;right:20px;bottom:16px;display:flex;align-items:flex-end;gap:22px}
+.emsvc-lbl{font-size:8px;letter-spacing:1px;opacity:.7;margin-bottom:2px}
+.emsvc-name{max-width:150px;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emsvc-exp{font-size:12px;font-weight:600;letter-spacing:1px}
+.emsvc-net{margin-left:auto;text-align:right;line-height:1}
+.emsvc-rupay{font-size:18px;font-weight:900;font-style:italic;letter-spacing:-.3px}
+.emsvc-rupay i{display:inline-block;width:0;height:0;margin-left:2px;border-left:7px solid #f58220;border-top:5px solid transparent;border-bottom:5px solid transparent;vertical-align:1px}
+.emsvc-prepaid{display:block;margin-top:3px;font-size:8px;letter-spacing:1.6px;opacity:.85}
+.emsvc-card.is-dim{filter:grayscale(.55) brightness(.92)}
+.emsvc-card.is-ended{filter:grayscale(1) brightness(.85)}
+.emsvc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.emsvc-foot-l{min-width:0}
+.emsvc-foot-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.emsvc-modal{display:flex;justify-content:center;margin:2px 0 14px}
+/* Wallets Requested: a wallet already on the card is shown, greyed out, and cannot be picked. */
+.cs-option.ems-ms-off{opacity:.45;cursor:not-allowed;pointer-events:none}
+.ems-ms-tag{margin-left:auto;padding-left:10px;font-size:11px;color:var(--gray)}

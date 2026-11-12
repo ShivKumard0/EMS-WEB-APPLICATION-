@@ -1,0 +1,232 @@
+/* ══ TIMESHEET EXPORT DRAWER ═══════════════════════════════════════════════
+   The same right-hand drawer the timesheet's day panel already uses — same
+   backdrop, same slide, same shadow — only wider, because this one is a form
+   rather than a read-out. Everything below is drawn from the app's own tokens:
+   --navy for committed state, --border for structure, --r-control on anything
+   you press and --r-status on anything you only read.
+
+   NO ACCENT COLOUR. Selected radios and ticked boxes are --navy, not a hue of
+   their own: the button system in buttons.css bans semantic colour on
+   controls, and a green tick here would be the only one in the product. What
+   marks a chosen thing is weight and fill, which is what marks a chosen thing
+   everywhere else in the app.
+   ========================================================================== */
+
+/* The toolbar button. Outline, because Search next to it is the affirmative
+   action on that bar and two filled buttons side by side is two primaries. */
+.tsx-open-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:34px;padding:0 16px;
+  font-family:inherit;font-size:12px;font-weight:600;line-height:1;
+  background:var(--card);color:var(--btn-ink);
+  border:1px solid var(--btn-stroke);border-radius:var(--r-control);
+  cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
+.tsx-open-btn:hover{color:var(--btn-accent);border-color:var(--btn-accent)}
+.tsx-open-btn:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+.tsx-open-btn svg{width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor}
+
+/* ── The drawer ── */
+.tsx-overlay{position:fixed;inset:0;z-index:500;display:flex;justify-content:flex-end}
+.tsx-bg{position:absolute;inset:0;background:rgba(10,18,30,.45);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:fadeIn .18s ease}
+.tsx-panel{
+  position:relative;z-index:1;width:480px;max-width:100vw;height:100vh;
+  background:var(--card);display:flex;flex-direction:column;
+  box-shadow:-12px 0 48px rgba(0,0,0,.18);overflow:hidden;
+  animation:tsx-slide .22s ease}
+@keyframes tsx-slide{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .tsx-panel,.tsx-bg{animation:none}
+}
+
+.tsx-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:18px 22px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.tsx-title{font-size:15px;font-weight:700;color:var(--navy);line-height:1.2}
+.tsx-sub{font-size:11.5px;color:var(--gray);margin-top:5px;line-height:1.45;max-width:38ch}
+.tsx-close{width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);
+  border-radius:var(--r-control);background:var(--card);color:var(--gray);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.14s}
+.tsx-close:hover{background:var(--btn-ghost-bg);color:var(--btn-accent);border-color:var(--btn-accent)}
+.tsx-close svg{width:12px;height:12px;fill:none;stroke:currentColor}
+
+.tsx-body{flex:1;overflow-y:auto;padding:6px 22px 20px;scrollbar-width:thin}
+
+/* ── A numbered section ──
+   The step number is the only ornament in here, and it earns its place: four
+   questions asked in a fixed order need to look ordered. */
+.tsx-sec{padding:18px 0;border-bottom:1px solid var(--border)}
+.tsx-sec:last-of-type{border-bottom:none}
+.tsx-sec-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.tsx-step{width:20px;height:20px;flex-shrink:0;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:10.5px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.tsx-sec-label{font-size:12.5px;font-weight:700;color:var(--navy)}
+.tsx-hint{font-size:11px;color:var(--gray);line-height:1.5;margin-top:8px}
+
+/* ── 1 · Employee selection ── */
+.tsx-field{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  height:38px;padding:0 12px;font-family:inherit;font-size:12.5px;font-weight:500;
+  color:var(--navy);background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-control);cursor:pointer;text-align:left;transition:.14s}
+.tsx-field:hover{border-color:var(--btn-accent)}
+.tsx-field.is-empty{color:#9ca3af}
+.tsx-field.is-open{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.tsx-field-chev{display:inline-flex;color:var(--gray);transition:transform .16s ease}
+.tsx-field-chev svg{width:12px;height:12px;fill:none;stroke:currentColor}
+.tsx-field.is-open .tsx-field-chev{transform:rotate(180deg)}
+
+/* Expands in place rather than floating: a popover inside a scrolling drawer
+   detaches from the field the moment anything moves. */
+.tsx-emp-list{margin-top:8px;border:1px solid var(--border);border-radius:var(--r-card);
+  overflow:hidden;background:var(--card);animation:fadeUp .16s ease}
+.tsx-emp-search{margin:8px 10px 0}
+.tsx-emp-search svg{width:13px;height:13px;flex-shrink:0;stroke:#9ca3af;fill:none}
+.tsx-emp-bulk{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-bottom:1px solid var(--border)}
+.tsx-emp-bulk button{border:none;background:none;padding:2px 6px;border-radius:5px;
+  font-family:inherit;font-size:11.5px;font-weight:600;color:var(--navy);cursor:pointer;transition:.12s}
+.tsx-emp-bulk button:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.tsx-emp-bulk span{font-size:11px;color:var(--gray);font-weight:500}
+.tsx-emp-options{max-height:230px;overflow-y:auto;scrollbar-width:thin}
+.tsx-emp-opt{width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border:none;border-bottom:1px solid #f1f3f5;background:none;
+  font-family:inherit;text-align:left;cursor:pointer;transition:var(--row-fade)}
+.tsx-emp-opt:last-child{border-bottom:none}
+.tsx-emp-opt:hover{background:var(--row-hover)}
+.tsx-emp-opt.is-on{background:var(--row-sel)}
+.tsx-emp-opt.is-on:hover{background:var(--row-sel-hover)}
+.tsx-emp-opt-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.tsx-emp-name{font-size:12.5px;font-weight:600;color:var(--navy);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsx-emp-meta{font-size:10.5px;color:var(--gray);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsx-emp-state{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:var(--r-status);
+  flex-shrink:0;letter-spacing:.2px}
+.tsx-emp-state.ok{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.tsx-emp-state.bad{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+.tsx-empty{padding:22px 12px;text-align:center;font-size:12px;color:#9ca3af}
+
+.tsx-emp-av{width:28px;height:28px;flex-shrink:0;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:10.5px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center}
+.tsx-emp-av.sm{width:24px;height:24px;font-size:9.5px}
+.tsx-emp-fixed{display:flex;align-items:center;gap:11px;padding:11px 13px;
+  background:var(--light);border:1px solid var(--border);border-radius:var(--r-control)}
+.tsx-emp-fixed-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+
+.tsx-chips{margin-top:10px}
+.tsx-chip-more{display:inline-flex;align-items:center;padding:4px 11px;
+  border-radius:var(--r-status);font-size:12px;font-weight:600;
+  background:var(--st-idle-bg);color:var(--st-idle-fg)}
+
+/* ── 2 · Report view ── */
+.tsx-choices{display:flex;flex-direction:column;gap:8px}
+.tsx-choice{display:flex;align-items:center;gap:11px;width:100%;padding:11px 13px;
+  border:1px solid var(--border);border-radius:var(--r-control);background:var(--card);
+  font-family:inherit;text-align:left;cursor:pointer;transition:border-color .14s,background .14s}
+.tsx-choice:hover{border-color:var(--btn-accent)}
+.tsx-choice.is-on{border-color:var(--navy);background:var(--row-sel)}
+.tsx-radio{width:16px;height:16px;flex-shrink:0;border-radius:50%;
+  border:1.5px solid #cbd5e1;background:#fff;position:relative;transition:.14s}
+.tsx-choice.is-on .tsx-radio{border-color:var(--navy);border-width:5px}
+.tsx-choice-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tsx-choice-label{font-size:12.5px;font-weight:600;color:var(--navy)}
+.tsx-choice-sub{font-size:10.5px;color:var(--gray)}
+
+/* ── 3 · Period ── */
+.tsx-segs{display:inline-flex;padding:3px;gap:3px;margin-bottom:12px;
+  background:var(--ol);border-radius:var(--r-control)}
+.tsx-seg{padding:6px 13px;border:none;border-radius:6px;background:none;
+  font-family:inherit;font-size:11.5px;font-weight:600;color:var(--gray);
+  cursor:pointer;transition:.14s;white-space:nowrap}
+.tsx-seg:hover:not(.is-on){background:var(--btn-tint-bg);color:var(--btn-accent)}
+.tsx-seg.is-on{background:var(--card);color:var(--navy);box-shadow:0 1px 2px rgba(15,23,42,.08)}
+.tsx-flds{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tsx-flds.one{grid-template-columns:1fr}
+.tsx-fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tsx-fld-lbl{font-size:10px;font-weight:700;color:var(--gray);
+  text-transform:uppercase;letter-spacing:.5px}
+/* The shared date control sizes itself to its container everywhere else; in a
+   two-up grid it needs to be told it may shrink. */
+.tsx-fld .cd-wrap,.tsx-fld .cd-trigger{width:100%;min-width:0}
+
+/* ── 4 · Columns ── */
+.tsx-grp{border:1px solid var(--border);border-radius:var(--r-card);
+  padding:12px 13px;margin-bottom:10px;background:var(--card)}
+.tsx-grp:last-child{margin-bottom:0}
+.tsx-grp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.tsx-grp-label{font-size:11px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.5px}
+.tsx-grp-count{font-size:10px;font-weight:700;color:var(--st-idle-fg);
+  background:var(--st-idle-bg);padding:2px 8px;border-radius:var(--r-status);
+  font-variant-numeric:tabular-nums}
+.tsx-grp-all{margin-left:auto;border:none;background:none;padding:2px 7px;border-radius:5px;
+  font-family:inherit;font-size:11px;font-weight:600;color:var(--navy);cursor:pointer;transition:.12s}
+.tsx-grp-all:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.tsx-grp-note{font-size:10.5px;color:var(--gray);margin:-4px 0 10px;line-height:1.45}
+/* A group the report shape has no use for is greyed and inert — never hidden.
+   Hiding it would make the tick you set a minute ago look as though it had
+   been thrown away. */
+.tsx-grp.is-off{background:var(--light);border-style:dashed}
+.tsx-grp.is-off .tsx-grp-label,.tsx-grp.is-off .tsx-check{color:#9ca3af}
+.tsx-grp.is-off .tsx-check{cursor:not-allowed}
+.tsx-grp.is-off .tsx-box{border-color:#e2e8f0;background:#f8fafc}
+.tsx-grp.is-off .tsx-check.is-on .tsx-box{background:#cbd5e1;border-color:#cbd5e1}
+
+.tsx-checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.tsx-check{display:flex;align-items:center;gap:8px;padding:4px 2px;
+  border:none;background:none;font-family:inherit;font-size:11.5px;font-weight:500;
+  color:var(--navy);text-align:left;cursor:pointer;line-height:1.3}
+.tsx-check:hover:not(:disabled) span:last-child{color:var(--btn-accent)}
+.tsx-box{width:16px;height:16px;flex-shrink:0;border-radius:4px;
+  border:1.5px solid #cbd5e1;background:#fff;color:transparent;
+  display:inline-flex;align-items:center;justify-content:center;transition:.14s}
+.tsx-box svg{width:10px;height:10px;fill:none;stroke:currentColor}
+.tsx-check.is-on .tsx-box,.tsx-emp-opt.is-on .tsx-box{
+  background:var(--navy);border-color:var(--navy);color:#fff}
+.tsx-check:focus-visible,.tsx-emp-opt:focus-visible,.tsx-choice:focus-visible,
+.tsx-seg:focus-visible,.tsx-field:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+
+/* ── The standing note and the footer ── */
+.tsx-note{display:flex;align-items:flex-start;gap:9px;margin-top:16px;padding:11px 13px;
+  background:var(--st-info-bg);border:1px solid var(--st-info-bd);border-radius:var(--r-control);
+  font-size:11px;line-height:1.5;color:#1e40af}
+.tsx-note svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;fill:none;stroke:currentColor}
+
+/* The read-out sits ON TOP OF the buttons rather than beside them: it is a
+   sentence that grows as the form is filled in, and squeezed into a column
+   next to two buttons it wrapped to two lines and pushed them out of line. */
+.tsx-foot{display:flex;flex-direction:column;gap:10px;padding:14px 22px;flex-shrink:0;
+  border-top:1px solid var(--border);background:var(--card)}
+.tsx-foot-note{font-size:10.5px;color:var(--gray);line-height:1.4}
+.tsx-foot-btns{display:flex;gap:10px}
+.tsx-cancel{flex:1}
+.tsx-export{flex:1.6}
+/* 40px — the .btn-lg step in buttons.css, which the button system reserves
+   for "full-width and modal-footer commitments". These were an invented 38. */
+.tsx-cancel,.tsx-export{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:40px;padding:0 24px;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;
+  border:1px solid transparent;border-radius:var(--r-control);cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
+.tsx-cancel{background:var(--card);color:var(--btn-ink);border-color:var(--btn-stroke)}
+.tsx-cancel:hover{color:var(--btn-accent);border-color:var(--btn-accent)}
+.tsx-export{background:var(--btn-ink);color:#fff;border-color:var(--btn-ink)}
+.tsx-export:hover{background:var(--btn-accent);border-color:var(--btn-accent)}
+.tsx-cancel:focus-visible,.tsx-export:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+.tsx-export svg{width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor}
+
+/* Narrow screens: the drawer becomes the screen, and the two-up grids stack
+   rather than squeezing a date field down to nothing. */
+@media (max-width:560px){
+  .tsx-panel{width:100vw}
+  .tsx-flds,.tsx-checks{grid-template-columns:1fr}
+}
+
+/* .cd-trigger stands 42px by default and is only brought down inside
+   .ep-form-group and .policy-form-grid. In this drawer it sat four pixels
+   taller than .tsx-field beside it, so the From/To row did not line up with
+   the controls above it. Scoped here — the picker's default is right where it
+   is used at full size. */
+.tsx-panel .cd-trigger{height:38px;border-width:1px;border-radius:var(--r-control);padding:0 12px}

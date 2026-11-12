@@ -1,0 +1,225 @@
+/* ══ IMMIGRATION & CONTRACTOR INTAKE ════════════════════════════════════════
+   The chrome for the two type-specific intake forms in js/contract-intake.js.
+
+   It is a separate sheet from main.css's .ep-form-* system on purpose. The
+   employee form system is a two-column grid of short fields; these two forms
+   are mostly long questions with radio answers, a document checklist and a
+   live risk read-out, and shoehorning those into .ep-form-grid meant a
+   question and its answer landed in different columns. What IS shared is the
+   shape language from main.css - --r-input for things you type into,
+   --r-control for things you press, --r-card for panels - so the two forms sit
+   inside the same product rather than next to it.
+
+   Scoped under .ci-page throughout, so nothing here can reach the EOR/PEO
+   wizard, which still runs on the .ep-form-* system. */
+
+.ci-page{max-width:880px;margin:0 auto;padding:4px 0 40px}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.ci-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+/* The type is stated once, up here, and never repeated on a card. A form that
+   says "Immigration" on every panel is a form that does not trust its own
+   header. */
+.ci-type-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+  color:var(--navy);background:var(--ol);border:1px solid var(--border);
+  padding:5px 13px;border-radius:var(--r-status);letter-spacing:.2px}
+.ci-type-pill svg{width:14px;height:14px;flex-shrink:0}
+.ci-head{margin-bottom:22px}
+.ci-title{font-size:20px;font-weight:700;color:var(--navy);margin:0 0 5px;letter-spacing:-.2px}
+.ci-sub{font-size:13px;color:var(--gray);margin:0;line-height:1.5;max-width:60ch}
+
+/* ── Stepper ────────────────────────────────────────────────────────────────
+   Steps are buttons because they ARE navigation - you can go back to one. The
+   connector is a child of the step rather than a sibling so a three-step and a
+   five-step bar need no markup change between them.
+
+   Labels are the PRD's own step names, and one of them is "Scope,
+   Classification & Commercial Details" - so they wrap to two lines rather than
+   being truncated into something that is no longer the spec's word. */
+.ci-stepper{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-card);padding:16px 22px;margin-bottom:22px}
+.ci-step{flex:1;display:flex;align-items:center;gap:10px;background:none;border:none;padding:0;
+  font-family:inherit;cursor:pointer;text-align:left;min-width:0}
+.ci-step:last-child{flex:0 0 auto}
+.ci-step-no{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;border:2px solid #d1d5db;color:#9ca3af;
+  background:transparent;transition:.18s}
+.ci-step-lbl{font-size:12.5px;font-weight:600;color:#9ca3af;line-height:1.3;transition:.18s;
+  text-align:left;max-width:20ch}
+.ci-step-bar{flex:1;height:1px;background:var(--border);margin:0 16px;min-width:24px}
+.ci-step.is-on .ci-step-no{border-color:var(--orange);color:var(--orange)}
+.ci-step.is-on .ci-step-lbl{color:var(--orange)}
+.ci-step.is-done .ci-step-no{background:var(--orange);border-color:var(--orange);color:#fff}
+.ci-step.is-done .ci-step-lbl{color:var(--navy)}
+.ci-step.is-done .ci-step-bar{background:var(--orange)}
+.ci-step:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:var(--r-control)}
+
+/* ── Cards ──────────────────────────────────────────────────────────────────
+   The sub-line under a card title carries the WHY - which authority sees this,
+   what the text is used for, what a wrong answer costs. It is the cheapest
+   place in the product to prevent a bad submission, so it is styled to be
+   read, not to be skipped. */
+.ci-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);
+  margin-bottom:16px;overflow:hidden}
+.ci-card-hd{padding:16px 22px;background:#fafbfc;border-bottom:1px solid var(--border)}
+.ci-card-title{font-size:14px;font-weight:700;color:var(--navy);margin:0}
+.ci-card-sub{font-size:12px;color:var(--gray);margin:4px 0 0;line-height:1.55;max-width:72ch}
+.ci-card-body{padding:22px}
+.ci-card-body>*+*{margin-top:18px}
+
+/* ── Fields ─────────────────────────────────────────────────────────────── */
+.ci-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.ci-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ci-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ci-full{grid-column:1/-1}
+.ci-label{font-size:12px;font-weight:600;color:var(--navy);line-height:1.45}
+.ci-label .req{color:#b83a3a}
+/* The PRD's third mandatory flag. It is not an asterisk, because the field is
+   not always required, and it is not silence, because sometimes it is. The
+   field's own hint says which condition turns it on. */
+.ci-cond{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.35px;
+  text-transform:uppercase;vertical-align:1px;margin-left:4px;padding:2px 7px;
+  border-radius:var(--r-status);color:#92400e;background:#fef3c7;border:1px solid #fde68a}
+/* The hint sits UNDER the control, not under the label: it explains what to do
+   with the answer, which is a thing you want after you have seen the box. */
+.ci-hint{font-size:11.5px;color:var(--gray);line-height:1.5}
+
+/* ONE field shape, everywhere in this form: --r-control.
+
+   main.css settles this argument for the whole product and this sheet follows
+   it: the type-vs-pick shape signal (pill for things you type into, square for
+   things you pick from) earns its keep on a STANDALONE control - a toolbar
+   search, a filter pill - where there is nothing to be out of step with. In a
+   form the two shapes land side by side in one grid, and a pill text field next
+   to a square dropdown reads as a mistake rather than as a signal.
+
+   So text, number, tel, email, textarea, select, the date trigger and the radio
+   tiles all take --r-control here. If you are tempted to give one of them a
+   pill back, give it to all of them or to none. */
+.ci-input{width:100%;box-sizing:border-box;height:42px;padding:0 13px;
+  border:1px solid var(--border);border-radius:var(--r-control);
+  font-family:inherit;font-size:13px;color:var(--navy);background:var(--card);
+  outline:none;transition:border-color .15s,box-shadow .15s}
+.ci-input::placeholder{color:#9ca3af}
+.ci-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(26,26,26,.07)}
+.ci-area{height:auto;min-height:92px;padding:11px 13px;line-height:1.55;resize:vertical}
+/* ── Dropdown ───────────────────────────────────────────────────────────────
+   The trigger is measured against .ci-input on purpose - same 42px height, 1px
+   border, --r-control radius, 13px type - because the two sit side by side in
+   the same grid and any difference between them reads as a rendering bug.
+
+   The menu is position:fixed because these forms scroll inside a container that
+   would clip an absolutely-positioned one; core.js's placeAnchoredMenu owns
+   where it lands, including the max-height it caps to, so nothing here sets a
+   height. The flex column is what lets that cap fall on the LIST while the
+   search box stays pinned at the top. */
+.ci-dd{position:relative;width:100%;min-width:0}
+.ci-dd-trigger{width:100%;box-sizing:border-box;height:42px;padding:0 11px 0 13px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--border);border-radius:var(--r-control);background:var(--card);
+  font-family:inherit;font-size:13px;color:var(--navy);text-align:left;cursor:pointer;
+  transition:border-color .15s,box-shadow .15s}
+.ci-dd-trigger:hover{border-color:#c9ced6}
+.ci-dd.is-open .ci-dd-trigger,.ci-dd-trigger:focus-visible{
+  border-color:var(--orange);box-shadow:0 0 0 3px rgba(26,26,26,.07);outline:none}
+.ci-dd-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ci-dd-trigger.is-placeholder .ci-dd-value{color:#9ca3af}
+.ci-dd-chev{width:14px;height:14px;flex-shrink:0;color:var(--gray);transition:transform .18s}
+.ci-dd.is-open .ci-dd-chev{transform:rotate(180deg)}
+
+.ci-dd-menu{position:fixed;display:none;z-index:900;
+  /* A dial-code trigger is 100px wide and its menu inherits that width from the
+     placement helper. min-width wins over the inline width, so a short trigger
+     still gets a readable list. */
+  min-width:180px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-control);
+  box-shadow:0 10px 28px rgba(15,23,42,.10);overflow:hidden}
+.ci-dd.is-open .ci-dd-menu{display:flex;flex-direction:column;animation:fadeUp .16s ease}
+.ci-dd-search{display:flex;align-items:center;gap:8px;flex-shrink:0;
+  padding:9px 12px;border-bottom:1px solid var(--border);background:var(--light)}
+.ci-dd-search svg{width:13px;height:13px;flex-shrink:0;color:var(--gray)}
+.ci-dd-search-input{flex:1;min-width:0;border:none;background:none;outline:none;
+  font-family:inherit;font-size:12.5px;color:var(--navy)}
+.ci-dd-search-input::placeholder{color:#9ca3af}
+.ci-dd-list{flex:1;min-height:0;overflow-y:auto;padding:5px}
+.ci-dd-opt{width:100%;box-sizing:border-box;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;height:34px;padding:0 10px;
+  border:none;background:none;border-radius:6px;cursor:pointer;
+  font-family:inherit;font-size:13px;color:var(--navy);text-align:left}
+/* .ci-dd-opt is display:flex, which would beat the hidden attribute on its own.
+   Filtering sets [hidden], so it has to be spelled out or search does nothing. */
+.ci-dd-opt[hidden]{display:none}
+.ci-dd-opt:hover,.ci-dd-opt.is-active{background:var(--ol)}
+.ci-dd-opt.is-on{font-weight:600}
+.ci-dd-opt-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ci-dd-check{width:14px;height:14px;flex-shrink:0;color:var(--orange);opacity:0}
+.ci-dd-opt.is-on .ci-dd-check{opacity:1}
+.ci-dd-empty{padding:16px 12px;text-align:center;font-size:12.5px;color:var(--gray)}
+.ci-dd-empty[hidden]{display:none}
+.ci-dd.ci-bad .ci-dd-trigger{border-color:#b83a3a;box-shadow:0 0 0 3px rgba(184,58,58,.09)}
+
+/* Two compound controls, both the same idea: a narrow picker welded to a wide
+   value, so the pair reads as one field instead of two that happen to be
+   adjacent. */
+.ci-phone,.ci-money{display:flex;gap:8px;min-width:0}
+.ci-phone .ci-dd{flex:0 0 104px}
+.ci-money .ci-dd{flex:0 0 96px}
+.ci-phone .ci-dd-trigger,.ci-money .ci-dd-trigger{padding:0 8px 0 11px;gap:4px}
+.ci-phone .ci-input,.ci-money .ci-input{flex:1;min-width:0}
+
+/* The date trigger is core.js's control, drawn in leaves.css at a 1.5px border.
+   Next to a 1px input in the same row that extra half-pixel reads as a heavier
+   field rather than as nothing, so it is brought into line here. Its radius is
+   already --r-control. */
+.ci-page .cd-trigger{border-width:1px}
+.ci-page .cd-trigger.cd-open{border-color:var(--orange)}
+
+/* A field that failed validation. The class goes on the control itself, so a
+   radio SET and an input can both wear it. */
+.ci-bad.ci-input{border-color:#b83a3a;box-shadow:0 0 0 3px rgba(184,58,58,.09)}
+.segmented.ci-bad{outline:1px solid #b83a3a;outline-offset:4px;border-radius:var(--r-control)}
+/* The date picker is core.js's, so the mark lands on its wrapper - the id
+   ciRequire is given belongs to a hidden input that can show nothing. */
+.cd-wrap.ci-bad .cd-trigger{border-color:#b83a3a;box-shadow:0 0 0 3px rgba(184,58,58,.09)}
+
+/* ── Radio sets ─────────────────────────────────────────────────────────────
+   THE SET IS .segmented NOW, from css/main.css — the strip this app's forms
+   have always used. What stood here was a .ci-radio tile: a bordered box with
+   a dot in it, one per option. It looked like a different product beside the
+   strips in the same modal, so it was withdrawn rather than left in the
+   stylesheet to be picked up again by mistake. ciRadio() in
+   js/contract-intake.js builds the strip; .ci-bad above still marks it. */
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.ci-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
+.ci-foot-right{display:flex;align-items:center;gap:10px}
+.ci-btn-back{border-radius:var(--r-status);display:inline-flex;align-items:center;gap:6px}
+/* Save Draft is a secondary action next to Submit, not a peer of it: PRD 3.1
+   makes Draft a real state, but Submit is what the user came to do. */
+.ci-btn-draft{border-radius:var(--r-status)}
+.ci-btn-next{padding:9px 30px;border-radius:var(--r-status)}
+
+/* ── Narrow ─────────────────────────────────────────────────────────────── */
+@media (max-width:880px){
+  .ci-grid,.ci-grid-3{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .ci-card-body{padding:18px 16px}
+  .ci-stepper{padding:14px 16px}
+  /* The step labels go, not the steps: three numbered circles still say where
+     you are, where three truncated words would not. */
+  .ci-step-lbl{display:none}
+  .ci-step-bar{margin:0 10px}
+  .ci-foot{flex-wrap:wrap;gap:10px}
+  .ci-foot-right{width:100%;justify-content:flex-end}
+}
+
+
+/* ── One field shape in the EOR/PEO wizard too ──────────────────────────────
+   That wizard is built on main.css's .ep-form-* system, which already squares
+   every control inside a form card. These two rules close the gaps that system
+   does not reach: the date trigger's 1.5px border (leaves.css) next to 1px
+   inputs, and the dial-code / currency selects that carry their shape inline. */
+.ct-form-page .cd-trigger{border-width:1px}
+.ct-form-page .cd-trigger.cd-open{border-color:var(--orange)}
+.ct-form-page .ci-dd-trigger{font-size:13px}

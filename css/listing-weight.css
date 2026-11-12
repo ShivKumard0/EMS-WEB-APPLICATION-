@@ -1,0 +1,19 @@
+/* ══ LISTING TEXT WEIGHT ═══════════════════════════════════════════════════
+   Rows in a listing are read as a list, not as headings: no cell is bold.
+   Many cells were bolded one at a time (inline font-weight on the <td> or on
+   a <div> inside it, .lp-c-main for the name column, .lpl-st for a log's
+   status), so the rule is stated once here, loaded last, instead of being
+   undone cell by cell.
+
+   Scope: the BODY rows of the listing tables only. Headers (th) stay as they
+   are, and so do tfoot totals and group rows (.ccp-*), which are structure,
+   not items. Buttons keep their own weight. Status pills drop to 500 so the
+   status column reads like the rest of the row. */
+:is(.lp-table,.att-table,.csag-table,.lpl-table,.listing-table,.at-table,.at-sb-table,
+    .leave-table,.lb-table,.ax-hist,.hdoc-table,.ph-slab-table) tbody td,
+:is(.lp-table,.att-table,.csag-table,.lpl-table,.listing-table,.at-table,.at-sb-table,
+    .leave-table,.lb-table,.ax-hist,.hdoc-table,.ph-slab-table) tbody td :is(div,span,b,strong,a):not(.lp-status-badge):not(button *),
+.lp-c-main{font-weight:400!important}
+
+:is(.lp-table,.att-table,.csag-table,.lpl-table,.listing-table,.at-table,.at-sb-table,
+    .leave-table,.lb-table,.ax-hist,.hdoc-table,.ph-slab-table) tbody td .lp-status-badge{font-weight:500!important}

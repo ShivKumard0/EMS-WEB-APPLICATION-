@@ -1,0 +1,1208 @@
+﻿
+/* LP INLINE SPLIT SIDEBAR */
+.lp-split-wrap{position:relative;min-width:0;width:100%}
+/* overflow:clip, not auto: as `auto` this was a scroll container wrapped around
+   the table, and a sticky <th> binds to the nearest one — which would be this
+   box, which never scrolls. clip keeps the table's corners inside the frame
+   without standing between the head and the page. */
+.lp-split-main{width:100%;min-width:0;overflow:clip;
+  border:1px solid var(--border);border-radius:12px;background:#fff}
+.lp-split-sb{position:absolute;top:0;right:0;width:0;overflow:hidden;background:#fff;display:flex;flex-direction:column;border-radius:12px;z-index:10;opacity:0;transition:width .28s cubic-bezier(.4,0,.2,1),opacity .2s;min-height:0}
+.lp-split-sb.open{width:68%;bottom:0;min-height:500px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(15,23,42,.12);opacity:1}
+.lp-isb{display:flex;flex-direction:column;flex:1;min-height:0}
+.lp-isb-tabbar{display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0;min-height:46px}
+.lp-isb-back{width:42px;border-radius:0;border:none;border-right:1px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748b;padding:0;font-family:inherit;transition:.15s}
+.lp-isb-back:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.lp-isb-tabs{display:flex;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;position:relative}
+.lp-isb-tabs::-webkit-scrollbar{display:none}
+
+/* The active tab's outline is not drawn by the tab - it is a .tab-ind--box
+   marker that travels between them. Shared with six other tab bars; the
+   marker, its shapes and the rule that keeps each bar from drawing its own
+   are all in the TAB BARS section of css/motion.css. */
+.lp-isb-nav-btn{width:30px;border:none;background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#94a3b8;padding:0;transition:background .15s,color .15s;border-right:1px solid var(--border)}
+.lp-isb-nav-btn.nav-right{border-right:none;border-left:1px solid var(--border)}
+.lp-isb-nav-btn:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+/* The transparent 1.5px border stays on EVERY tab even though none of them
+   draws it any more: it is what makes a tab's offset box the exact size the
+   sliding indicator has to match, and it keeps that size identical whether
+   the tab is active or not. */
+.lp-isb-tab{padding:0 16px;align-self:stretch;border:1.5px solid transparent;border-radius:4px;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--gray);font-family:inherit;transition:color .15s;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;margin:0 4px}
+/* Weight is faked with a hairline shadow rather than switched to 600. A real
+   weight change would re-measure the label mid-slide, so the tab you are
+   travelling towards would grow while the box was still on its way to it and
+   the box would land a few pixels short. This reads the same and cannot
+   move anything. */
+.lp-isb-tab.active{color:var(--orange);text-shadow:0 0 .45px currentColor}
+.lp-isb-tab:hover:not(.active){color:var(--btn-accent)}
+.lp-isb-right{display:flex;align-items:center;gap:5px;padding:0 10px;border-left:1px solid var(--border);flex-shrink:0}
+.lp-isb-close{width:26px;height:26px;border:none;background:#f1f5f9;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:.15s;padding:0}
+.lp-isb-close:hover{background:var(--btn-tint-bg);color:var(--btn-accent)}
+.lp-isb-body{flex:1;overflow-y:auto;padding:18px 20px;background:#fff;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.07) transparent}
+.lp-isb-body::-webkit-scrollbar{width:3px}
+.lp-isb-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:99px}
+.lp-isb-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 20px;gap:10px;color:#9ca3af;font-size:13px;text-align:center}
+.lp-isb-empty p{margin:0;font-weight:500}
+.lp-sb-log-list{display:flex;flex-direction:column}
+.lp-sb-log-item{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #f1f3f5}
+.lp-sb-log-item:last-child{border-bottom:none}
+.lp-sb-log-dot{width:8px;height:8px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:4px}
+.lp-sb-log-action{font-size:13px;font-weight:600;color:var(--navy)}
+.lp-sb-log-meta{font-size:11.5px;color:#9ca3af;margin-top:2px}
+/* Row interaction — one treatment for every listing table in the app.
+   Keyed off .lp-row-selected only and NOT scoped to a table class, so pages
+   with their own row class (de-row, ge-row, tm-row, pm-row, al-row, ct-row,
+   tk-row, chat-row, …) and their own table class read identically.
+   Colours come from the --row-* tokens in main.css — do not hard-code here. */
+/* clickable rows are a control, not prose — no native blue text-drag or tap flash */
+.lp-table tr.lp-row,.lp-table tbody tr[onclick],tbody tr[onclick].at-tr,tbody tr.lp-row-selected{cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+/* the fade IS the animation — every row eases between the three states */
+.lp-table td,.listing-table td,.at-td,tbody tr[onclick]>td{transition:var(--row-fade)}
+.lp-table tbody tr:hover td,.listing-table tbody tr:hover td,.at-tr:hover .at-td{background:var(--row-hover)}
+tbody tr.lp-row-selected>td,
+.lp-table tbody tr.lp-row-selected td,
+.listing-table tbody tr.lp-row-selected td{background:var(--row-sel)}
+tbody tr.lp-row-selected:hover>td,
+.lp-table tbody tr.lp-row-selected:hover td,
+.listing-table tbody tr.lp-row-selected:hover td{background:var(--row-sel-hover)}
+/* inset rail rather than a border so selecting a row never nudges its cells */
+tr.lp-row-selected>td:first-child,
+.lp-table tr.lp-row-selected td:first-child{box-shadow:inset 3px 0 0 var(--row-sel-rail)}
+.lp-action-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:30px;border:none;border-radius:7px;color:#334155;background:transparent;cursor:pointer;transition:.15s;font-family:inherit;padding:0;flex-shrink:0}
+.lp-action-btn:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+/* LP SIDEBAR DETAIL/EDIT */
+.lp-sb-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lp-sb-field-card{background:#f8f9fb;border:1px solid #eef0f3;border-radius:10px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px}
+/* ── FULL-WIDTH FIELDS GO LAST ─────────────────────────────────────────────
+   A field too long for half a row — an address, a resolution note — has to
+   span the grid, and a spanning item mid-list breaks the two-column rhythm:
+   it ends whatever row it lands in, so the field that should have sat beside
+   its neighbour gets pushed down and the pairs below it all shift. On the
+   entity panel that put Address between "Entity Name" and "City" and left the
+   remaining ten fields reading as five unrelated rows.
+
+   `order:1` moves every wide card after the normal ones (default order:0) at
+   PLACEMENT time, so the markup can still declare a field wherever it belongs
+   logically and the grid still lays the pairs out cleanly with the wide ones
+   collected at the bottom. Being a grid-item property it needs no cooperation
+   from the container, which is why this one rule covers every detail grid in
+   the app — the class-based .lp-sb-detail-grid and the several inline
+   `display:grid` ones alike.
+
+   1/-1 rather than `span 2`: it fills the row whatever the column count, so a
+   three-column grid does not silently leave a hole. */
+.lp-sb-field-card.is-wide{grid-column:1/-1;order:1}
+.lp-sb-field-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#9ca3af;margin-top:1px}
+.lp-sb-field-icon svg{width:16px;height:16px}
+.lp-sb-field-content{flex:1;min-width:0}
+.lp-sb-field-label{font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:5px;line-height:1}
+.lp-sb-field-value{font-size:13.5px;font-weight:600;color:#1e293b;line-height:1.3;display:flex;align-items:center}
+/* Status of the record a detail panel is describing: coloured text, never a
+   pill. Pills stay in the tables and in lists of other records. Written by
+   sbStatus() in core.js — tones map to the same --st-* tokens as the pills. */
+.sb-status{font-weight:600;color:var(--st-idle-fg);white-space:nowrap}
+.sb-status.ok{color:var(--st-ok-fg)}
+.sb-status.bad{color:var(--st-bad-fg)}
+.sb-status.wait{color:var(--st-wait-fg)}
+.sb-status.info{color:var(--st-info-fg)}
+/* The one "no value here" marker for these panels. It is a muted DASH, not a
+   muted value: it stands in for a field that is empty, so it is the absence
+   that is greyed, never a real answer. */
+.sb-dash{color:#9ca3af;font-weight:400}
+.lp-sb-view-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.lp-sb-section-title{font-size:13px;font-weight:700;color:var(--navy)}
+/* Sends you to the tab a derived value was read from, so a panel never shows
+   a value whose source the reader cannot get to. */
+.lp-sb-section-link{
+  background:none;border:0;padding:0;cursor:pointer;font-family:inherit;
+  font-size:11.5px;font-weight:600;color:var(--gray);
+  transition:color var(--t-micro) ease}
+/* Underline dropped for the same reason as .hr-section-link - it drew through
+   the chevron. See the NAVIGATION LINKS note in css/dashboard-multiview.css.
+   MERGE NOTE: the other branch still had the older navy+underline hover here.
+   One selector cannot be defined twice, so this - the newer rule, and the one
+   that names the bug it fixes - is the one kept. */
+.lp-sb-section-link:hover{color:var(--btn-accent)}
+
+/* ── DETAIL PANEL HEADER: TWO DESIGNS, BOTH KEPT ──────────────────────────
+   These two blocks are the ends of a merge that has NOT been decided yet, and
+   they answer the same question in opposite ways:
+
+     .lp-sb-action-row  - the header band is gone. The record's type, name and
+                          status read better as labelled field cards, so they
+                          moved down into the grid and only the Edit button is
+                          left up here.
+     .lp-sb-record      - the header band stays and gains the record's identity
+                          (eyebrow, title, status), so the name no longer has
+                          to be repeated as the first field card below.
+
+   As merged, js/pages.js emits .lp-sb-action-row (once, in the shared panel
+   header helper) and emits .lp-sb-record nowhere - so the .lp-sb-record rules
+   below are live CSS with no markup behind them today. They are kept rather
+   than deleted so the design is still in the repo to switch back to; picking a
+   winner means changing the markup, and then deleting whichever block lost.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* IN USE - the header row as the merged pages.js renders it. */
+.lp-sb-action-row{display:flex;justify-content:flex-end;margin-bottom:12px}
+
+/* NOT CURRENTLY RENDERED - see the merge note above. Record header for a
+   detail panel. Panels that had nothing to put beside the Edit button were
+   pushing it right with an empty <span>, which left the whole left half of the
+   row blank. This gives that row the record's own identity — what it is, what
+   it is called, and where it stands. */
+.lp-sb-record{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #eef0f3}
+.lp-sb-record-id{min-width:0;flex:1}
+/* With no title under it the eyebrow is a single line, so the row centres on it
+   rather than hanging the status and Edit button off the top of nothing. */
+.lp-sb-record[data-no-title]{align-items:center;padding-bottom:12px;margin-bottom:12px}
+.lp-sb-record-eyebrow{
+  font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;line-height:1}
+.lp-sb-record-title{
+  font-size:17px;font-weight:700;color:#1e293b;line-height:1.3;margin-top:6px;overflow-wrap:anywhere}
+.lp-sb-record-side{display:flex;align-items:center;gap:14px;flex-shrink:0}
+@media (max-width:640px){
+  .lp-sb-record{flex-direction:column;gap:10px}
+  .lp-sb-record-side{width:100%;justify-content:space-between}
+}
+
+/* .lp-sb-flag / .lp-sb-flag.no are dropped. A "No" used to render grey to read
+   more quietly than a "Yes" - a fourth text colour in the panel, and it made an
+   answer look like a missing value. Both answers are value ink now; only an
+   EMPTY field is greyed, via .sb-dash above. Neither branch's markup emits the
+   span any more, so nothing is lost by leaving the rule out. */
+.pm-user-subtabs{display:flex;gap:20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.pm-user-subtab{border:none;background:none;padding:0 0 10px;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px}
+.pm-user-subtab.active{color:var(--navy);border-bottom-color:var(--orange)}
+.pm-user-subtab:hover:not(.active){color:var(--btn-accent)}
+.pm-ts-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.pm-ts-stat{background:#f8f9fb;border:1px solid #eef0f3;border-radius:10px;padding:12px;text-align:center}
+.pm-ts-stat-val{font-size:20px;font-weight:800;line-height:1.2}
+.pm-ts-stat-lbl{font-size:11px;color:var(--gray);font-weight:500;margin-top:4px}
+.cmp-rules-card{margin:18px 0;padding:2px 16px}
+.cmp-rules-card .cs-toggle-row{padding:12px 0}
+.cmp-rule-hint{font-size:11.5px;color:var(--gray);margin-top:2px;line-height:1.4}
+.ep-file-input{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:#fff;cursor:pointer;transition:border-color .15s;width:100%;box-sizing:border-box}
+.ep-file-input:hover{border-color:#c7ccd6}
+.ep-file-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--orange);color:#fff;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.ep-file-name{font-size:13px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-file-name.chosen{color:var(--navy);font-weight:600}
+.rr-success-modal{background:#fff;border-radius:20px;padding:38px 32px 34px;width:min(360px,90vw);box-shadow:0 24px 60px rgba(15,23,42,.25);text-align:center;position:relative;animation:rr-modal-pop .25s cubic-bezier(.34,1.56,.64,1)}
+.rr-success-ring{width:76px;height:76px;border-radius:50%;background:var(--st-ok-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;position:relative}
+.rr-success-ring::before,.rr-success-ring::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--st-ok-bd);opacity:0;animation:rr-ring-pulse 1.5s ease-out infinite}
+.rr-success-ring::after{animation-delay:.5s}
+.rr-success-check{width:54px;height:54px;border-radius:50%;background:var(--st-ok-fg);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(22,163,74,.35);animation:rr-check-pop .45s cubic-bezier(.34,1.56,.64,1) .1s both}
+.rr-success-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.rr-success-sub{font-size:13px;color:var(--gray);line-height:1.5;max-width:280px;margin:0 auto}
+@keyframes rr-modal-pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes rr-check-pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes rr-ring-pulse{0%{transform:scale(.85);opacity:.55}100%{transform:scale(1.45);opacity:0}}
+.lp-sb-emp-count{font-size:12px;color:var(--gray);font-weight:600}
+.lp-sb-edit-form{display:flex;flex-direction:column;gap:18px}
+.lp-sb-edit-section{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.lp-sb-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lp-sb-field{display:flex;flex-direction:column;gap:5px}
+.lp-sb-field label{font-size:11.5px;font-weight:600;color:var(--navy)}
+/* read-only identifier inside an edit form */
+.sb-field-hint{font-weight:500;font-size:10px;color:#9ca3af;text-transform:none;letter-spacing:0}
+/* Cancel / Save changes sit clear of the last field - the same 20px every
+   panel form leaves, whatever that last field is (input, textarea, note). */
+.lp-sb-form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.lp-sb-form-actions .ep-cancel-btn,.lp-sb-form-actions .ep-save-btn{min-width:96px;justify-content:center}
+.lp-sb-emp-edit{display:flex;flex-direction:column;gap:14px}
+.lp-sb-emp-edit .lp-sb-view-header{margin-bottom:0}
+/* LP SIDEBAR EMPLOYEE LIST */
+.lp-sb-emp-list{display:flex;flex-direction:column;gap:8px}
+.lp-sb-emp-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:9px;padding:10px 14px;box-shadow:0 1px 4px rgba(15,23,42,.06)}
+.lp-sb-emp-avatar{width:32px;height:32px;border-radius:50%;background:var(--ol);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;text-transform:uppercase}
+.lp-sb-emp-name{font-size:13px;color:var(--navy);font-weight:500;flex:1}
+.lp-sb-emp-remove{margin-left:auto;background:none;border:none;cursor:pointer;color:#9ca3af;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;transition:.15s;flex-shrink:0}
+.lp-sb-emp-remove:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.lp-sb-emp-search{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:#fff;margin-bottom:10px;transition:.15s}
+.lp-sb-emp-search input{border:none;outline:none;font-size:13px;color:var(--navy);background:transparent;flex:1;font-family:inherit}
+.lp-sb-emp-selector{display:flex;gap:12px;flex-direction:column}
+.lp-sb-sel-pane{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1}
+.lp-sb-sel-pane-title{font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.lp-avail-emp-list,.lp-sb-sel-emp-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.lp-avail-emp-btn{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:#f8f9fb;cursor:pointer;transition:.15s;width:100%;text-align:left;font-family:inherit}
+.lp-avail-emp-btn:hover{background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.lp-ae-info{display:flex;flex-direction:column;gap:1px}
+.lp-ae-name{font-size:13px;color:var(--navy);font-weight:500}
+.lp-ae-key{font-size:11px;color:var(--gray)}
+.lp-ae-add{color:var(--orange);font-size:18px;font-weight:700;line-height:1}
+.lp-sb-empty{font-size:13px;color:var(--gray);padding:32px 20px;text-align:center;background:#fff;border:1px solid var(--border);border-radius:10px}
+.lp-tab-placeholder{font-size:13px;color:var(--gray);text-align:center;padding:40px 20px}
+/* POLICY FORM SECTIONS */
+.policy-form-section{padding:22px;border-bottom:1px solid #f1f3f5}
+.policy-form-section:last-child{border-bottom:0}
+.policy-section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--navy);margin-bottom:16px}
+.policy-section-title::before{content:'';width:3px;height:14px;border-radius:4px;background:var(--orange)}
+.policy-form-grid{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:18px 22px}
+.ep-form-full{grid-column:1/-1}
+/* CUSTOM SELECT (apCS) */
+.cs-wrap{position:relative;width:100%}
+.cs-trigger{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--r-control);background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;cursor:pointer;font-size:13px;color:var(--navy);font-family:inherit;outline:none;transition:.15s;box-sizing:border-box;text-align:left;gap:8px}
+.cs-trigger.cs-placeholder .cs-value{color:#b0b8c4}
+.cs-trigger.cs-open{border-color:var(--orange);box-shadow:0 0 0 2px rgba(26,26,26,.08)}
+.cs-chevron{transition:transform .2s;flex-shrink:0;color:#6b7280}
+.cs-trigger.cs-open .cs-chevron{transform:rotate(180deg)}
+/* Capped and scrollable. It had no max-height at all, so a long option list
+   (every country, every agent) simply grew past the bottom of the window with
+   no way to reach the end of it. overscroll-behavior stops a flick at the end
+   of the list carrying on into the page behind. */
+/* position:fixed, like .cd-panel and .ms-dropdown, and for the same reason:
+   these selects sit inside .lp-isb-body and other overflow:auto containers,
+   which clipped the absolutely-positioned list - the Rejection Reason field
+   in the employee log form showed six of its seven options and cut the last
+   one in half. csToggle() measures and places it with placeAnchoredMenu(). */
+.cs-dropdown{position:fixed;box-sizing:border-box;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(15,23,42,.10);z-index:1000;display:none;padding:4px;max-height:264px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.cs-dropdown.cs-open{display:block}
+.cs-option{padding:10px 14px;font-size:13px;color:var(--navy);cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:space-between;transition:.1s}
+.cs-option:hover,.cs-option.cs-selected{background:#f1f5f9}
+.cs-check{flex-shrink:0;display:none;color:var(--orange)}
+/* An option with a description under its name (csWithHints in core.js). */
+.cs-opt-col{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left}
+.cs-opt-hint{font-size:11.5px;font-weight:400;line-height:1.35;color:var(--gray);white-space:normal}
+.cs-option.cs-selected .cs-check{display:block}
+/* Searchable menu (csSearchSetup, core.js): the box stays pinned at the top
+   while the options scroll under it. */
+.cs-option[hidden]{display:none}
+.cs-search{position:sticky;top:-4px;z-index:1;display:flex;align-items:center;gap:8px;margin:-4px -4px 4px;padding:8px 12px;
+  background:#fff;border-bottom:1px solid #f1f3f5;color:#94a3b8}
+.cs-search svg{flex-shrink:0}
+.cs-search input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:13px;color:var(--navy);padding:2px 0}
+.cs-search input::placeholder{color:#a3acb9}
+.cs-search:focus-within{color:var(--navy)}
+.cs-search-none{padding:14px;text-align:center;font-size:12.5px;color:var(--gray)}
+.cs-search-none[hidden]{display:none}
+
+/* CUSTOM DATE PICKER (apCD)
+   <input type="date"> hands its popup to the browser, and that popup cannot be
+   styled at all - so next to our own dropdowns it arrived as a stray piece of
+   Chrome UI: different type, different weights, blue selection, its own idea of
+   spacing. This is the same panel built in markup we control, deliberately
+   sharing the trigger geometry and the shadow/radius language of .cs-* above so
+   a date filter and a status filter read as one row of controls. */
+.cd-wrap{position:relative;width:100%}
+.cd-trigger{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--r-control);background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;cursor:pointer;font-size:13px;color:var(--navy);font-family:inherit;outline:none;transition:.15s;box-sizing:border-box;text-align:left;gap:8px}
+.cd-trigger.cd-placeholder .cd-value{color:#b0b8c4}
+.cd-trigger.cd-open{border-color:var(--orange);box-shadow:0 0 0 2px rgba(26,26,26,.08)}
+.cd-trigger:hover:not(.cd-open){border-color:#cbd5e1}
+.cd-cal-ico{flex-shrink:0;color:#6b7280;transition:color .15s}
+.cd-trigger.cd-open .cd-cal-ico{color:var(--orange)}
+/* position:fixed, like .ct-action-menu below, and for the same reason: these
+   fields sit inside .lp-isb-body and other overflow:auto containers, which
+   would clip an absolutely-positioned panel. The browser's own popup never had
+   that problem because it was never in the document. cdToggle() measures and
+   places it. */
+/* IT MUST SURVIVE BEING CAPPED. placeAnchoredMenu() writes a max-height when
+   neither the space above the field nor the space below it can hold the whole
+   calendar — a short window, or a field near the middle of a tall modal. The
+   panel had no overflow rule, so a cap did not shorten it: it clipped nothing
+   and the last week plus the Clear / Today row simply spilled out of the white
+   box and sat on top of the field underneath. The calendar looked broken
+   because it WAS broken — drawn outside its own border.
+
+   So the panel is a column that owns its height: the month header and the
+   footer keep theirs, and the weeks give. Capped, it still reads as a calendar
+   with a header, a scrollable month and its two actions, instead of loose rows
+   over the form. */
+.cd-panel{position:fixed;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.14);z-index:1000;display:none;padding:12px;width:266px;box-sizing:border-box;overflow:hidden;flex-direction:column}
+.cd-panel.cd-open{display:flex;animation:cdIn .16s cubic-bezier(.16,1,.3,1)}
+@keyframes cdIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.cd-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;flex-shrink:0}
+.cd-title{font-size:13px;font-weight:700;color:var(--navy);letter-spacing:.1px}
+.cd-nav{width:26px;height:26px;flex-shrink:0;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.13s;padding:0}
+.cd-nav:hover{background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.cd-nav:active{transform:scale(.94)}
+/* The one part that gives. min-height:0 is what lets it: a grid item defaults
+   to min-height:auto and would refuse to shrink below its content, pushing the
+   footer back out of the panel again. */
+.cd-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;min-height:0;overflow-y:auto;scrollbar-width:thin}
+.cd-dow{font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;text-align:center;padding:4px 0 6px}
+.cd-day{height:32px;border:none;background:none;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:500;color:var(--navy);cursor:pointer;transition:background .12s,color .12s;padding:0}
+.cd-day:hover:not(.cd-sel){background:#f1f5f9}
+/* The cells either end of the month are empty now rather than greyed numbers
+   from the months on each side — see cdPaint. pointer-events, or the hover
+   above would light up a blank square. */
+.cd-day.cd-blank{pointer-events:none}
+.cd-day.cd-today{font-weight:700;color:var(--orange);box-shadow:inset 0 0 0 1.5px var(--border)}
+.cd-day.cd-sel{background:var(--orange);color:#fff;font-weight:700}
+.cd-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9;flex-shrink:0}
+.cd-link{border:none;background:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;padding:2px 4px;border-radius:6px;transition:.13s}
+.cd-link:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.cd-link.cd-strong{color:var(--orange)}
+/* Filter bars run 34px-high controls; forms run the taller field.
+   The width:auto/min-width pair matches .lp-filter-bar-row .cs-wrap exactly —
+   without it the wrapper keeps width:100% and takes the whole flex row to
+   itself, pushing Search onto its own line. */
+.lp-filter-bar-row .cd-wrap{width:auto;min-width:120px}
+.lp-filter-bar-row .cd-trigger{height:34px;padding:0 14px;font-size:13px;white-space:nowrap}
+/* A date TRIGGER is a button that opens a calendar — you pick from it, you do
+   not type into it — so it takes --r-control like every other picker, and now
+   matches the select it sits beside in a form row. It was on --r-input, which
+   is the pill reserved for typeable fields. */
+.ep-form-group .cd-trigger,.policy-form-grid .cd-trigger{height:38px;border-width:1px;border-radius:var(--r-control);padding:0 12px}
+.ts-rp-fld .cd-trigger{height:34px;border-width:1px;padding:0 10px;font-size:12.5px}
+
+/* APPLICABLE EMPLOYEES */
+.ap-filter-section{margin-bottom:16px}
+.ap-filter-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+.ap-filter-group,.ap-filter-second{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px;max-width:320px}
+.ap-form-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px}
+.ap-pill-btn{border-radius:var(--r-control)!important}
+/* MODULE EMPLOYEE PICKER */
+.employee-picker{border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden}
+.employee-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:#fafbfc;border-bottom:1px solid var(--border)}
+.employee-picker-title{font-size:12px;font-weight:700;color:var(--navy)}
+.employee-picker-count{font-size:11px;font-weight:700;color:var(--orange);background:#f1f5f9;border:1px solid #d1d5db;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.employee-picker-body{display:grid;grid-template-columns:1fr 1fr;gap:0;height:260px;overflow:hidden}
+.employee-list,.employee-selected{padding:12px;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.employee-list{border-right:1px solid var(--border)}
+.employee-list-title{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#9ca3af;margin-bottom:10px;flex-shrink:0}
+#ep-avail-emp-list{flex:1;overflow-y:auto;scrollbar-width:thin}
+.employee-selected .ep-emp-tags{flex:1;overflow-y:auto;scrollbar-width:thin}
+.employee-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #edf0f4;background:#fff;border-radius:9px;margin-bottom:6px;cursor:pointer;font-family:inherit;text-align:left;transition:.15s}
+.employee-option:hover{border-color:#d1d5db;background:#f1f5f9}
+.employee-name{font-size:12.5px;font-weight:700;color:#111827}
+.employee-key{font-size:11px;color:#8b93a1;margin-top:1px}
+.employee-add{color:var(--orange);font-size:18px;font-weight:700;line-height:1}
+.empty-selection{font-size:12px;color:#9ca3af;line-height:1.5;padding:10px}
+.lp-page{max-width:1180px;margin:0 auto;width:100%}
+.ep-page{max-width:820px;margin:0 auto;width:100%}
+.team-form-page{max-width:820px}
+.team-form-card{border-radius:12px;box-shadow:0 1px 4px rgba(15,23,42,.05)}
+.team-form-card .policy-section-title{color:#98a2b3}
+.team-form-card .policy-section-title::before{display:none}
+.team-form-row{align-items:end}
+.team-form-links{display:inline-flex;align-items:center;gap:10px;margin-left:10px;vertical-align:middle}
+.team-form-link{font-size:11px;font-weight:500;color:var(--orange);background:none;border:none;padding:0;cursor:pointer;font-family:inherit}
+.team-form-link.muted{color:#64748b}
+.team-form-divider{border:none;border-top:1px dashed #cfd6df;margin:20px 22px 0}
+.team-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.team-section-head .policy-section-title{margin-bottom:0}
+.team-add-members{font-size:13px;font-weight:600;color:var(--navy);background:none;border:none;padding:0;cursor:pointer;font-family:inherit}
+.team-help-dot{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1.5px solid var(--orange);border-radius:50%;font-size:9px;font-weight:800;color:var(--orange);line-height:1;margin-left:3px}
+/* Hover / focus help: any element with data-tip shows it in a dark bubble
+   above it - the field explained where the field is, without a modal. The
+   bubble starts at the icon and runs right, so an icon near a form's left
+   edge never has its text cut off. */
+[data-tip]{position:relative;cursor:help;outline:none}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:-10px;bottom:calc(100% + 8px);transform:translateY(4px);
+  width:max-content;max-width:260px;padding:8px 11px;border-radius:8px;background:var(--navy);color:#fff;
+  font:500 11.5px/1.5 Inter,sans-serif;letter-spacing:0;text-transform:none;text-align:left;white-space:normal;
+  box-shadow:0 8px 20px rgba(15,23,42,.18);opacity:0;visibility:hidden;pointer-events:none;z-index:50;
+  transition:opacity .15s ease,transform .15s ease,visibility .15s}
+[data-tip]::before{content:'';position:absolute;left:50%;bottom:calc(100% + 3px);transform:translate(-50%,4px);
+  border:5px solid transparent;border-top-color:var(--navy);border-bottom:0;opacity:0;visibility:hidden;z-index:50;
+  transition:opacity .15s ease,transform .15s ease,visibility .15s}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;visibility:visible;transform:none}
+[data-tip]:hover::before,[data-tip]:focus-visible::before{opacity:1;visibility:visible;transform:translate(-50%,0)}
+[data-tip]:focus-visible{box-shadow:0 0 0 3px rgba(148,163,184,.4)}
+.team-form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+@media (max-width:720px){
+  .policy-form-grid.team-form-row{grid-template-columns:1fr}
+  .team-form-links{display:flex;margin:5px 0 0}
+  .team-form-actions{justify-content:stretch}
+  .team-form-actions button{flex:1}
+}
+/* LP LOGS TIMELINE */
+.lp-logs-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+/* A logs column that carries something above the form — the compliance panel's
+   approve/reject bar. The stickiness moves up to this wrapper so the bar rides
+   with the form instead of scrolling away from it; without that the form alone
+   would be sticky inside a box exactly its own height, which does nothing. */
+.lp-logs-side{display:flex;flex-direction:column;gap:12px;position:sticky;top:0;min-width:0}
+.lp-logs-side .lp-logs-form{position:static;top:auto}
+.lp-logs-timeline{display:flex;flex-direction:column}
+.lp-log-row{display:flex;gap:10px;align-items:stretch}
+.lp-log-avatar-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:34px}
+/* The ring WIDTH lives here and only here - the --variants below set nothing
+   but its colour.  It used to be repeated as `border:2px solid <colour>` on all
+   eight of them, so thinning the ring meant finding and agreeing eight lines. */
+.lp-log-avatar{width:34px;height:34px;border-radius:50%;border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.lp-log-avatar--active{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-fg)}
+.lp-log-avatar--inactive{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-fg)}
+.lp-log-avatar--default,.lp-log-avatar--idle{background:var(--st-idle-bg);color:var(--st-idle-fg);border-color:var(--st-idle-bd)}
+/* Amber is "waiting", never "bad" — which is why Unapproved is red, not amber.
+   See the status-token note in main.css. */
+/* The --ok/--bad/--wait/--info aliases are for panels whose statuses are not one
+   of the named pairs; they pass statusTone() straight through. */
+.lp-log-avatar--approved,.lp-log-avatar--ok{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-fg)}
+.lp-log-avatar--pending,.lp-log-avatar--wait{background:var(--st-wait-bg);color:var(--st-wait-fg);border-color:var(--st-wait-fg)}
+.lp-log-avatar--unapproved,.lp-log-avatar--bad{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-fg)}
+.lp-log-avatar--info{background:var(--st-info-bg);color:var(--st-info-fg);border-color:var(--st-info-fg)}
+/* An ordinary edit, not a status move - see logIsChange() in core.js. Grey and
+   hollow so a coloured ring down the timeline always means the status changed. */
+.lp-log-avatar--event{background:var(--card);color:#9aa3b0;border-color:var(--border)}
+.lp-log-connector{flex:1;width:2px;background:#e5e7eb;margin:3px auto;min-height:16px}
+.lp-log-card{flex:1;background:#fff;border:1px solid #eef0f3;border-radius:10px;padding:11px 13px;margin-bottom:10px;box-shadow:0 1px 4px rgba(15,23,42,.05);transition:.15s}
+.lp-log-card:hover{border-color:#d1d5db;box-shadow:0 2px 8px rgba(15,23,42,.09)}
+.lp-log-status-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.lp-log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.lp-log-dot--active{background:var(--st-ok-fg)}
+.lp-log-dot--inactive{background:var(--st-bad-fg)}
+.lp-log-dot--default,.lp-log-dot--idle{background:var(--st-idle-fg)}
+.lp-log-dot--approved,.lp-log-dot--ok{background:var(--st-ok-fg)}
+.lp-log-dot--pending,.lp-log-dot--wait{background:var(--st-wait-fg)}
+.lp-log-dot--unapproved,.lp-log-dot--bad{background:var(--st-bad-fg)}
+.lp-log-dot--info{background:var(--st-info-fg)}
+.lp-log-dot--event{background:#c3c9d2}
+.lp-log-status-text{font-size:13px;font-weight:700}
+.lp-log-status-text--active{color:var(--st-ok-fg)}
+.lp-log-status-text--inactive{color:var(--st-bad-fg)}
+.lp-log-status-text--default,.lp-log-status-text--idle{color:var(--st-idle-fg)}
+.lp-log-status-text--approved,.lp-log-status-text--ok{color:var(--st-ok-fg)}
+.lp-log-status-text--pending,.lp-log-status-text--wait{color:var(--st-wait-fg)}
+.lp-log-status-text--unapproved,.lp-log-status-text--bad{color:var(--st-bad-fg)}
+.lp-log-status-text--info{color:var(--st-info-fg)}
+.lp-log-status-text--event{color:var(--gray);font-weight:600}
+
+/* ── TIMELINE TONE: WHERE WE ARE, AND WHAT IS DONE ────────────────────────────
+   Inside a Logs timeline an entry is coloured by its PLACE in the history, not
+   by the status it carries. Lists are newest first, so the top entry is the
+   step the record is on now - blue - and every entry under it is a step
+   already behind it - green. Two colours and no others, so amber, red and grey
+   rings no longer compete with the one question a timeline answers: how far
+   along is this?
+
+   It overrides every --tone modifier above from one place, so no module's
+   renderer had to change. The compliance panel's "next step" card sits above
+   the history and keeps its own look; the entry after it is the current one. */
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row) .lp-log-avatar{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-fg)}
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row) .lp-log-dot{background:var(--st-ok-fg)}
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row) .lp-log-status-text{color:var(--st-ok-fg);font-weight:700}
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row):first-child .lp-log-avatar,
+.lp-logs-timeline>.oca-next-row+.lp-log-row .lp-log-avatar{background:var(--st-info-bg);color:var(--st-info-fg);border-color:var(--st-info-fg)}
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row):first-child .lp-log-dot,
+.lp-logs-timeline>.oca-next-row+.lp-log-row .lp-log-dot{background:var(--st-info-fg)}
+.lp-logs-timeline>.lp-log-row:not(.oca-next-row):first-child .lp-log-status-text,
+.lp-logs-timeline>.oca-next-row+.lp-log-row .lp-log-status-text{color:var(--st-info-fg)}
+/* The form beside the timeline is headed by the status the record is on now -
+   the same "current" as the top entry, so the same blue. */
+.lp-logs-form-header .lp-log-dot{background:var(--st-info-fg)}
+.lp-log-meta-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#64748b;flex-wrap:wrap;margin-bottom:7px}
+.lp-log-meta-item{display:flex;align-items:center;gap:3px}
+.lp-log-meta-item svg{flex-shrink:0;opacity:.65}
+.lp-log-comment-row{font-size:12.5px;color:#374151;background:#f9fafb;border-radius:7px;padding:7px 10px;line-height:1.4}
+.lp-log-comment-label{font-weight:600;color:#9ca3af;margin-right:4px;font-size:11px}
+/* LP LOGS FORM (right panel) */
+.lp-logs-form{background:#fff;border:1px solid #eef0f3;border-radius:12px;padding:16px;position:sticky;top:0;box-shadow:0 1px 6px rgba(15,23,42,.06)}
+.lp-logs-form-header{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#1e293b;margin-bottom:3px}
+.lp-logs-form-sub{font-size:11.5px;color:#9ca3af;margin:0 0 14px;line-height:1.4}
+.lp-logs-form-label{font-size:11.5px;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:3px;margin-bottom:5px}
+.lp-logs-form-req{color:#b83a3a;font-size:12px}
+/* THE STATUS FIELD IS apCS NOW, the dropdown the rest of the app uses. What
+   stood here dressed a native <select>: a wrapper to hang a chevron on and an
+   appearance:none to hide the browser's. It could never style the OPTION LIST,
+   though — that is drawn by the operating system, blue highlight bar and all,
+   which is what gave these panels a dropdown that belonged to no design. Only
+   the spacing the wrapper used to provide is still needed. */
+.lp-logs-form .cs-wrap{margin-bottom:12px}
+.lp-logs-form-textarea{width:100%;height:88px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:var(--r-control);font-family:inherit;font-size:13px;color:#1e293b;background:#fff;outline:none;resize:none;line-height:1.5;transition:.15s;box-sizing:border-box;margin-bottom:12px}
+.lp-logs-form-textarea:focus{border-color:#94a3b8;box-shadow:none}
+.lp-logs-form-textarea::placeholder{color:#b0b8c4}
+/* A missing mandatory value flags the field rather than firing an alert - the
+   same correction the Chats and Contracts panels already use. */
+.lp-logs-form-textarea.is-invalid,.lp-logs-form .cs-trigger.is-invalid{border-color:var(--st-bad-fg);background:var(--st-bad-bg)}
+.lp-logs-save-btn{width:100%;height:40px;background:var(--orange);color:#fff;border:none;border-radius:var(--r-control);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:.15s;letter-spacing:.01em}
+/* hover handled by the button system (colour only) - no lift, no shadow */
+.lp-logs-save-btn:active{transform:none}
+.lp-logs-empty{font-size:13px;color:#9ca3af;text-align:center;padding:32px 16px;background:#f9fafb;border-radius:10px;border:1px dashed #e5e7eb}
+/* LP WORKFLOW TIMELINE */
+.lp-wf-wrap{display:flex;flex-direction:column}
+.lp-wf-row{display:flex;gap:16px;align-items:stretch}
+.lp-wf-dot-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px;padding-top:16px}
+/* Workflow timeline indicator - ONE implementation, used by every workflow tab.
+   Never introduce a second marker style or colour; change it here. */
+:root{--wf-dot:#3b82f6;--wf-ring:#bfdbfe;--wf-halo:#eff6ff}
+.lp-wf-dot{width:11px;height:11px;border-radius:50%;background:var(--wf-dot);border:2px solid var(--wf-ring);flex-shrink:0;box-shadow:0 0 0 3px var(--wf-halo)}
+.lp-wf-connector{flex:1;width:2px;background:var(--wf-ring);margin:5px auto;min-height:12px}
+.lp-wf-card{flex:1;background:#fff;border:1px solid #e9edf2;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.05);transition:.15s}
+/* Hover is the same neutral lift as .lp-log-card above - a grey border and a
+   slate shadow. It used to go blue, which was the only blue hover on any
+   card in the app and read as a selected or active state on a card that is
+   neither: a Workflow entry is history, and pointing at it selects nothing.
+   The Logs and Workflow tabs sit next to each other on the same panel, so
+   two cards of the same shape must not answer the pointer differently. */
+.lp-wf-card:hover{border-color:#d1d5db;box-shadow:0 2px 8px rgba(15,23,42,.09)}
+.lp-wf-title{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:7px}
+.lp-wf-meta-row{display:flex;align-items:center;gap:10px;font-size:12px;color:#64748b;flex-wrap:wrap;margin-bottom:10px}
+.lp-wf-meta-item{display:flex;align-items:center;gap:3px}
+.lp-wf-meta-item svg{flex-shrink:0;opacity:.6}
+.lp-wf-meta-sep{color:#cbd5e1;font-size:13px;line-height:1}
+.lp-wf-desc{font-size:12.5px;line-height:1.5}
+.lp-wf-desc-label{font-weight:700;color:#374151;margin-right:3px}
+.lp-wf-desc-text{color:#3b82f6}
+.lp-wf-empty{font-size:13px;color:#9ca3af;text-align:center;padding:32px 16px;background:#f9fafb;border-radius:10px;border:1px dashed #e5e7eb}
+.ct-action-wrap{position:relative;display:inline-flex;align-items:center;gap:5px;vertical-align:middle}
+/* THE ROW STATUS PILL - one size on every listing that has one (Contracts,
+   Payments, Employees): 126px wide, label left and chevron right. A longer
+   label ends in "…" and the whole of it is on the button's title. */
+.ct-action-btn{background:var(--orange);color:#fff;border:none;border-radius:8px;padding:0 10px 0 12px;height:28px;line-height:28px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit;white-space:nowrap;width:126px;justify-content:space-between;transition:.15s;vertical-align:middle}
+.ct-action-btn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.ct-dots-btn{border:none;background:transparent;border-radius:6px;width:28px;height:28px;line-height:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#64748b;padding:0;transition:.15s;flex-shrink:0;vertical-align:middle}
+.ct-dots-btn:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+/* overflow-y:auto, not hidden: placeAnchoredMenu() caps max-height when the
+   viewport cannot hold the whole menu, and a capped menu that cannot scroll is
+   just a clipped one. overflow-x stays hidden so the rounded corners still cut
+   the first and last item. */
+.ct-action-menu{position:fixed;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,.13);z-index:1000;min-width:200px;overflow:hidden auto;overscroll-behavior:contain;scrollbar-width:thin;display:none}
+.ct-action-menu.open{display:block}
+/* 7px rows, not 9px. Eight of them at the old height came to 304px, which is
+   taller than the space under a table row on a laptop viewport — so the menu
+   was being capped and scrolled on almost every open. At 33px a row the whole
+   flow is 264px and usually just fits, which is a better fix than making the
+   scrollbar look nicer. */
+.ct-act-item{padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:9px;color:var(--navy);transition:.12s;border-bottom:1px solid #f1f5f9}
+.ct-act-item:last-child{border-bottom:none}
+.ct-act-item:hover:not(.done):not(.current){background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.ct-act-item.current{color:var(--orange);font-weight:700;background:#f1f5f9;cursor:default}
+.ct-act-item.done{color:#9ca3af;cursor:default}
+.ct-act-step{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.ct-act-step.done{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.ct-act-step.current{background:var(--orange);color:#fff}
+.ct-act-step.next{background:#f1f5f9;color:#64748b}
+.ct-sb-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--r-status);font-size:11px;font-weight:600;border:1.5px solid var(--btn-stroke);white-space:nowrap}
+.ct-pending-stats{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;flex-shrink:0}
+.ct-pending-stat{padding:12px 22px;text-align:center;border-right:1px solid var(--border)}
+.ct-pending-stat:last-child{border-right:none}
+.ct-pending-count{font-size:22px;font-weight:800;line-height:1}
+.ct-pending-label{font-size:11px;font-weight:500;color:#64748b;margin-top:3px;white-space:nowrap}
+.ct-upload-area{border:2px dashed #d1d5db;border-radius:10px;padding:22px 16px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfc;margin-bottom:10px}
+.ct-upload-area:hover{border-color:var(--orange);background:#f1f5f9}
+.ct-upload-area p{font-size:12px;color:#64748b;margin:4px 0 0;line-height:1.4}
+.ct-modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;display:flex;align-items:center;justify-content:center}
+/* ONE width for every creation popup (.ct-modal--form): Create Leave, Leave
+   Policy, Holidays, Compliance, Rule, Template, Payhead, Ticket, Pay Run and
+   Invoice. They had drifted to seven widths between 620px and 1000px, so
+   moving between modules resized the same kind of window. Change it here. */
+:root{--form-modal-w:880px}
+.ct-modal.ct-modal--form{width:min(var(--form-modal-w),94vw)}
+.ct-modal{background:#fff;border-radius:16px;padding:28px;width:min(560px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,23,42,.22);scrollbar-width:thin}
+.ct-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.ct-modal-title{font-size:16px;font-weight:700;color:var(--navy)}
+.ct-modal-close{width:28px;height:28px;border:none;background:#f1f5f9;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;padding:0}
+.ct-modal-close:hover{background:var(--btn-tint-bg);color:var(--btn-accent)}
+.ct-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.ct-modal-field{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.ct-modal-flabel{font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:3px}
+.ct-modal-fval{font-size:13px;font-weight:600;color:var(--navy)}
+/* The listing search box. .ct-search-input is the same control under the name
+   Contracts gave it before every listing had one; both are kept on the rule so
+   the two cannot drift apart. */
+.lp-search-input,.ct-search-input{width:150px;min-width:0;height:34px;box-sizing:border-box;padding:0 14px;border:1px solid var(--border);border-radius:var(--r-control);font-family:inherit;font-size:13px;color:var(--navy);outline:none;background:#fff;transition:.15s}
+.lp-search-input:focus,.ct-search-input:focus{border-color:var(--orange);box-shadow:0 0 0 2px rgba(26,26,26,.1)}
+.lp-search-input::placeholder,.ct-search-input::placeholder{color:#9ca3af}
+/* LP PAGINATION */
+.lp-pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);background:#fff}
+.lp-pagination-info{font-size:12.5px;color:#6b7280}
+.lp-pagination-controls{display:flex;align-items:center;gap:4px}
+.lp-pg-btn{min-width:32px;height:32px;padding:0 8px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:13px;font-weight:500;color:#374151;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;transition:.15s}
+.lp-pg-btn:hover:not(:disabled){background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.lp-pg-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);font-weight:700}
+.lp-pg-btn:disabled{opacity:.4;cursor:default}
+.lp-pg-arrow{color:#64748b}
+
+/* ══ PAYHEADS — SLAB CONFIGURATION ═════════════════════════════════════════
+   A slab row is four fields and a delete, on one line, because a slab is one
+   fact — "between here and there, apply this, this way" — and stacking it into
+   four labelled rows would hide that. The grid is fixed rather than equal
+   thirds: From and To hold short numbers, Value holds a short number, and Calc
+   Method holds a select whose longest option is "Percentage", so giving them
+   equal width would leave the numbers swimming and the select cramped. */
+/* The card follows the Name/Category grid, so it needs the grid's own 18px
+   rhythm above it; it carries no padding because the head and body pad
+   themselves; and overflow stays visible so a Calc Method menu can drop out
+   of it. */
+.ph-slab-card{padding:0;overflow:visible;margin:18px 0 22px}
+.ph-slab-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 20px;background:#fafbfc;border-bottom:1px solid var(--border);
+  border-radius:12px 12px 0 0}
+/* .ep-form-title is a section heading with its own rule under it; here the
+   head strip already ends in a rule, so the title's is dropped. */
+.ph-slab-head .ep-form-title{margin:0;padding-bottom:0;border-bottom:0}
+.ph-add-slab{
+  display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 14px;
+  border-radius:var(--r-control);background:#fff;border:1.5px solid var(--orange);color:var(--orange);
+  font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,color .15s ease}
+.ph-add-slab:hover{background:var(--orange);color:#fff}
+.ph-slab-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1.3fr auto;gap:12px;align-items:end;
+  padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--border)}
+.ph-slab-row:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+/* From Value is derived from the slab above, so it reads as a stated value
+   rather than an empty field inviting a number that would be overwritten. */
+.ph-slab-row input[readonly]{background:var(--light);color:var(--gray);cursor:default}
+.ph-hint{color:#9ca3af;cursor:help}
+.ph-slab-del{
+  width:42px;height:42px;flex-shrink:0;border:1px solid var(--border);border-radius:var(--r-control);
+  background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;transition:border-color .15s ease,color .15s ease,background .15s ease}
+.ph-slab-del:hover:not(:disabled){border-color:var(--st-bad-fg);color:var(--st-bad-fg);background:var(--st-bad-bg)}
+/* One slab left: it is the rule, so it cannot be removed. */
+.ph-slab-del:disabled{opacity:.4;cursor:not-allowed}
+@media (max-width:760px){
+  .ph-slab-row{grid-template-columns:1fr 1fr;gap:10px}
+  .ph-slab-del{grid-column:1/-1;width:100%}
+}
+
+/* The slab table in the detail panel, and anywhere else a saved rule is read
+   back. Same shape as the panel's other tables. */
+.ph-slab-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;background:#fff}
+.ph-slab-table{width:100%;border-collapse:collapse;min-width:380px}
+.ph-slab-table tbody tr:last-child td{border-bottom:none}
+.ph-slab-table tbody tr:hover td{background:#fafbfc}
+
+/* ── Create Ticket / Create Payhead: popup form extras ─────────────────────
+   Both use the shared .ct-modal shell; these are the few controls those forms
+   add that the shell does not already carry. */
+.ep-optional{color:var(--gray);font-weight:400;font-size:11px}
+.tk-ta{min-height:74px;resize:vertical;line-height:1.5;padding-top:9px;font-family:inherit}
+.tk-ta-lg{min-height:96px}
+/* Field and its Search share one line — the button is an action ON the field,
+   not a separate step under it. */
+.tk-link-row{display:flex;gap:10px;align-items:stretch}
+.tk-link-row .ep-form-input{flex:1;min-width:0}
+.tk-link-row .ep-cancel-btn{flex-shrink:0}
+/* A resolved link, shown as a chip rather than left as raw text in the input,
+   so "searched and found" is visibly different from "typed something". */
+.tk-link-chip{
+  display:inline-flex;align-items:center;gap:8px;margin-top:9px;
+  padding:6px 8px 6px 11px;border-radius:8px;
+  background:var(--st-ok-bg);border:1px solid var(--st-ok-bd);
+  font-size:12px;color:var(--navy);max-width:100%}
+.tk-link-chip b{font-weight:700;flex-shrink:0}
+.tk-link-chip span{color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-link-chip button{
+  flex-shrink:0;width:20px;height:20px;border:none;border-radius:5px;background:transparent;
+  color:var(--gray);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.tk-link-chip button:hover{background:rgba(15,23,42,.07);color:var(--navy)}
+/* Slab rows inside the popup: the modal supplies the padding the form card
+   used to, so the list gets its own. */
+.ph-slab-body{padding:18px 20px}
+
+/* ══ POPUP FORM PARTS (shared) ═════════════════════════════════════════════
+   The sub-heading and the footer row of a .ct-modal creation form. They began
+   life inside the Holidays module and were named for it; Add Leave Policy needs
+   exactly the same two, so they carry the shell's own prefix instead of being
+   copied under a second name. */
+.ct-modal-sub{margin:-8px 0 18px;font-size:12.5px;line-height:1.5;color:var(--gray)}
+/* A creation form tall enough to scroll must not put its primary action below
+   the fold. The footer sticks to the bottom of the popup so Create/Add stays
+   reachable while the fields scroll under it; on a short form there is nothing
+   to scroll and sticky behaves exactly like static, so it costs those nothing. */
+/* Z-INDEX 2 LOST TO THE FIELDS. .custom-select carries z-index:5 so its menu
+   can sit over its neighbours, which also put every closed Type select ON TOP
+   of this bar: scroll a long form and the row underneath drew straight through
+   the footer, next to the buttons. The footer is chrome — whatever scrolls
+   beneath it goes beneath it — so it outranks the fields. It stays below an
+   OPEN menu (those are position:fixed at z-index 900+) because a dropdown the
+   user just opened has to clear the bar. */
+.ct-modal-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  position:sticky;bottom:-28px;z-index:20;
+  margin:0 -28px -28px;padding:16px 28px;
+  background:#fff;border-top:1px solid var(--border);border-radius:0 0 16px 16px}
+.ct-modal-btns{display:flex;gap:10px;flex-shrink:0;margin-left:auto}
+/* The leave-policy form is sectioned, so its sections lose the outer card's
+   padding and rely on their own. */
+.ct-modal .policy-form-section:first-child{padding-top:20px}
+.ct-modal .policy-form-section:last-child{border-bottom:0}
+
+/* ══ HOLIDAYS ══════════════════════════════════════════════════════════════
+   Two small marks on the listing, a date block on the panel, and a repeating
+   row for the create popup. Everything else the module needs — the table, the
+   filter bar, the stat tiles, the panel shell — it already shares with every
+   other listing, and none of it is restated here. */
+
+/* Marks on the listing. Both are QUIET: they annotate a cell rather than
+   competing with the status pill at the end of the row, so they are set in the
+   smallest readable size with no border and no fill beyond a tint. */
+.hd-next-chip{
+  display:inline-block;margin-left:8px;padding:1.5px 7px;border-radius:var(--r-status);
+  background:var(--st-info-bg);color:var(--st-info-fg);
+  font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;vertical-align:1px}
+/* A holiday on a Saturday or Sunday costs the entity no working day. HR asks
+   this of every published calendar, so the calendar answers it in place. */
+.hd-weekend-chip{
+  display:inline-block;margin-left:7px;padding:1.5px 7px;border-radius:var(--r-status);
+  background:var(--st-idle-bg);color:var(--st-idle-fg);font-size:10px;font-weight:600;vertical-align:1px}
+
+/* ── Panel: the date, stated as a date ───────────────────────────────────── */
+/* The record IS a date, so the panel leads with one rather than opening on a
+   grid of labelled fields that happens to contain it. */
+.hd-sb-hero{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;margin-bottom:16px;
+  border:1px solid var(--border);border-radius:12px;background:var(--light)}
+.hd-sb-hero.is-next{border-color:var(--st-info-bd);background:var(--st-info-bg)}
+.hd-sb-datechip{
+  position:relative;overflow:hidden;
+  flex-shrink:0;width:60px;padding:12px 0 9px;border-radius:10px;background:#fff;
+  border:1px solid var(--border);text-align:center;line-height:1.1}
+.hd-sb-datechip::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--st-idle-fg)}
+.hd-sb-datechip.tone-ok::before{background:var(--st-ok-fg)}
+.hd-sb-datechip.tone-info::before{background:var(--st-info-fg)}
+.hd-sb-datechip.tone-wait::before{background:var(--st-wait-fg)}
+.hd-sb-datechip.tone-idle::before{background:var(--st-idle-fg)}
+.hd-sb-dc-day{display:block;font-size:22px;font-weight:800;color:var(--navy)}
+.hd-sb-dc-mon{display:block;margin-top:2px;font-size:10.5px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px}
+.hd-sb-hero-text{min-width:0;flex:1}
+.hd-sb-hero-name{font-size:15px;font-weight:700;color:var(--navy);line-height:1.3}
+.hd-sb-hero-meta{margin-top:3px;font-size:12px;color:var(--gray);display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.hd-sb-dot{margin:0 7px;color:#cbd5e1}
+.hd-sb-hero .hd-weekend-chip{margin-left:7px}
+/* Type, status and Edit travel together at the end of the header — three marks
+   about the same record, not three separate things floating in a row. */
+.hd-sb-hero-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hd-sb-badges{display:flex;align-items:center;gap:6px}
+/* A withdrawn holiday should not read as loudly as a live one. The badge says
+   Inactive; this makes the whole header agree with it. */
+.hd-sb-hero.is-off{background:#fbfcfd;border-style:dashed}
+.hd-sb-hero.is-off .hd-sb-hero-name{color:var(--gray)}
+.hd-sb-hero.is-off .hd-sb-datechip{opacity:.65}
+/* What Inactive actually costs, said under the header it belongs to. */
+.hd-sb-note{
+  margin:-8px 0 16px;padding:9px 13px;border-radius:9px;
+  background:var(--st-bad-bg);border:1px solid var(--st-bad-bd);
+  font-size:12px;line-height:1.5;color:var(--st-bad-fg)}
+/* The panel is narrow enough to be squeezed by a long holiday name, so the
+   header is allowed to stack rather than crush the badges. */
+@media (max-width:520px){
+  .hd-sb-hero{flex-wrap:wrap}
+  .hd-sb-hero-right{width:100%;justify-content:space-between}
+}
+/* Edit sits in the hero because that is where the record's identity already
+   is — a separate header row above the grid would be a second title saying the
+   same thing. It never shrinks; the name beside it does. */
+.hd-sb-hero .lp-sb-view-edit-btn{flex-shrink:0}
+/* Says plainly what this form does NOT change, next to the form that does not
+   change it — cheaper than someone hunting for a Status field that is
+   deliberately elsewhere. */
+.hd-edit-note{margin:14px 0 0;font-size:11.5px;line-height:1.5;color:var(--gray)}
+.hd-edit-note b{color:var(--navy);font-weight:600}
+
+/* ── Create popup ────────────────────────────────────────────────────────── */
+/* The entity, STATED rather than offered. It is styled as a fact — tinted
+   panel, no border that reads as a control, no chevron — because anything that
+   looks like a field invites a click that has nowhere to go. The lock chip says
+   why it cannot be changed here and where it can. */
+.hd-entity-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;margin-bottom:18px;
+  background:var(--light);border:1px solid var(--border);border-radius:10px}
+.hd-entity-ico{
+  flex-shrink:0;width:34px;height:34px;border-radius:8px;background:#fff;
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gray)}
+.hd-entity-text{min-width:0;flex:1}
+.hd-entity-label{font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--gray)}
+.hd-entity-name{margin-top:2px;font-size:14px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hd-entity-lock{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:var(--r-status);background:var(--ol);
+  color:var(--gray);font-size:11px;font-weight:600;white-space:nowrap;cursor:default}
+@media (max-width:820px){.hd-entity-row{flex-wrap:wrap}}
+@media (max-width:560px){.hd-entity-lock{display:none}}
+
+.hd-rows-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 20px;background:#fafbfc;border-bottom:1px solid var(--border);
+  /* The card it sits in is overflow:visible, so the branch popover can leave it -
+     which also means this strip is not clipped to the rounded corners of the card,
+     and it squared them off. It carries the radius itself. */
+  border-radius:11px 11px 0 0}
+/* The strip already ends in a rule of its own; the title's .ep-form-title
+   underline drew a second one a few pixels above it. */
+.hd-rows-head .ep-form-title{margin:0;padding-bottom:0;border-bottom:0}
+.hd-rows-head-right{display:flex;align-items:center;gap:10px}
+.hd-add-row{
+  display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 14px;
+  border-radius:var(--r-control);background:#fff;border:1.5px solid var(--orange);color:var(--orange);
+  font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,color .15s ease}
+.hd-add-row:hover{background:var(--orange);color:#fff}
+.hd-rows-body{padding:16px 20px}
+/* The last row's picker opens downward like every other one; without this the
+   card ends flush under it and the popover would be the thing that scrolls. */
+.hd-rows-body{padding-bottom:24px}
+
+/* A holiday is one fact — "this day, called this, of this kind" — so it is one
+   line. The grid is weighted, not equal: a name needs room to be a name, Day
+   holds one derived word, and the last two columns are FIXED rather than auto —
+   auto would size them to their contents, and a header strip whose columns are
+   sized by "Repeats" while the rows' are sized by a checkbox chip is a header
+   that does not sit over its own columns.
+
+   min-width:0 ON EVERY CELL is what actually holds the rows in line with each
+   other. A grid item defaults to min-width:auto, so a select showing "Optional
+   Holiday" pushes its own column past the share it was given and every column
+   after it shifts — rows end up aligned to whatever each happens to contain
+   rather than to the grid. Without this the columns visibly step between one
+   row and the next as their values are picked. */
+.hd-row-head,.hd-row-form{
+  display:grid;grid-template-columns:22px 1.25fr 1.05fr minmax(0,1.35fr) minmax(0,1.15fr) 96px 34px;gap:12px}
+.hd-row-head>*,.hd-row-form>*{min-width:0}
+/* A date trigger that wraps turns a 40px row into a 60px one and knocks the
+   whole line out of alignment. It gets one line and an ellipsis instead. */
+.hd-row-form .cd-value,.hd-row-form .custom-select-trigger span{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Labels once, over the columns they name, instead of five labels repeated on
+   every row — a twelve-row batch would otherwise carry sixty of them. */
+.hd-row-head{
+  align-items:end;padding-bottom:9px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.hd-row-head>span{font-size:11.5px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* START, NOT CENTRE. Every control in the row is 40px, so aligning them at the
+   top puts them all on one line. Centring did that too — right up until the
+   date cell grew a weekday caption under its field: that cell is then ~20px
+   taller than the rest, and centring it lifted the date field above the line
+   its neighbours sit on. The caption now hangs below the row's line, where it
+   belongs, and nothing else moves. */
+.hd-row-form{
+  align-items:start;
+  padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--border)}
+.hd-row-form:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.hd-cell{min-width:0}
+/* Derived, and said where it is derived FROM. As its own column it was a
+   disabled-looking box holding one word; here it is a caption. */
+.hd-cell-sub{
+  margin-top:4px;padding-left:2px;font-size:10.5px;color:#9ca3af;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* The row number, so a validation message that says "Row 3" has something to
+   point at. */
+.hd-row-index{
+  height:40px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#94a3b8}
+/* ONE BASELINE ACROSS THE ROW. The three control types the row uses stand at
+   three different heights out of the box — the text input at 38, the select at
+   40, the date trigger at 42 — which on a single line reads as a row that does
+   not line up rather than as three components with their own opinions. They
+   are pinned to one height here, and only inside this row. */
+.hd-row-form .ep-form-input{height:40px}
+.hd-row-form .cd-trigger{height:40px}
+.hd-row-form .custom-select-trigger{height:40px;min-height:40px;padding-top:0;padding-bottom:0}
+/* Day is taken from the date, so it reads as a stated value rather than an
+   empty field inviting a word that would be overwritten. */
+.hd-row-form input[readonly]{background:var(--light);color:var(--gray);cursor:default}
+.hd-check{
+  width:100%;box-sizing:border-box;
+  height:40px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;
+  border:1px solid var(--border);border-radius:var(--r-control);background:#fff;
+  font-size:12.5px;color:var(--navy);cursor:pointer;white-space:nowrap;user-select:none;
+  transition:border-color .15s ease,background .15s ease}
+.hd-check:hover{border-color:var(--btn-accent)}
+.hd-check input{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;margin:0}
+.hd-row-del{
+  width:34px;height:40px;flex-shrink:0;border:1px solid var(--border);border-radius:var(--r-control);
+  background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;transition:border-color .15s ease,color .15s ease,background .15s ease}
+.hd-row-del:hover:not(:disabled){border-color:var(--st-bad-fg);color:var(--st-bad-fg);background:var(--st-bad-bg)}
+/* One row left: it is the batch, so it cannot be removed. */
+.hd-row-del:disabled{opacity:.4;cursor:not-allowed}
+/* ── Who a holiday is for ─────────────────────────────────────────────────
+   The trigger reads like the chips it will produce, so the control and the
+   record it writes look like the same statement. Entity-wide is the quiet
+   state — grey, no weight — because it is the default and most holidays are
+   it; naming branches is the exception and carries the ink. */
+.hd-bp{position:relative;min-width:0}
+.hd-bp-btn{
+  width:100%;box-sizing:border-box;height:40px;
+  display:inline-flex;align-items:center;gap:7px;padding:0 10px;
+  border:1px solid var(--border);border-radius:var(--r-control);background:#fff;
+  color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  transition:border-color .15s ease,box-shadow .15s ease}
+.hd-bp-btn:hover{border-color:var(--btn-accent)}
+.hd-bp-btn.is-open{border-color:var(--btn-accent);box-shadow:0 0 0 3px rgba(15,23,42,.04)}
+.hd-bp-btn.is-all{color:var(--gray);font-weight:500}
+.hd-bp-btn svg{flex-shrink:0;stroke:currentColor;fill:none}
+.hd-bp-lbl{flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-bp-chev{opacity:.7;transition:transform .16s ease}
+.hd-bp-btn.is-open .hd-bp-chev{transform:rotate(180deg)}
+/* Anchored to the trigger and drawn over the rows below it. It is inside the
+   modal's own scroller, so it travels with the row rather than pinning itself
+   to a viewport the modal may have scrolled away from. */
+.hd-bp-pop{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:216px;max-width:280px;
+  padding:8px;background:#fff;border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 12px 32px rgba(15,23,42,.14);animation:fadeUp .14s ease}
+.hd-bp-pop.is-up{top:auto;bottom:calc(100% + 6px)}
+.hd-bp-head{
+  padding:2px 8px 6px;font-size:10.5px;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--gray)}
+.hd-bp-opt{
+  width:100%;display:flex;align-items:center;gap:9px;padding:7px 8px;
+  border:0;border-radius:7px;background:none;cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--navy);text-align:left}
+.hd-bp-opt:hover{background:var(--ol)}
+.hd-bp-box{
+  flex-shrink:0;width:16px;height:16px;border:1.5px solid #cbd5e1;border-radius:5px;
+  display:inline-flex;align-items:center;justify-content:center;color:transparent;
+  transition:background .14s ease,border-color .14s ease,color .14s ease}
+.hd-bp-box svg{stroke:currentColor;fill:none}
+.hd-bp-opt.is-on .hd-bp-box{background:var(--navy);border-color:var(--navy);color:#fff}
+.hd-bp-opt.is-on{font-weight:600}
+.hd-bp-sep{height:1px;margin:6px 4px;background:var(--border)}
+.hd-bp-empty{padding:8px;font-size:11.5px;color:var(--gray)}
+/* What the current selection actually means, in words, under the boxes that
+   made it — "Hyderabad, Mumbai" is a list; "only these two will see it" is the
+   consequence. */
+.hd-bp-note{padding:8px 8px 4px;font-size:10.5px;line-height:1.5;color:var(--gray)}
+.hd-bp-apply{
+  width:100%;margin-top:4px;padding:7px;border:1px solid var(--border);border-radius:7px;
+  background:#fff;color:var(--navy);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.hd-bp-apply:hover{border-color:var(--btn-accent);color:var(--btn-accent)}
+
+/* The same answer, stated: the office it applies to, or one grey chip for the
+   whole entity. NOWRAP is the whole point — this sits in a table cell about
+   150px wide, and a second chip wrapping under the first made that row taller
+   than every other row in the table. The count carries the rest, the cell's
+   title carries the names, and the panel below has the width to list them. */
+.hd-br-chips{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;max-width:100%;min-width:0}
+.hd-br-chip{
+  display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--r-status);
+  background:var(--ol);color:var(--navy);font-size:11px;font-weight:600;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.hd-br-chip.is-all{background:transparent;border:1px dashed var(--border);color:var(--gray);font-weight:500}
+/* The remainder, in the same shape as a branch but plainly not one — it is a
+   number, so it does not compete with the name beside it. */
+.hd-br-chip.is-more{
+  flex-shrink:0;background:#fff;border:1px solid var(--border);color:var(--gray);
+  font-variant-numeric:tabular-nums;padding:2px 7px}
+/* The panel states the audience in full: it has the room, and it is the place
+   somebody goes to find out exactly who a holiday covers. */
+.lp-sb-field-value .hd-br-chips{margin-top:1px;flex-wrap:wrap;gap:5px}
+
+/* Said under the row it is about, while the row is still being typed. */
+.hd-row-note{
+  grid-column:1/-1;margin-top:-2px;padding-left:34px;
+  font-size:11.5px;line-height:1.4;color:var(--gray)}
+.hd-row-note.is-bad{color:var(--st-bad-fg);font-weight:500}
+.hd-row-form.is-bad .cd-trigger{border-color:var(--st-bad-fg)}
+
+/* The batch, restated as it is typed, next to the button that will file it —
+   so the count on the button is one the user has watched climb. */
+.hd-summary{font-size:12.5px;color:var(--gray);min-width:0}
+
+/* Stacked: the header strip cannot span columns that no longer line up, so it
+   is dropped and the placeholders do the labelling — they already read as
+   labels ("Select date", "From date", "Select Type"), and every control
+   carries an aria-label for anything that is not reading the placeholder. */
+@media (max-width:900px){
+  .hd-row-head{display:none}
+  .hd-row-form{grid-template-columns:22px 1fr 1fr;gap:10px}
+  .hd-row-del{grid-column:1/-1;width:100%}
+  .hd-row-note{padding-left:0}
+}
+
+/* A detail panel that failed to render. Deliberately plain and readable rather
+   than styled like a designed empty state — it is a fault, not a feature, and
+   should look like one. */
+.sb-render-error{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  margin:28px 16px;padding:22px 18px;text-align:center;
+  border:1px solid var(--st-bad-bd);border-radius:12px;background:var(--st-bad-bg)}
+.sb-render-error svg{width:26px;height:26px;stroke:var(--st-bad-fg)}
+.sb-render-error b{font-size:13px;color:var(--navy)}
+.sb-render-error span{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11px;line-height:1.5;color:var(--st-bad-fg);word-break:break-word}
+
+/* ══ ATTACHMENTS TAB ═══════════════════════════════════════════════════════
+   Shared by every detail panel. Two states, and the difference between them is
+   how much room the drop zone gets: all of it when there is nothing to show,
+   a slim bar once the list has taken over. */
+.att-zone{
+  border:1.5px dashed var(--border);border-radius:12px;background:var(--light);
+  cursor:pointer;text-align:center;color:var(--gray);
+  transition:border-color var(--t-fast) var(--e-out),background var(--t-fast) var(--e-out),color var(--t-fast) var(--e-out)}
+.att-zone:hover,.att-zone.is-over{border-color:var(--btn-accent);background:#fff;color:var(--btn-accent)}
+/* A dashed box that solidifies is the clearest possible "let go here". */
+.att-zone.is-over{border-style:solid;box-shadow:0 0 0 3px rgba(15,23,42,.05)}
+
+/* Empty: the zone is the whole tab. */
+.att-zone-lg{display:flex;flex-direction:column;align-items:center;gap:6px;padding:38px 20px}
+.att-zone-ico{
+  width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;margin-bottom:4px;color:inherit}
+.att-zone-ico svg{width:19px;height:19px}
+.att-zone-title{font-size:13.5px;font-weight:600;color:var(--navy)}
+.att-zone.is-over .att-zone-title{color:var(--btn-accent)}
+.att-zone-hint{font-size:11.5px;line-height:1.45}
+
+/* Filled: demoted to one line so the list leads. */
+.att-zone-sm{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:500}
+.att-zone-ico-sm{display:inline-flex}
+.att-zone-ico-sm svg{width:14px;height:14px}
+
+.att-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.att-count{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--gray)}
+.att-bar-actions{display:flex;gap:6px}
+/* Download All only exists when there is something to download — an unfilled
+   tab used to offer it over an empty table. */
+.att-link{
+  display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:4px 6px;
+  border-radius:var(--r-control);color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:background var(--t-micro) ease,color var(--t-micro) ease}
+.att-link:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+
+.att-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;background:#fff}
+.att-table{width:100%;border-collapse:collapse;min-width:520px}
+.att-table tbody tr:last-child td{border-bottom:none}
+.att-table tbody tr:hover td{background:#fafbfc}
+.att-kind{
+  display:inline-block;padding:2px 8px;border-radius:5px;background:var(--ol);color:var(--gray);
+  font-size:10.5px;font-weight:600;white-space:nowrap}
+.att-row-btn{
+  width:28px;height:28px;margin-left:4px;border:1px solid var(--border);border-radius:7px;background:#fff;
+  color:#64748b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
+.att-row-btn:hover{background:var(--btn-ghost-bg);border-color:var(--btn-accent);color:var(--btn-accent)}
+/* Delete is the one row action that cannot be undone, so it is the one that
+   colours on hover — at rest it stays as quiet as its neighbour. */
+.att-row-btn.is-danger:hover{background:var(--st-bad-bg);border-color:var(--st-bad-fg);color:var(--st-bad-fg)}
+
+/* Contract status popup: the from -> to pair under the title, and the note
+   shown when a later stage was picked than the one-step rule allows. */
+.ct-sm-move{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.ct-sm-note{margin:0 0 16px;padding:10px 12px;border-radius:10px;background:var(--st-wait-bg);border:1px solid var(--st-wait-bd);color:var(--st-wait-fg);font-size:12.5px;line-height:1.5}
+
+/* ── Create New Team as a popup ───────────────────────────────────────────
+   Two sections in the standard create popup, divided the way the page form
+   divided them. */
+.tm-modal-sec{margin-bottom:24px}
+.tm-modal-sec+.tm-modal-sec{padding-top:20px;border-top:1px dashed #cfd6df}
+.tm-modal-sec-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;
+  font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#98a2b3}
+.tm-modal-sec-title .team-add-members{text-transform:none;letter-spacing:0}
+.tm-modal .ep-form-grid{align-items:end}
+
+/* ── DETAIL PANEL HEADER (sbHero in core.js) ──────────────────────────────
+   The one header every action-sidebar's details tab opens with: icon tile,
+   name, identifying line, status and Edit. It began as the Assets / IT Access
+   header (itself shaped on the holiday header) and is now shared, so every
+   module's panel reads the same way. */
+.sb-hero{display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:16px;
+  border:1px solid var(--border);border-radius:12px;background:var(--light)}
+.sb-hero-ico{flex-shrink:0;width:46px;height:46px;border-radius:11px;background:#fff;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:#64748b}
+.sb-hero-ico svg{width:22px;height:22px}
+.sb-hero-img{flex-shrink:0;width:46px;height:46px;border-radius:11px;object-fit:cover;border:1px solid var(--border);background:#fff}
+.sb-hero-txt{flex:1;min-width:0}
+.sb-hero-name{font-size:15px;font-weight:700;color:var(--navy);line-height:1.3;overflow:hidden;text-overflow:ellipsis}
+.sb-hero-meta{margin-top:3px;font-size:12px;color:var(--gray);display:flex;align-items:center;flex-wrap:wrap}
+.sb-dot{margin:0 7px;color:#cbd5e1}
+.sb-hero-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.sb-hero-right .lp-sb-view-edit-btn{flex-shrink:0}
+/* Where the Edit button was, while the record is being edited. */
+.sb-hero-editing{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:600;color:var(--st-info-fg);background:var(--st-info-bg);border:1px solid var(--st-info-bd)}
+.sb-hero-editing svg{width:12px;height:12px}
+/* A tab holding unsaved edits (sbMarkDraftTabs): a small dot after its label,
+   in the same blue as the Editing tag on the header. */
+.lp-isb-tab.has-draft{position:relative}
+.lp-isb-tab.has-draft::after{content:'';display:inline-block;width:7px;height:7px;margin-left:7px;vertical-align:2px;
+  border-radius:50%;background:var(--st-info-fg);box-shadow:0 0 0 2px var(--st-info-bg)}
+/* Leaving a record with unsaved edits (sbConfirmDiscard). */
+.ct-modal.sb-discard{width:min(440px,92vw)}
+.ct-modal.sb-discard .ct-modal-foot{margin-top:22px}
+/* ── History tab (js/history.js) ──
+   The Assets assignment-history table (.ax-hist), one row per changed field.
+   Six columns can be wider than the panel: the table scrolls sideways in its
+   own box, and a long value is cut with its whole text on the hover title. */
+.sb-hist-wrap{overflow-x:auto;overscroll-behavior-x:contain;border-radius:10px}
+.sb-hist td{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.sb-hist .sb-hist-n{color:var(--gray);width:44px}
+.sb-hist .sb-hist-time{color:var(--gray)}
+.sb-hist .sb-hist-old{color:#94a3b8}
+.sb-hist .sb-hist-new{font-weight:600}
+/* Headers read like every other listing in the panel (.att-table / .csag-table). */
+.sb-hist th{font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px}
+/* ── Workflow step states (wfTimelineHTML) ──
+   Done: the green dot and a green line on to the next step. In progress: the
+   blue dot, a blue card edge and an "In progress" chip. Not started: a hollow
+   grey dot, a dashed line, and a faded dashed card. */
+.lp-wf-row.is-done .lp-wf-dot{background:var(--st-ok-fg);border-color:#bbf7d0;box-shadow:0 0 0 3px #f0fdf4}
+.lp-wf-row.is-done .lp-wf-connector{background:#bbf7d0}
+.lp-wf-row.is-current .lp-wf-card{border-color:#93c5fd;box-shadow:0 1px 4px rgba(37,99,235,.06)}
+.lp-wf-row.is-current .lp-wf-connector{background:#93c5fd}
+.lp-wf-chip{display:inline-flex;align-items:center;margin-left:8px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;
+  background:var(--st-info-bg);color:var(--st-info-fg);vertical-align:2px}
+.lp-wf-row.is-todo .lp-wf-dot{background:#fff;border-color:#cbd5e1;box-shadow:none}
+.lp-wf-row.is-todo .lp-wf-connector{background:repeating-linear-gradient(#cbd5e1 0 4px,transparent 4px 8px)}
+.lp-wf-row.is-todo .lp-wf-card{background:#fafbfc;border-style:dashed;box-shadow:none;padding:12px 16px}
+.lp-wf-row.is-todo .lp-wf-card:hover{border-color:#d1d5db;box-shadow:none}
+.lp-wf-row.is-todo .lp-wf-title{color:#64748b;font-weight:600;margin-bottom:5px}
+.lp-wf-row.is-todo .lp-wf-meta-row{margin-bottom:0}
+.lp-wf-not-started{font-style:italic;color:#94a3b8}
+.lp-wf-desc-text b{font-weight:700}
+/* Edit / Enlarge beside the close x (sbDecorateTabbars, core.js): the same
+   26px square as the x, with the icon in ink. */
+.sb-tools{display:flex;align-items:center;gap:5px}
+.sb-tool{width:26px;height:26px;border:none;background:#f1f5f9;border-radius:6px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:var(--navy);padding:0;transition:.15s}
+.sb-tool svg{width:13px;height:13px}
+.sb-tool:hover{background:var(--btn-accent);color:#fff}
+/* Enlarge: the panel opens as a popup over the page - the same panel, so
+   its tabs, its Edit and anything typed in it stay as they are - centred,
+   above a dimmed backdrop, its body scrolling inside. */
+/* Centred by offsets, not transform: a transformed box would become the
+   reference for the dropdowns and date pickers inside it, which sit fixed. */
+.lp-split-sb.open.is-popup{position:fixed;top:calc((100vh - min(86vh,920px)) / 2);left:calc((100vw - min(1100px,92vw)) / 2);right:auto;bottom:auto;
+  width:min(1100px,92vw);height:min(86vh,920px);min-height:0;z-index:1200;border-radius:16px;
+  box-shadow:0 24px 70px rgba(15,23,42,.28);transition:none}
+#sb-popup-backdrop{position:fixed;inset:0;z-index:1190;background:rgba(15,23,42,.45);animation:fadeIn .15s ease}
+/* The popup's record header (sbPopHead, core.js): the record across the top,
+   the tab bar under it. Shrink and close live here, so the tab's own Enlarge
+   and the tab bar's x step aside while it is up. */
+.sb-pop-head{display:flex;align-items:center;gap:14px;padding:14px 18px 14px 20px;border-bottom:1px solid var(--border);
+  background:#fff;flex-shrink:0;border-radius:16px 16px 0 0}
+.sb-pop-ico{flex-shrink:0;display:flex}
+.sb-pop-ico .sb-hero-ico,.sb-pop-ico .sb-hero-img{width:40px;height:40px;border-radius:10px}
+.sb-pop-ico .sb-hero-ico svg{width:19px;height:19px}
+.sb-pop-ico .hd-sb-datechip{transform:scale(.88);transform-origin:center}
+.sb-pop-txt{flex:1;min-width:0}
+.sb-pop-title{display:flex;align-items:center;gap:10px;min-width:0}
+.sb-pop-name{font-size:17px;font-weight:700;color:var(--navy);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.sb-pop-status{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.sb-pop-status .hd-sb-badges{display:inline-flex;align-items:center;gap:6px}
+.sb-pop-meta{margin-top:3px;font-size:12.5px;color:var(--gray);display:flex;align-items:center;flex-wrap:wrap;
+  white-space:nowrap;overflow:hidden}
+.sb-pop-tools{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:auto}
+.sb-pop-btn{width:30px;height:30px;border-radius:8px;color:var(--gray)}
+.sb-pop-btn svg{width:13px;height:13px}
+.lp-isb:has(>.sb-pop-head) .lp-isb-tabbar .lp-isb-close{display:none}
+.lp-isb:has(>.sb-pop-head) .lp-isb-tabbar .lp-isb-right:not(:has(>:not(.lp-isb-close))){display:none}
+.lp-isb:has(>.sb-pop-head) .lp-isb-body .sb-tool-wide{display:none}
+.lp-isb:has(>.sb-pop-head) .sb-body-tools:not(:has(.sb-tool:not(.sb-tool-wide))){display:none}
+/* The header card a tab was given only to hold the tools repeats the popup's
+   own header - so in the popup it goes, unless it still carries an Edit. */
+.lp-isb:has(>.sb-pop-head) .sb-hero-auto:not(:has(.sb-tool:not(.sb-tool-wide))){display:none}
+@media (max-width:640px){
+  .sb-pop-head{padding:12px 14px;gap:10px}
+  .sb-pop-title{flex-wrap:wrap;gap:6px}
+}
+/* Edit / Enlarge inside the tab: at the end of the heading row, or on a slim
+   row of their own at the top of a tab that starts without one. */
+/* the heading stays left; anything else on the row (a count) sits with the buttons */
+.lp-sb-view-header:has(>.sb-tools){justify-content:flex-start;gap:10px}
+.lp-sb-view-header:has(>.sb-tools)>:first-child{margin-right:auto}
+.sb-body-tools{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+
+/* ── LEAVE BALANCE TILE (Leave Requests, js/pages.js alBalCardHTML) ────────
+   A status tile in its own box, beside the real ones - but it filters
+   nothing, so it has no pointer, no hover fill and no press. */
+.al-bal-stat .listing-stat{cursor:default;min-width:110px}
+.al-bal-stat .listing-stat:hover{background:transparent}
+.al-bal-stat .listing-stat:active{transform:none}
+
+/* ── Row logs (js/row-logs.js) ──────────────────────────────────────────────
+   The row menu reuses the Contracts menu as it is (.ct-act-item / .ct-act-step);
+   only the popup's Expense / Line Item switch needs spacing. */
+.rl-modal .rl-scope{margin:0 0 16px}

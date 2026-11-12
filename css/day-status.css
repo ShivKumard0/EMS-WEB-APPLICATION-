@@ -1,0 +1,54 @@
+/* ══ DAY STATUS ════════════════════════════════════════════════════════════
+   Two things: the rail colour a month cell carries and the tag the day panel
+   spells the same state out in. Every colour is one of the five sanctioned
+   --st-* tones — there is no sixth hue here, and the letter code is what
+   separates the two states that share amber.
+   ========================================================================== */
+
+/* ── The rail on a month cell ──
+   The grid's only mark. It replaces the old st-present / st-absent / st-inprog
+   colours with the finer set, so a day worked start to finish and one that
+   lost both ends of the shift no longer read as the same green. Written after
+   those rules and with the same specificity, so it wins on order. */
+.ts-day-cell.ds-ok{border-left-color:var(--st-ok-fg)}
+.ts-day-cell.ds-wait{border-left-color:var(--st-wait-fg)}
+.ts-day-cell.ds-bad{border-left-color:var(--st-bad-fg)}
+.ts-day-cell.ds-info{border-left-color:var(--st-info-fg)}
+.ts-day-cell.ds-idle{border-left-color:var(--st-idle-bd)}
+/* A pending claim still outranks all of them: what is waiting on somebody else
+   is more urgent than how the shift was kept. */
+.ts-day-cell.ar-pending{border-left-color:var(--st-wait-fg)}
+
+/* ── The tag, in the day panel ── */
+.ds-tagrow{display:flex;flex-direction:column;gap:5px;padding:11px 13px;
+  background:var(--light);border:1px solid var(--border);border-radius:var(--r-control)}
+.ds-tag{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+  padding:4px 12px;border-radius:var(--r-status);
+  font-size:11.5px;font-weight:700;letter-spacing:.2px;border:1px solid transparent}
+.ds-tag-why{font-size:10.5px;color:var(--gray);line-height:1.45;font-variant-numeric:tabular-nums}
+
+.ds-tag.tone-ok{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-bd)}
+.ds-tag.tone-wait{background:var(--st-wait-bg);color:var(--st-wait-fg);border-color:var(--st-wait-bd)}
+.ds-tag.tone-bad{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+.ds-tag.tone-info{background:var(--st-info-bg);color:var(--st-info-fg);border-color:var(--st-info-bd)}
+.ds-tag.tone-idle{background:var(--st-idle-bg);color:var(--st-idle-fg);border-color:var(--st-idle-bd)}
+
+/* ── The month's totals, in the calendar header ──
+   Where the four-item legend used to sit. A total describes the month and
+   belongs beside its name; the states describe individual days and are read in
+   the day panel, not from a key. */
+.ds-totals{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ds-total{display:inline-flex;align-items:baseline;gap:6px;font-size:11.5px;color:var(--gray)}
+.ds-total b{font-size:13px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+
+/* ── Statuses inside a day cell ──
+   Every status in the month grid — In progress, Absent, Late in / Early out,
+   a holiday, a leave's Pending / Paid / Unpaid, a claim's Pending / Approved /
+   Rejected — is the app's own lp-status-badge with its tone, set a size down
+   so it fits a day cell. Ellipsis if a long holiday name runs out of room; the
+   full text is on its title. */
+.ts-cell-badge{display:inline-block;min-width:0;max-width:100%;margin-top:4px;padding:2px 8px;font-size:10.5px;line-height:1.35;
+  align-self:flex-start;overflow:hidden;text-overflow:ellipsis}   /* inline-block: ellipsis does not work on a flex box */
+.ts-cell-badge.is-claim{margin-top:auto}
+/* A leave day: the leave's name (a type, not a status) and under it where it stands. */
+.ts-leave-row{display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0;max-width:100%;margin-top:2px}

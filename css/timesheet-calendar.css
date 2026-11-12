@@ -1,0 +1,165 @@
+/* ══ TIMESHEET CALENDAR — "clean grid" (2026-10-30) ═══════════════════════
+   An override on top of the original month grid, whose rules in main.css,
+   day-status.css and attendance-request.css are left exactly as they were.
+   TO GO BACK TO THE ORIGINAL DESIGN: remove this file's <link> in index.html
+   (statuses inside the cells are lp-status-badge, styled in day-status.css).
+
+   Replaces the earlier "soft tiles" version. The rules it follows, taken
+   from the calmer month views (Google Calendar, Notion Calendar, Linear, the
+   time modules in Rippling / Deel):
+
+   · ONE RULED GRID, NOT 35 CARDS. Hairlines between days make the month one
+     object; a border round every day made it thirty-five.
+   · COLOUR IS FOR EXCEPTIONS. A normal day is its date and its hours, nothing
+     else — no green rail on every cell. Late, absent, leave, pending get a
+     small dot and a word, in the one tone that names them.
+   · STATUSES ARE THE APP'S OWN BADGE (lp-status-badge, compact — see
+     day-status.css); "Manual" is a quiet word.
+   · WEEKENDS ARE GREY, NOT AMBER. A faint column tint is enough.
+   · DATE TOP-LEFT, the calendar convention; today is a filled disc.
+   Every colour is still one of the five --st-* tones.
+   ========================================================================== */
+
+/* ── Card + header ── */
+.ts-cal-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.ts-cal-card .ts-cal-head{background:#fff;border-bottom:1px solid var(--border);padding:16px 20px}
+.ts-cal-card .ts-cal-title{font-size:15px;font-weight:700;gap:12px}
+
+/* ── Grid: one surface, hairline rules ── */
+.ts-cal-card .ts-col-hdrs,
+.ts-cal-card .ts-cal-row{gap:0;padding:0;background:#fff;grid-template-columns:120px repeat(7,minmax(0,1fr))}
+.ts-cal-card .ts-col-hdrs{border-bottom:1px solid var(--border)}
+.ts-cal-card .ts-cal-row{border-bottom:1px solid #f0f2f5}
+.ts-cal-card .ts-cal-row:last-child{border-bottom:none}
+.ts-cal-card .ts-col-hdr{padding:10px 12px;font-size:11px;font-weight:600;letter-spacing:.6px;
+  color:#94a3b8;background:none;text-align:left;border-left:1px solid #f0f2f5}
+.ts-cal-card .ts-col-hdr:first-child{border-left:none}
+.ts-cal-card .ts-col-hdr.we{color:#94a3b8;background:#fafbfc}
+
+/* ── Week rail ── */
+.ts-cal-card .ts-week-cell{background:#fafbfc;border:none;border-radius:0;
+  align-items:flex-start;justify-content:flex-start;gap:4px;padding:12px 14px}
+.ts-cal-card .ts-wk-label{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#94a3b8}
+.ts-cal-card .ts-wk-total{font-size:15px;font-weight:600;color:var(--navy);letter-spacing:-.2px}
+.ts-cal-card .ts-wk-total.none{color:#cbd5e1}
+.ts-cal-card .ts-wk-span{font-size:10.5px;font-weight:500}
+.ts-cal-card .ts-wk-pick{margin-top:6px;font-size:11px;font-weight:500;color:var(--navy)}
+
+/* ── The day ──
+   Three classes deep so it outranks every two-class rule in the original
+   sheets (.ts-day-cell.ds-ok, .is-selected, .ar-pending ...) on specificity,
+   not on load order. */
+.ts-cal-card .ts-cal-row .ts-day-cell{
+  background:#fff;border:none;border-left:1px solid #f0f2f5;border-radius:0;
+  padding:10px 12px;min-height:88px;gap:4px;overflow:hidden;
+  transition:background .12s ease}
+.ts-cal-card .ts-cal-row .ts-day-cell::before{display:none}
+.ts-cal-card .ts-cal-row .ts-day-cell.we{background:#fafbfc}
+/* No status rails or tints: the words in the cell carry the status. */
+.ts-cal-card .ts-cal-row .ts-day-cell.ds-ok,
+.ts-cal-card .ts-cal-row .ts-day-cell.ds-wait,
+.ts-cal-card .ts-cal-row .ts-day-cell.ds-bad,
+.ts-cal-card .ts-cal-row .ts-day-cell.ds-info,
+.ts-cal-card .ts-cal-row .ts-day-cell.ds-idle,
+.ts-cal-card .ts-cal-row .ts-day-cell.ar-pending,
+.ts-cal-card .ts-cal-row .ts-day-cell.is-today,
+.ts-cal-card .ts-cal-row .ts-day-cell.is-locked{border-left-color:#f0f2f5}
+.ts-cal-card .ts-cal-row .ts-day-cell.is-today,
+.ts-cal-card .ts-cal-row .ts-day-cell.is-locked,
+.ts-cal-card .ts-cal-row .ts-day-cell.future{background:#fff}
+.ts-cal-card .ts-cal-row .ts-day-cell.we.is-locked,
+.ts-cal-card .ts-cal-row .ts-day-cell.we.future{background:#fafbfc}
+.ts-cal-card .ts-cal-row .ts-day-cell.ts-empty{background:#fcfcfd}
+.ts-cal-card .ts-cal-row .ts-day-cell.out-of-range{
+  background:repeating-linear-gradient(135deg,#fff,#fff 6px,#f8f9fb 6px,#f8f9fb 12px)}
+
+/* Interaction - after the resets so they win on order at equal weight. */
+.ts-cal-card .ts-cal-row .ts-day-cell.is-clickable:hover{background:#f6f8fa}
+.ts-cal-card .ts-cal-row .ts-day-cell.is-selected,
+.ts-cal-card .ts-cal-row .ts-day-cell.is-selected:hover{background:#f3f5f8;box-shadow:inset 0 0 0 1.5px var(--navy)}
+
+/* ── Contents ── */
+/* Date, top-left. */
+.ts-cal-card .ts-day-num{text-align:left;font-size:12px;font-weight:500;color:#64748b;line-height:20px;height:20px}
+.ts-cal-card .ts-day-cell.we .ts-day-num{color:#94a3b8}
+.ts-cal-card .ts-day-cell.future .ts-day-num,
+.ts-cal-card .ts-day-cell.out-of-range .ts-day-num{color:#cbd5e1}
+.ts-cal-card .ts-day-num.today{width:22px;height:22px;margin:-1px 0 -1px -5px;font-weight:600;
+  background:var(--navy);color:#fff}
+/* The hover glyph moves to the top-right, out of the date's way. */
+.ts-cal-card .ts-day-peek{left:auto;right:10px;top:12px}
+
+.ts-cal-card .ts-day-hrs{font-size:15px;font-weight:600;letter-spacing:-.2px;color:var(--navy);margin-top:2px}
+/* Locked and empty: kept on weekdays so the week adds up, dropped on
+   weekends where "0.00h" on every Saturday is just noise. */
+.ts-cal-card .ts-day-hrs.is-zero{color:#cbd5e1;font-weight:500}
+.ts-cal-card .ts-day-cell.we .ts-day-hrs.is-zero{display:none}
+
+
+/* "Manual" is a footnote, not a badge. */
+.ts-cal-card .ts-day-src{margin-top:auto;padding:0;background:none;border-radius:0;
+  font-size:10.5px;font-weight:500;letter-spacing:0;text-transform:none;color:#94a3b8}
+
+/* "+ Request" on a closed day: a quiet text action until hovered. */
+.ts-cal-card .ar-cell-link{margin-top:auto;align-self:flex-start;width:auto;height:auto;padding:3px 0;
+  border:0;background:none;font-size:11px;font-weight:500;color:#94a3b8}
+.ts-cal-card .ar-cell-link:hover{background:none;border:0;color:var(--navy)}
+
+/* ══ EMPHASIS (2026-10-30, second pass) ════════════════════════════════════
+   Thirty daily figures in the same bold as the week totals meant nothing
+   stood out. Now, in order of weight:
+     1. Week totals  — the figure a timesheet is scanned for: bold, dark.
+     2. Statuses — the app's lp-status-badge in its tone.
+     3. Daily hours  — readable, regular weight, a step lighter.
+     4. Information  — the leave's name, "Manual": plain, quiet text.
+   ========================================================================== */
+.ts-cal-card .ts-wk-total{font-size:16px;font-weight:700;color:var(--navy)}
+.ts-cal-card .ts-day-num{font-size:11.5px;color:#94a3b8}
+.ts-cal-card .ts-day-hrs{font-size:13.5px;font-weight:500;letter-spacing:0;color:#334155}
+.ts-cal-card .ts-day-src{color:#b4bdc9}
+
+
+/* Select all, in the head of the week column. */
+.ts-cal-card .ts-col-hdr .ts-wk-all{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#94a3b8}
+.ts-cal-card .ts-col-hdr .ts-wk-all:hover{color:var(--navy)}
+
+/* Selection column: its own narrow column on the far left, apart from the
+   week's figures — a table's row-select column. Header tick = select all.
+   Only there when at least one week can be ticked. */
+.ts-cal-card .ts-col-hdrs.has-pick,
+.ts-cal-card .ts-cal-row.has-pick{grid-template-columns:44px 112px repeat(7,minmax(0,1fr))}
+.ts-cal-card .ts-col-hdr.ts-pick-hdr{display:flex;align-items:center;justify-content:center;padding:10px 0}
+.ts-pick-cell{display:flex;align-items:center;justify-content:center;background:#fafbfc;border-right:1px solid #f0f2f5}
+.ts-cal-card .ts-col-hdrs.has-pick .ts-col-hdr:nth-child(2){border-left:1px solid #f0f2f5}
+.ts-cal-card .ts-col-hdrs.has-pick .ts-col-hdr:nth-child(2),
+.ts-cal-card .ts-col-hdrs:not(.has-pick) .ts-col-hdr:first-child{padding-left:14px}
+/* A ticked week shades its whole row — selection column, week rail and all
+   seven days — so it reads as one selected line, as in a table. Important
+   because the day cells carry state backgrounds (weekend, locked, future…)
+   at higher specificity; the selected-day outline is a box-shadow and stays. */
+.ts-cal-card .ts-cal-row.is-picked > *{background:#f1f4f8 !important}
+.ts-cal-card .ts-cal-row.is-picked .ts-day-cell.is-clickable:hover{background:#e9edf3 !important}
+/* Submitted week: its days fade back (still readable, still clickable to view)
+   while the week column keeps the Submitted status at full strength. */
+.ts-cal-card .ts-cal-row.is-submitted .ts-day-cell{background:#fafbfc !important}
+.ts-cal-card .ts-cal-row.is-submitted .ts-day-cell > *{opacity:.4;filter:grayscale(1)}
+.ts-cal-card .ts-cal-row.is-submitted .ts-day-cell:hover > *{opacity:.75}
+
+/* Blocking dialog (tsDialog in core.js): a rule to deal with before going on,
+   e.g. "Lock Week 2 first". Centred, one message, Cancel + the fix. */
+.ts-dlg-ov{position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(15,23,42,.45);opacity:0;transition:opacity .18s ease}
+.ts-dlg-ov.is-shown{opacity:1}
+.ts-dlg{width:100%;max-width:400px;box-sizing:border-box;padding:24px 24px 20px;background:#fff;border-radius:var(--r-card,14px);
+  box-shadow:0 20px 50px rgba(15,23,42,.25);text-align:center;transform:translateY(8px) scale(.98);transition:transform .2s var(--e-out,ease-out)}
+.ts-dlg-ov.is-shown .ts-dlg{transform:none}
+.ts-dlg-ico{width:44px;height:44px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ts-dlg-ico svg{width:20px;height:20px}
+.ts-dlg-ico.is-warn{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.ts-dlg-ico.is-info{background:#f1f5f9;color:var(--navy)}
+.ts-dlg h3{margin:0;font-size:16px;font-weight:700;color:var(--navy)}
+.ts-dlg p{margin:6px 0 0;font-size:13px;line-height:1.55;color:var(--gray)}
+.ts-dlg p b{font-weight:600;color:var(--navy)}
+.ts-dlg-btns{display:flex;gap:10px;margin-top:20px}
+.ts-dlg-btns>button{flex:1;justify-content:center}
+@media (prefers-reduced-motion:reduce){.ts-dlg-ov,.ts-dlg{transition:none}}

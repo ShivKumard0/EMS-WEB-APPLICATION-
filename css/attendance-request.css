@@ -1,0 +1,140 @@
+/* ══ ATTENDANCE REQUEST ════════════════════════════════════════════════════
+   Two small marks on the timesheet grid and one right-hand drawer. The drawer
+   is the export drawer's shell at a narrower width, and its form is the
+   sidebar's own .lp-sb-form-grid / .lp-sb-field / label — so the fields here
+   have the same 8px corners and 36px height as every other edit screen in the
+   app rather than a private shape of their own.
+   ========================================================================== */
+
+/* ── On the month grid ──
+   Both marks live at the foot of a cell that was empty, so nothing on a
+   working day moves. They stay small on purpose: a weekly off is still a
+   weekly off, and the claim is the exception. */
+/* A STANDING CONTROL, NOT A HOVER REVEAL. It was opacity:0 until the pointer
+   crossed the cell, which hid the only way into the feature behind a gesture
+   nobody had a reason to make on an empty square. It is drawn as a small
+   bordered chip so it reads as pressable at 9.5px, and it sits at the bottom
+   of the cell where the hours would be. */
+.ar-cell-link{display:inline-flex;align-items:center;justify-content:center;gap:3px;
+  margin-top:auto;padding:0 6px;height:17px;max-width:100%;
+  border:1px solid var(--border);border-radius:5px;background:var(--card);
+  font-family:inherit;font-size:9.5px;font-weight:700;letter-spacing:.1px;
+  color:var(--gray);cursor:pointer;white-space:nowrap;overflow:hidden;
+  transition:background .14s,color .14s,border-color .14s}
+.ar-cell-link svg{width:8px;height:8px;flex-shrink:0;fill:none;stroke:currentColor}
+.ar-cell-link:hover{background:var(--btn-ghost-bg);color:var(--btn-accent);border-color:var(--btn-accent)}
+.ar-cell-link:focus-visible{outline:2px solid var(--btn-accent);outline-offset:1px}
+/* A day carrying a pending claim gets the same amber rail its chip is, so the
+   month can be scanned for them without reading a single cell. */
+.ts-day-cell.ar-pending{border-left-color:var(--st-wait-fg)}
+
+.ar-head-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:var(--r-status);font-size:10px;font-weight:700;letter-spacing:.2px;
+  background:var(--st-wait-bg);color:var(--st-wait-fg);border:1px solid var(--st-wait-bd);
+  white-space:nowrap}
+.ar-head-chip svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor}
+
+/* ── In the day panel ── */
+.ar-panel-block{background:var(--light);border:1px solid var(--border);
+  border-radius:var(--r-control);padding:13px 14px;display:flex;flex-direction:column;gap:9px}
+.ar-panel-block.is-off{background:#fbfcfd}
+.ar-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ar-panel-kind{font-size:12px;font-weight:700;color:var(--navy)}
+.ar-panel-note{font-size:11px;color:var(--gray);line-height:1.5}
+.ar-panel-times{font-size:12.5px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+.ar-panel-block .ts-sb-btn{margin-top:2px}
+
+/* ── The drawer ── */
+.ar-overlay{position:fixed;inset:0;z-index:520;display:flex;justify-content:flex-end}
+.ar-bg{position:absolute;inset:0;background:rgba(10,18,30,.45);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:fadeIn .18s ease}
+.ar-panel{position:relative;z-index:1;width:440px;max-width:100vw;height:100vh;background:var(--card);
+  display:flex;flex-direction:column;box-shadow:-12px 0 48px rgba(0,0,0,.18);overflow:hidden;
+  animation:ar-slide .22s ease}
+@keyframes ar-slide{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.ar-panel,.ar-bg{animation:none}}
+
+.ar-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:18px 22px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ar-title{font-size:15px;font-weight:700;color:var(--navy);line-height:1.2}
+.ar-sub{font-size:11.5px;color:var(--gray);margin-top:4px;line-height:1.45}
+.ar-close{width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);
+  border-radius:var(--r-control);background:var(--card);color:var(--gray);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.14s}
+.ar-close:hover{background:var(--btn-ghost-bg);color:var(--btn-accent);border-color:var(--btn-accent)}
+.ar-close:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+.ar-close svg{width:12px;height:12px;fill:none;stroke:currentColor}
+.ar-body{flex:1;overflow-y:auto;padding:18px 22px 22px;scrollbar-width:thin;
+  display:flex;flex-direction:column;gap:16px}
+
+.ar-note{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;
+  background:var(--st-info-bg);border:1px solid var(--st-info-bd);border-radius:var(--r-control);
+  font-size:11px;line-height:1.5;color:#1e40af}
+.ar-note svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;fill:none;stroke:currentColor}
+
+.ar-date{display:flex;align-items:center;gap:11px;padding:12px 14px;
+  background:var(--light);border:1px solid var(--border);border-radius:var(--r-control)}
+.ar-date>svg{width:17px;height:17px;flex-shrink:0;color:var(--gray);fill:none;stroke:currentColor}
+.ar-date-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.ar-date-label{font-size:9.5px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+.ar-date-val{font-size:13px;font-weight:700;color:var(--navy)}
+
+/* .lp-sb-form-grid gives the fields their shape; only the row rhythm differs. */
+.ar-grid{gap:14px 16px}
+.ar-req{color:#b83a3a}
+.ar-auto{margin-left:5px;padding:1px 6px;border-radius:var(--r-status);
+  background:var(--st-idle-bg);color:var(--st-idle-fg);font-size:9px;font-weight:700;letter-spacing:.2px}
+/* A derived value is shown, not offered: same box as a field so the row still
+   lines up, but with the tinted fill that says nothing here is typeable. */
+.ar-static,.ar-total{display:flex;align-items:center;min-height:36px;padding:0 12px;
+  background:var(--light);border:1px solid var(--border);border-radius:var(--r-control);
+  font-size:13px;color:var(--navy);box-sizing:border-box}
+.ar-total{font-weight:700;font-variant-numeric:tabular-nums}
+.ar-total.is-none{color:#b0b8c4;font-weight:500}
+.ar-warn{display:none;font-size:10.5px;font-weight:600;color:var(--st-bad-fg);line-height:1.4}
+.ar-warn.is-on{display:block}
+.ar-textarea{min-height:76px;padding:9px 12px;line-height:1.5;resize:vertical}
+.ar-count{align-self:flex-end;font-size:10px;font-weight:600;color:#9ca3af;
+  font-variant-numeric:tabular-nums}
+
+.ar-status{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:12px 14px;
+  background:var(--light);border:1px solid var(--border);border-radius:var(--r-control)}
+.ar-status-label{font-size:11.5px;font-weight:700;color:var(--navy)}
+.ar-status-meta{flex:1 0 100%;font-size:10.5px;color:var(--gray)}
+
+.ar-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--r-status);
+  font-size:10px;font-weight:700;letter-spacing:.2px;border:1px solid transparent;white-space:nowrap;flex-shrink:0}
+.ar-chip.tone-wait{background:var(--st-wait-bg);color:var(--st-wait-fg);border-color:var(--st-wait-bd)}
+.ar-chip.tone-ok{background:var(--st-ok-bg);color:var(--st-ok-fg);border-color:var(--st-ok-bd)}
+.ar-chip.tone-bad{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+.ar-chip.tone-info{background:var(--st-info-bg);color:var(--st-info-fg);border-color:var(--st-info-bd)}
+.ar-chip.tone-idle{background:var(--st-idle-bg);color:var(--st-idle-fg);border-color:var(--st-idle-bd)}
+
+.ar-foot{display:flex;gap:10px;padding:14px 22px;flex-shrink:0;
+  border-top:1px solid var(--border);background:var(--card)}
+.ar-btn,.ar-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:40px;padding:0 24px;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;
+  border:1px solid transparent;border-radius:var(--r-control);cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
+.ar-btn-ghost{flex:1;background:var(--card);color:var(--btn-ink);border-color:var(--btn-stroke)}
+.ar-btn-ghost:hover{color:var(--btn-accent);border-color:var(--btn-accent)}
+.ar-btn{flex:1.6;background:var(--btn-ink);color:#fff;border-color:var(--btn-ink)}
+.ar-btn:hover{background:var(--btn-accent);border-color:var(--btn-accent)}
+.ar-btn:focus-visible,.ar-btn-ghost:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+.ar-btn svg{width:13px;height:13px;flex-shrink:0;fill:none;stroke:currentColor}
+
+@media (max-width:520px){
+  .ar-panel{width:100vw}
+  .ar-grid{grid-template-columns:1fr}
+}
+
+/* The day panel stacks the claim block above Add entry, so the actions row
+   stops being a single button and becomes a column. */
+.ts-sb-actions:has(.ar-panel-block){display:flex;flex-direction:column;gap:10px}
+
+/* .ts-sb-actions carries margin-top:auto so the button sits at the foot of a
+   panel whose read sections fill the space above it. On a closed day with no
+   punch those sections are gone, so "auto" pushed the claim block to the
+   bottom of an empty panel — a lone card floating a screen away from the date
+   it belongs to. Here it follows the date box instead. */
+.ts-sb-inner[data-ar-claim] .ts-sb-actions{margin-top:0}

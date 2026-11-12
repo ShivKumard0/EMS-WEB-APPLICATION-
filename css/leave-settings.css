@@ -1,0 +1,23 @@
+/* ══ COMPANY SETTINGS → LEAVES ═════════════════════════════════════════════
+   One rule. The tab is built entirely from the panel's shared parts —
+   .lp-sb-view-header, .lp-sb-detail-grid / .lp-sb-field-card to read,
+   .lp-sb-edit-form / .lp-sb-edit-section / .lp-sb-form-grid / .lp-sb-field to
+   edit, .hd-check for the booleans — and it borrows .csa-sub, .csa-unit,
+   .csa-hint and .csa-check from css/attendance-settings.css, which are generic
+   Company-Settings form parts rather than anything to do with attendance.
+
+   WHAT IS LEFT IS A HEIGHT. .cd-trigger stands 42px by default and is only
+   brought down inside .ep-form-group and .policy-form-grid; in
+   .lp-sb-form-grid it keeps its full height and stood six pixels taller than
+   the selects beside it. leaves.css does not change it globally — the Edit
+   Holiday form pairs the same picker with 40px custom selects, where 42 is
+   right — so the correction is scoped to this form alone.
+   ========================================================================== */
+.csl-form .cd-trigger{height:36px;border-width:1px;border-radius:var(--r-control);padding:0 12px}
+
+/* .lp-sb-field-card.is-wide carries order:1 so that, in a grid of mixed
+   widths, the full-width cards collect at the end instead of leaving a hole
+   beside a half-width one. Here the order IS the meaning — a leave period
+   before the frequency it is allocated at, an approval LEVEL before the
+   approvers it decides the number of — so the written run is restored. */
+.csl-view .lp-sb-field-card.is-wide{order:0}

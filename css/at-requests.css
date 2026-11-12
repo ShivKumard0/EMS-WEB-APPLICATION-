@@ -1,0 +1,100 @@
+/* ══ ALL TIMESHEET → REQUESTS TAB (js/at-requests.js) ══════════════════════ */
+
+/* ── The "something is waiting" dot ──
+   The same mark as the header bell's unread dot (.tb-badge in main.css): a
+   solid maroon circle ringed in white, still — no pulse, no halo. Maroon, not
+   blue: a blue dot on a panel tab already means unsaved edits
+   (.lp-isb-tab.has-draft in leaves.css). */
+.at-req-dot,.at-tab-dot{
+  display:inline-block;width:7px;height:7px;box-sizing:content-box;border-radius:50%;flex-shrink:0;
+  background:var(--st-bad-fg);border:2px solid var(--card);pointer-events:none}
+.at-tab-dot{margin-left:5px;vertical-align:1px}
+/* On the row, the dot sits on the top-right corner of the View Details
+   button — the button that opens the panel the request is in. */
+.at-act-btn{position:relative}
+.at-req-dot.at-act-dot{position:absolute;top:-4px;right:-4px}
+
+/* The month in the panel header's meta line (renderAtSidebar, pages.js). */
+.at-sb-period{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.at-sb-period svg{flex-shrink:0;opacity:.75}
+
+/* ── Filter strip ── */
+.at-req-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.at-req-seg{display:inline-flex;padding:3px;border-radius:9px;background:var(--ol);border:1px solid var(--border)}
+.at-req-seg button{
+  display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px;border:none;border-radius:7px;
+  background:none;font:inherit;font-size:12.5px;font-weight:500;color:var(--gray);cursor:pointer;
+  transition:background .15s ease,color .15s ease}
+.at-req-seg button.active{background:#fff;color:var(--navy);font-weight:600;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+.at-req-count{
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;background:var(--st-idle-bg);color:var(--st-idle-fg);font-variant-numeric:tabular-nums}
+.at-req-count.is-hot{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+.at-req-bar-note{font-size:11.5px;color:var(--gray)}
+
+/* ── A request ──
+   Neutral on purpose: white card, grey icon, grey labels. The status badge is
+   the only colour, so a list of them reads as a list and not as an alarm. */
+.at-req-list{display:flex;flex-direction:column;gap:10px}
+.at-req-card{padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:#fff;
+  transition:border-color .15s ease,box-shadow .15s ease}
+.at-req-card:hover{border-color:#d5dbe3;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+.at-req-top{display:flex;align-items:flex-start;gap:12px}
+.at-req-ico{width:34px;height:34px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:var(--ol);color:#475569}
+.at-req-head{flex:1;min-width:0}
+.at-req-title{font-size:13.5px;font-weight:600;color:var(--navy);line-height:1.3}
+.at-req-date{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px;margin-top:3px;font-size:12px;color:var(--gray)}
+.at-req-sep{width:3px;height:3px;border-radius:50%;background:#cbd5e1}
+
+/* The times, as a labelled read-out. */
+.at-req-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:12px;
+  border:1px solid #eef1f4;border-radius:8px;background:#eef1f4;overflow:hidden}
+.at-req-grid.is-compare{grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr)}
+.at-req-cell{display:flex;flex-direction:column;gap:3px;padding:9px 12px;background:#fbfcfd;min-width:0}
+.at-req-cell.is-wide{grid-column:1/-1}
+.at-req-lbl{font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#94a3b8}
+.at-req-val{font-size:13px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.at-req-sub{font-size:11.5px;color:var(--gray);font-variant-numeric:tabular-nums}
+.at-req-cell.is-before .at-req-val{color:#94a3b8;font-weight:500;text-decoration:line-through}
+.at-req-arrow{display:flex;align-items:center;justify-content:center;background:#fbfcfd;color:#94a3b8}
+
+.at-req-reason{display:flex;flex-direction:column;gap:4px;margin-top:12px;
+  font-size:12.5px;color:#334155;line-height:1.5;word-break:break-word}
+
+.at-req-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-top:12px;padding-top:12px;border-top:1px solid #f1f3f5}
+.at-req-when{font-size:11.5px;color:var(--gray)}
+.at-req-acts{display:flex;gap:8px}
+.at-req-btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 14px;border-radius:7px;
+  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
+.at-req-btn.is-reject{background:#fff;color:var(--navy);border:1px solid var(--border)}
+.at-req-btn.is-reject:hover{background:var(--btn-ghost-bg);border-color:#cbd5e1}
+.at-req-btn.is-approve{background:var(--navy);color:#fff;border:1px solid var(--navy)}
+.at-req-btn.is-approve:hover{filter:brightness(1.15)}
+
+/* ── Empty states ──
+   Full: this person has never asked for anything. Compact: they have, but
+   nothing is waiting. */
+.at-req-empty{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:40px 24px 36px;border:1px dashed #d5dbe3;border-radius:12px;background:#fbfcfd}
+.at-req-empty.is-compact{padding:28px 20px}
+.at-req-empty-ico{
+  width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#fff;border:1px solid var(--border);color:#94a3b8;box-shadow:0 0 0 6px var(--ol)}
+.at-req-empty-ico.is-ok{width:44px;height:44px;background:var(--st-ok-bg);border-color:var(--st-ok-bd);color:var(--st-ok-fg);box-shadow:none}
+.at-req-empty-title{margin-top:16px;font-size:14px;font-weight:700;color:var(--navy)}
+.at-req-empty.is-compact .at-req-empty-title{margin-top:12px}
+.at-req-empty-txt{margin:6px 0 0;max-width:340px;font-size:12.5px;line-height:1.5;color:var(--gray)}
+.at-req-empty-kinds{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:18px}
+.at-req-empty-kinds span{
+  display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:13px;
+  background:#fff;border:1px solid var(--border);font-size:11.5px;color:#475569}
+.at-req-empty-kinds svg{width:13px;height:13px;color:#94a3b8}
+.at-req-link{
+  margin-top:12px;background:none;border:none;padding:0;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--btn-accent);cursor:pointer}
+.at-req-link:hover{text-decoration:underline}

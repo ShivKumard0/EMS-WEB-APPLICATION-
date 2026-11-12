@@ -1,0 +1,7 @@
+/* ══ LISTING HEADERS ON ONE LINE (product owner, 10 Nov 2026) ═════════════
+   A column header is one short label on one line; it never wraps under a
+   narrow column. What a column holds besides its main value (an approved
+   amount under the requested one, a reference under a date) is shown in the
+   cell, not in the header. Loaded last; headers only. */
+:is(.lp-table,.att-table,.csag-table,.lpl-table,.listing-table,.at-table,.at-sb-table,
+    .leave-table,.lb-table,.ax-hist,.hdoc-table,.ph-slab-table) thead th{white-space:nowrap}

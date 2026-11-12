@@ -1,0 +1,255 @@
+/* ══ E-SIGN (DocuSeal) ════════════════════════════════════════════════════
+   THIS FILE ADDS AS LITTLE AS IT CAN, because the app already has a component
+   for nearly everything e-signing needs and the first version of this screen
+   invented parallel ones. What it now uses, unchanged:
+
+     .ct-modal--form + .ep-form-grid   the popup and its field grid, exactly
+                                       as the Generate NDA popup uses them
+     .lp-sb-view-header / -section-title   a section heading inside a panel
+     .lp-sb-detail-grid / .lp-sb-field-card   read-only facts: icon, small
+                                       grey label, bold value - the same cards
+                                       the entity's Basic Details tab draws
+     .csag-table / .csag-file / .csag-file-ico   the attachments listing's
+                                       table and file cell
+     .lp-status-badge.tone-*           every status pill in the app
+     .lp-log-* timeline                every Logs tab in the app
+     .info-box.tip                     the app's one note treatment
+     .att-row-btn / .ep-save-btn / .ep-cancel-btn / .att-link   the buttons
+
+   What remains below is only the handful of things the system genuinely has
+   no part for: the row's Send action, a masked credential field, the role
+   preview, the integration row, and the mock webhook simulator. */
+
+/* ── Row action ───────────────────────────────────────────────────────────
+   An outline button cut from the same cloth as the .att-row-btn icons it sits
+   beside - same 28px height, 7px corner, stroke and hover - so the action
+   cell reads as one toolbar rather than a row of icons with a black slab
+   bolted on the end. A hairline divider separates it from the file's own
+   actions (view, download, remove), because sending for signature is a
+   different kind of act from handling the file. */
+.es-send-btn{position:relative;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 10px;
+  margin-left:15px;vertical-align:middle;border:1px solid var(--border);border-radius:7px;background:var(--card);
+  color:var(--btn-ink,#353535);font-family:inherit;font-size:12px;font-weight:600;line-height:1;white-space:nowrap;
+  cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease}
+.es-send-btn::before{content:'';position:absolute;left:-9px;top:5px;bottom:5px;width:1px;background:var(--border)}
+.es-send-btn svg{flex-shrink:0;color:#64748b;transition:color .15s ease}
+.es-send-btn:hover:not(:disabled){background:var(--btn-ghost-bg);border-color:var(--btn-accent);color:var(--btn-accent)}
+.es-send-btn:hover:not(:disabled) svg{color:var(--btn-accent)}
+.es-send-btn:active:not(:disabled){transform:scale(.97)}
+.es-send-btn:focus-visible{outline:2px solid var(--btn-accent);outline-offset:2px}
+/* Disabled keeps the button's shape so the row does not reflow when the thing
+   blocking it is resolved; the reason is on its tooltip. */
+.es-send-btn:disabled{background:var(--light);border-color:var(--border);color:#9aa3b0;cursor:not-allowed}
+.es-send-btn:disabled svg{color:#c0c7d1}
+/* The e-sign detail and setup icons that replace the Send button once it has
+   done its job take the same divider, so the cell keeps its grouping. */
+.csag-act .att-row-btn.es-detail,.csag-act .att-row-btn.es-cog{position:relative;margin-left:15px}
+.csag-act .att-row-btn.es-detail::before,.csag-act .att-row-btn.es-cog::before{content:'';position:absolute;
+  left:-9px;top:5px;bottom:5px;width:1px;background:var(--border)}
+.att-row-btn.es-cog.is-on{background:var(--btn-tint-bg);color:var(--btn-accent)}
+
+/* ── Inside the popup ─────────────────────────────────────────────────────
+   Spacing only. The parts themselves are the app's. */
+.es-modal .csag-body{padding-bottom:20px}
+/* The send popup's closing note sits a full grid gap below the fields - the
+   info-box's own 8px top margin made it read as part of the last field row -
+   and its icon centres on the text block instead of hanging off its top edge. */
+.es-modal .ep-form-grid+.info-box{margin-top:22px}
+.es-modal .info-box.tip{padding:14px 16px;gap:12px;align-items:center}
+.es-modal .info-box.tip strong{color:var(--navy);margin-bottom:4px}
+.es-sec{margin-bottom:20px}
+.es-sec:last-child{margin-bottom:0}
+.es-sec .lp-sb-view-header{margin-bottom:10px}
+.es-sec .info-box{margin-top:12px}
+/* The field cards are read-only facts, so they use the detail-panel grid.
+   Three per row rather than two: an id is a short value and the popup is
+   wider than the side panel these cards were first drawn in. */
+.es-facts{grid-template-columns:repeat(3,1fr)}
+.es-facts .lp-sb-field-value{font-size:12.5px;gap:6px;min-width:0}
+.es-facts .lp-sb-field-value span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.es-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.2px}
+.es-copy{flex-shrink:0;width:20px;height:20px;border:none;background:none;border-radius:5px;cursor:pointer;
+  color:#b6bdc8;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.es-copy:hover{background:#e8ecf2;color:var(--btn-accent)}
+/* A fact with no value yet stays in the grid rather than being dropped, so
+   the popup does not change shape as the flow progresses. */
+.lp-sb-field-value .es-none{color:#b6bdc8;font-weight:500}
+
+/* Tables inside the popup are the attachments listing's table. Only the
+   corner rounding differs, because here it is not inside a scroll wrapper. */
+.es-sec .csag-table{min-width:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.es-sec .csag-table th:first-child,.es-sec .csag-table td:first-child{padding-left:14px}
+.es-sec .csag-table th:last-child,.es-sec .csag-table td:last-child{padding-right:14px}
+.es-sec .csag-table tr:last-child .csag-td{border-bottom:0}
+.es-party{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:5px;
+  font-size:10.5px;font-weight:600;background:var(--light);color:#64748b;white-space:nowrap}
+.es-party.is-client{background:#eff6ff;color:#2563eb}
+.es-party.is-company{background:#fdf2f8;color:#db2777}
+.es-sub{font-size:11px;color:var(--gray);margin-top:1px;font-weight:400}
+.es-missing{color:#b6bdc8;font-style:italic}
+
+/* Signed files reuse the listing's file cell, in a bordered row rather than a
+   table because there are at most two of them. */
+.es-file{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);
+  border-radius:10px;margin-bottom:8px;background:var(--card)}
+.es-file:last-child{margin-bottom:0}
+.es-file .csag-file{flex:1;min-width:0}
+/* .lp-c-main sets no font-size of its own - inside the listing it inherits the
+   12.5px of .csag-td. Outside a table it would inherit the modal's body size
+   and a filename would out-shout the section heading above it, so the table's
+   size is restated here. */
+.es-file .lp-c-main{font-size:12.5px}
+.es-file .lp-c-sub{white-space:normal}
+.es-file-acts{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.csag-file-ico.es-ico-signed{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.csag-file-ico.es-ico-audit{background:#eef2ff;color:#4f46e5}
+.csag-file-ico.es-ico-wait{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.csag-file-ico.es-ico-lock{background:var(--light);color:#9aa3b0}
+.es-empty{padding:18px;text-align:center;font-size:12px;color:#9aa3b0;border:1px dashed var(--border);border-radius:10px}
+
+/* An open question in the written requirement, marked where it lands on the
+   screen rather than tracked in a document nobody opens next to it. */
+.es-tbd{display:inline-flex;align-items:center;height:17px;padding:0 6px;margin-left:6px;border-radius:4px;
+  background:#fde5c0;color:#92400e;font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+  vertical-align:middle}
+
+/* ── Sending ──────────────────────────────────────────────────────────────
+   The request is the one moment with no result yet, so it replaces the body
+   rather than spinning on the button - the popup must not look pressable
+   while a submission is being created. */
+.es-sending{display:flex;flex-direction:column;align-items:center;gap:12px;padding:44px 20px;text-align:center}
+.es-spinner{width:28px;height:28px;border:3px solid #e8edf3;border-top-color:var(--orange);border-radius:50%;
+  animation:es-spin .7s linear infinite}
+@keyframes es-spin{to{transform:rotate(360deg)}}
+.es-sending-title{font-size:13.5px;font-weight:700;color:var(--navy)}
+.es-sending-sub{font-size:12px;color:var(--gray);max-width:330px;line-height:1.55}
+
+/* ── Webhook simulator ───────────────────────────────────────────────────
+   Visibly a test harness and not a product control, so it is set apart by a
+   dashed edge and says what it stands in for. */
+.es-sim{border:1px dashed #d4dae2;border-radius:12px;padding:14px;background:#fbfcfd}
+.es-tag{display:inline-flex;align-items:center;height:17px;padding:0 7px;border-radius:5px;background:#e0e7ff;
+  color:#4338ca;font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.es-sim-sub{font-size:11.5px;color:var(--gray);line-height:1.55;margin:0 0 12px}
+.es-sim-row{display:flex;gap:10px;align-items:center}
+.es-sim-row .cs-wrap{flex:1;min-width:0}
+.es-sim-row .ep-save-btn{flex-shrink:0}
+.es-sim-btns{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.es-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#475569;
+  background:var(--light);border:1px solid var(--border);border-radius:5px;padding:1px 6px}
+.es-log .lp-logs-timeline{max-height:240px;overflow:auto;padding-right:6px}
+.es-log .lp-log-status-row{flex-wrap:wrap;gap:6px}
+.es-code-dupe{color:#92400e;background:#fde5c0;border-color:#fcd9a0}
+
+/* ══ THE E-SIGN TAB (Company Settings) ═══════════════════════════════════
+   A tab body on the entity panel, so it has no card of its own - the panel is
+   the card. Sections are separated by a rule, the way a tab with more than one
+   section is separated everywhere else on this panel. */
+.es-tab-sub{font-size:12.5px;color:var(--gray);line-height:1.6;margin:-8px 0 14px}
+.es-rule{height:1px;background:var(--border);margin:22px 0 18px}
+.es-toggle{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.es-toggle-lbl{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap}
+/* Who does what (csEsignTabHTML): two bordered columns under the header card,
+   each a short checklist, in place of the paragraph that used to say it. */
+.es-roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.es-role{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#fff}
+.es-role-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.es-role-h svg{width:13px;height:13px;color:#64748b;flex-shrink:0}
+.es-role-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.es-role-list li{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:#475569;line-height:1.4}
+.es-role-list li svg{width:12px;height:12px;margin-top:2px;flex-shrink:0;color:var(--st-ok-fg)}
+.es-send-from{display:flex;align-items:center;gap:8px;padding:9px 12px;margin-bottom:16px;border-radius:8px;
+  background:var(--light);font-size:12.5px;color:var(--gray)}
+.es-send-from>svg{width:14px;height:14px;flex-shrink:0;color:#64748b}
+.es-send-from .es-inline-link{font-weight:600;padding:0;vertical-align:baseline}
+@media (max-width:640px){.es-roles{grid-template-columns:1fr}}
+/* The panel is narrower than a page, so the form keeps two columns but tighter
+   gutters than a full-width form would use. */
+.es-cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+
+.es-secret{position:relative}
+.es-secret .ep-form-input{padding-right:40px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.5px}
+.es-eye{position:absolute;top:50%;right:9px;transform:translateY(-50%);width:26px;height:26px;border:none;
+  background:none;border-radius:6px;cursor:pointer;color:#b6bdc8;display:flex;align-items:center;justify-content:center;padding:0}
+.es-eye:hover{background:#eef2f7;color:var(--btn-accent)}
+.es-ro .ep-form-input{background:#f8f9fb;color:#64748b}
+.es-hint{font-size:11px;color:var(--gray);margin-top:6px;line-height:1.5}
+.es-hint b{color:var(--navy);font-weight:600}
+.es-inline-link{height:22px;padding:0 6px;vertical-align:-5px}
+
+/* One footer rule: state on the left, actions on the right. */
+.es-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  border-top:1px solid var(--border);margin-top:18px;padding-top:14px}
+.es-foot-btns{display:flex;gap:10px;margin-left:auto}
+.es-foot .ep-save-btn:disabled{background:#eef1f5;color:#9aa3b0;cursor:not-allowed}
+.es-state{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;line-height:1.5;min-width:0}
+.es-state.is-ok{color:var(--st-ok-fg)}
+.es-state.is-bad{color:var(--st-bad-fg)}
+.es-state.is-idle{color:var(--gray);font-weight:500}
+.es-state .es-spinner{width:14px;height:14px;border-width:2px}
+.es-state svg{flex-shrink:0}
+
+/* ══ THE ATTACHMENTS ROW ══════════════════════════════════════════════════
+   A FILE NAME IS ONE LINE, TRUNCATED. Long upload names have no spaces to
+   break on, so the cell was wrapping "Kanan_Textiles_MSA_signed_copy.pdf"
+   across two lines and taking the row's height and its baselines with it -
+   the size sub-line then sat below a two-line name while every other cell in
+   the row stayed centred on one. The full name is on the cell's tooltip, which
+   is how the rest of the app's tables handle a value too long for its column. */
+.csag-table .csag-file-txt{min-width:0}
+.csag-table .csag-file-txt .lp-c-main,
+.csag-table .csag-file-txt .lp-c-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* SIX COLUMNS, SIX SHARES, AND THE BROWSER GETS NO SAY.
+
+   The table wants 881px and the entity panel gives it 780. Under the default
+   auto layout the browser decides which column pays the 100px difference, and
+   it kept choosing Source - which vanished entirely, while File Name sat at
+   full width showing a name nobody needs in full. Percentage widths did not
+   help: under auto layout they are hints, and min-content always wins.
+
+   table-layout:fixed makes the shares binding. Every column now gets exactly
+   what it is given, and the one value here that is genuinely unbounded - the
+   file name - absorbs the difference by truncating, with the full name on its
+   tooltip. Action is sized from the widest cell it actually has to hold: a
+   status pill plus three icon buttons, measured at 211px.
+
+   Scoped to the attachments listing; Roles & Access uses the same table class
+   with a different set of columns. */
+.csag-table--files{table-layout:fixed}
+/* Sized from the longest real value in each: "Shrikant Ghagre" and "Manual
+   upload" both have to fit without clipping, because a truncated person or a
+   truncated source tells you nothing, where a truncated file name still
+   tells you which file it is. */
+.csag-table--files th:nth-child(1){width:58px}
+.csag-table--files th:nth-child(2){width:25%}
+.csag-table--files th:nth-child(3){width:18%}
+.csag-table--files th:nth-child(4){width:8%}
+.csag-table--files th:nth-child(5){width:14%}
+.csag-table--files th:nth-child(6){width:29%}
+/* Fixed layout will happily let a cell spill past its share, so the two other
+   columns holding free text clip rather than overlap their neighbour. */
+.csag-table--files td:nth-child(3),
+.csag-table--files td:nth-child(5){overflow:hidden;text-overflow:ellipsis}
+/* In the side panel the Action share is ~200px, short of the full "Send to
+   E-sign" button beside Download and Remove, so the row scrolled sideways and
+   the button was cut. Below 900px the button drops its label and becomes the
+   same square as the icons beside it; the full wording stays on its tooltip.
+   The popup and wider screens keep the label. */
+.csag-table-wrap{container-type:inline-size}
+@container (max-width:900px){
+  .csag-table--files .es-send-btn{width:28px;padding:0;justify-content:center}
+  .csag-table--files .es-send-lbl{display:none}
+}
+
+/* Roles & Access: the person cell's avatar, the one part that table needs and
+   the attachments table does not have. */
+.cs-role-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;
+  justify-content:center;background:var(--light);color:#64748b;font-size:11px;font-weight:700;letter-spacing:.3px}
+.cs-role-scope{color:#64748b;font-size:11.5px}
+.att-row-btn.is-danger:hover{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+
+@media (max-width:760px){
+  .es-cfg-grid{grid-template-columns:1fr}
+  .es-facts{grid-template-columns:1fr}
+}

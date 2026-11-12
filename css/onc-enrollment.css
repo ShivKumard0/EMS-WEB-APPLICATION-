@@ -1,0 +1,24 @@
+/* ══ ONC CARD ENROLLMENT + MODULE CONTROL (js/onc-enrollment.js, js/ems-access.js)
+   Everything sits on the shared parts: ea-toggle-row and cs-toggle for the
+   switches, lp-sb-detail-grid / axField for the details, ep-form-grid for
+   the edit form, att-table.csag-table for lists, wb-note for notes. Only the
+   group headings and the declaration rows are new. */
+.onc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.onc-switch{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--border)}
+.onc-switch .ea-block-head{font-size:13px}
+.onc-group-h{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray);margin:16px 0 8px}
+.onc-group-h .wb-muted{text-transform:none;letter-spacing:0;font-weight:400;margin-left:6px}
+.onc-decls{display:flex;flex-direction:column;gap:8px}
+.onc-decl{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--navy);line-height:1.45;cursor:pointer}
+.onc-decl input{margin-top:3px;accent-color:var(--btn-ink)}
+.onc-decl.is-ok{color:var(--navy)}
+.onc-decl.is-ok svg{color:var(--st-ok-fg)}
+.onc-decl.is-ok svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+.onc-decl-box{width:14px;height:14px;border:1.5px solid var(--border);border-radius:4px;flex-shrink:0;margin-top:2px}
+.onc-pend{margin:8px 0}
+.onc-pend .csag-td{white-space:normal}
+.csag-table code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:var(--light);padding:1px 5px;border-radius:4px}
+
+/* Add Employee: five step titles fit the stepper (Benefits & Eligibility wraps) */
+.ea-stepper .ea-step-text{max-width:150px}
+.ea-stepper .ea-step-title,.ea-stepper .ea-step-sub{white-space:normal}

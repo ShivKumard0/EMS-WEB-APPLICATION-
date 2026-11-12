@@ -1,0 +1,30 @@
+/* Corporate Cards (Build 7) - only what the shared components do not already style. */
+.cc-checks{display:flex;flex-wrap:wrap;gap:6px 18px;padding-top:4px}
+.cc-check{margin:0}
+.cc-demo-row .att-link{margin-left:6px}
+.cc-table td{vertical-align:middle}
+.cc-summary{flex-wrap:wrap;margin-bottom:12px}
+.cc-ver{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:10px}
+.cc-ver-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.cc-ver .sb-hist-wrap{margin-top:8px}
+.cc-ctl-table td{white-space:normal}
+/* 7E: Card Loads sub-views, bulk rows */
+.cc-subbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:2px 0 12px}
+.cc-subbar .ca-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* Statements & Reconciliation has nine boxes on one row: a long label ("Reconciliation Exceptions") wraps onto two
+   lines inside its box instead of running into the next one (11 Nov 2026). */
+.cc-stmt-stats .listing-stat{padding:10px 8px;min-width:0}
+.cc-stmt-stats .listing-stat-label{white-space:normal;text-align:center;line-height:1.3}
+.cc-bulk-stats{margin:6px 0 12px;flex-wrap:wrap}
+.cc-bulk-rows td{vertical-align:top}
+.cc-bulk-rows tr.cc-row-bad td{background:#fef6f6}
+.cc-bulk-rows td{white-space:normal;overflow:visible;text-overflow:clip;max-width:none}
+.cc-bulk-rows td:nth-child(5){min-width:180px}
+.cc-bulk-rows td .ax-sub{white-space:nowrap}
+.cc-bulk-rows .cc-row-acts{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+/* 7F: cardholder view */
+.cc-holder-head{margin-top:4px}
+.cc-holder-figs{margin:4px 0 8px}
+.cc-holder-pend .wb-note{margin:6px 0}
+.cc-holder-table td{white-space:normal;max-width:none;vertical-align:top}
+.cc-holder-table td .att-link{margin:-4px 0 -4px -6px}

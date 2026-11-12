@@ -1,0 +1,108 @@
+/* ══ RBAC TEMPLATES (js/rbac-templates.js) ═════════════════════════════════
+   The page is the standard listing + detail panel (lp-*, .ax-table, sbHero,
+   lpLogsView, wfTimelineHTML). Only the permission parts are here: the
+   listing's Permissions cell, the panel's Permissions tab and the picker in
+   the Add / Edit form. Monochrome like the rest of the app - amber is the one
+   colour, and it only ever means "sensitive". */
+
+/* Listing */
+.lp-page .rb-top .lp-filter-bar .lp-filter-bar-row .lp-search-input{width:270px}
+.rb-top .lp-filter-bar-row .cs-wrap{width:150px}
+.rb-table .lp-c-plain.is-none{color:var(--gray)}
+/* Every cell is one or two single lines, so every row is the same height. */
+.rb-table .ax-c-trunc{white-space:nowrap}
+.rb-table .ax-c-trunc{max-width:260px}
+.rb-table .rb-c-areas{max-width:190px}
+/* Permissions holds a count and a short line, so it stays narrow; the
+   names (template, roles) get the width. */
+.rb-table th:nth-child(2){width:30%}
+.rb-table th:nth-child(3){width:9%}
+.rb-table th:nth-child(4){width:200px}
+.rb-table th:nth-child(5){width:24%}
+
+/* Sensitive: the one colour on the page */
+.rb-sens{display:inline-flex;align-items:center;gap:4px;color:var(--st-wait-fg);font-weight:500;white-space:nowrap}
+.rb-sens svg{width:12px;height:12px;flex-shrink:0}
+.rb-tag-sens{flex-shrink:0;font-size:10px;font-weight:600;color:var(--st-wait-fg);background:var(--st-wait-bg);
+  border:1px solid var(--st-wait-bd);border-radius:var(--r-status);padding:1px 7px;align-self:center}
+.rb-link{color:var(--navy);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* Panel: Permissions tab */
+.rb-seg{margin-left:auto;margin-right:10px}
+.rb-seg .seg-btn{padding:6px 12px;min-width:0}
+.rb-seg-n{font-size:10.5px;color:var(--gray);font-weight:500}
+.rb-mod{border:1px solid var(--border);border-radius:var(--r-card);background:var(--card);margin-bottom:12px;overflow:hidden}
+.rb-mod-hd{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--light);border-bottom:1px solid var(--border)}
+.rb-mod-name{font-size:13px;font-weight:600;color:var(--navy)}
+.rb-mod-n{font-size:11.5px;color:var(--gray);font-variant-numeric:tabular-nums}
+.rb-mod-bar{margin-left:auto;width:90px;height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.rb-mod-bar span{display:block;height:100%;background:var(--orange)}
+.rb-area{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.rb-area:last-child{border-bottom:0}
+.rb-area-name{font-size:12px;font-weight:600;color:var(--navy);padding-top:3px}
+.rb-area-list{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rb-perm{display:flex;align-items:flex-start;gap:8px}
+.rb-perm-ico{flex-shrink:0;width:16px;height:16px;margin-top:2px;border-radius:4px;background:var(--orange);color:#fff;display:grid;place-items:center}
+.rb-perm-ico svg{width:10px;height:10px}
+.rb-perm.is-sens .rb-perm-ico{background:var(--st-wait-fg)}
+.rb-perm.is-off .rb-perm-ico{background:transparent;border:1px dashed var(--st-idle-bd)}
+.rb-perm-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rb-perm-d{font-size:12.5px;color:var(--navy);line-height:1.4}
+.rb-perm.is-off .rb-perm-d{color:var(--gray)}
+.rb-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--gray);letter-spacing:-.1px}
+.rb-perm.is-off .rb-tag-sens{opacity:.55}
+
+/* Add / Edit: the permission picker */
+.rb-modal{max-width:880px}
+.rb-pk{display:flex;flex-direction:column;gap:10px}
+.rb-pk-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rb-pk .rb-pk-q{flex:1;min-width:220px;width:auto}
+.rb-pk-sum{display:inline-flex;align-items:center;gap:10px;font-size:12px;color:var(--gray);white-space:nowrap}
+.rb-pk-sum b{color:var(--navy);font-weight:600;font-variant-numeric:tabular-nums}
+.rb-pk-clear,.rb-pk-bulk,.rb-pk-all{border:0;background:none;padding:0;font:inherit;font-size:11.5px;font-weight:500;color:var(--gray);
+  text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.rb-pk-clear:hover,.rb-pk-bulk:hover,.rb-pk-all:hover{color:var(--navy)}
+.rb-pk-list{border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden;background:var(--card)}
+.rb-pk-mod+.rb-pk-mod{border-top:1px solid var(--border)}
+.rb-pk-hd{display:flex;align-items:center;gap:12px;padding-right:14px;background:var(--light)}
+.rb-pk-mod.is-open .rb-pk-hd{border-bottom:1px solid var(--border)}
+.rb-pk-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:11px 14px;border:0;background:none;font:inherit;cursor:pointer;text-align:left}
+.rb-pk-chev{display:inline-flex;width:14px;height:14px;color:var(--gray);transition:transform 170ms var(--ease-out,ease)}
+.rb-pk-chev svg{width:14px;height:14px}
+.rb-pk-mod.is-open .rb-pk-chev{transform:rotate(90deg)}
+.rb-pk-name{font-size:13px;font-weight:600;color:var(--navy)}
+.rb-pk-own{font-size:10px;font-weight:600;color:var(--gray);border:1px solid var(--border);border-radius:var(--r-status);padding:1px 7px;background:var(--card)}
+.rb-pk-count{margin-left:auto;font-size:11.5px;color:var(--gray);font-variant-numeric:tabular-nums}
+.rb-pk-count.has{color:var(--navy);font-weight:600}
+.rb-pk-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start;padding:9px 14px;border-bottom:1px solid var(--border)}
+.rb-pk-row:last-child{border-bottom:0}
+.rb-pk-area{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;font-weight:600;color:var(--navy);padding-top:5px}
+.rb-pk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rb-ck{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 8px;border:1px solid var(--border);border-radius:var(--r-control);
+  background:var(--card);font:inherit;font-size:12px;font-weight:500;color:var(--gray);cursor:pointer;transition:border-color 110ms,background 110ms,color 110ms}
+.rb-ck:hover{border-color:var(--navy);color:var(--navy)}
+.rb-ck-box{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--st-idle-bd);display:grid;place-items:center;flex-shrink:0}
+.rb-ck-box svg{width:9px;height:9px}
+.rb-ck.on{border-color:var(--orange);color:var(--navy);background:var(--ol)}
+.rb-ck.on .rb-ck-box{background:var(--orange);border-color:var(--orange);color:#fff}
+.rb-ck.is-sens.on{border-color:var(--st-wait-bd);background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.rb-ck.is-sens.on .rb-ck-box{background:var(--st-wait-fg);border-color:var(--st-wait-fg)}
+.rb-ck.is-sens:not(.on) .rb-ck-box{border-color:var(--st-wait-bd)}
+.rb-ck:focus-visible,.rb-pk-toggle:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.rb-pk-none{padding:22px;text-align:center;color:var(--gray);font-size:12.5px}
+
+/* Narrow screens: area names go above their actions. */
+@media (max-width:640px){
+  .rb-pk-row,.rb-area{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.rb-pk-chev,.rb-ck{transition:none}}
+
+/* Horizontal scroll on the RBAC Templates listing (product owner, 8 Nov 2026): the same treatment as the Expense
+   Management listings (css/expenses.css). Where the table is wider than its card it scrolls sideways, Action
+   pinned, instead of being cut off under the pinned Action column; the column heads scroll with the table. */
+.lp-table-card:has(> table.rb-table){overflow-x:auto;overscroll-behavior-x:contain}
+/* ...and first, fit the card: text cells wrap to at most two lines (then "…") only when the one-line table does not
+   fit its card (.is-tight, js/listing-fit.js), as on the Expense Management listings (css/expenses.css). */
+.lp-table.is-tight.rb-table td:not(:first-child):not(:last-child) :is(.lp-c-main,.lp-c-plain,.lp-c-sub):not(:has(button,a,input,select,.lp-status-badge)){
+  white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+.lp-table.is-tight.rb-table td[colspan]{white-space:normal}

@@ -1,0 +1,18 @@
+/* ══ COMPANY SETTINGS · ROLES & ACCESS (js/cs-roles.js) ═════════════════════
+   The inline Add / Edit Role form above the roles table. Same card as the
+   RBAC Workspaces add-team form (.ws-add). */
+.csr-add{border:1px solid var(--border);border-radius:var(--r-card);background:var(--light);padding:14px;margin-bottom:14px}
+.csr-add-hd{margin-bottom:12px}
+.csr-kind{margin-bottom:14px}
+.csr-seg{display:inline-flex}
+.csr-add .lp-sb-form-actions{margin-top:12px}
+.csag-table tr.csr-editing td{background:var(--light)}
+
+/* Company Settings: the section's tabs under the section bar, and Company
+   Structure's own (nested) strip - one look for both (js/pages.js). */
+.cs-subtabs{display:flex;gap:0;flex-wrap:wrap;border-bottom:1.5px solid var(--border);margin:-4px 0 16px}
+.cs-subtabs.is-nested{margin:0 0 14px}
+.cs-subtab{padding:7px 13px;border:none;background:none;font-size:12.5px;font-weight:500;color:var(--gray);cursor:pointer;font-family:inherit;
+  border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:.15s}
+.cs-subtab:hover{color:var(--navy)}
+.cs-subtab.active{font-weight:600;color:var(--orange);border-bottom-color:var(--orange)}

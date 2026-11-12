@@ -1,0 +1,229 @@
+/* ══ THE LOGS TAB (js/logs-view.js) ═══════════════════════════════════════
+   Head (current-status bar, or a status card) → composer → log table.
+   Every colour is an existing --st-* tone or the panel greys main.css and
+   leaves.css already use. */
+
+.lpl{display:flex;flex-direction:column;min-width:0}
+
+/* ── Current-status bar ─────────────────────────────────────────────────── */
+.lpl-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding:14px 16px;margin-bottom:14px;
+  border:1px solid var(--border);border-radius:12px;background:var(--light)}
+/* The text takes the room it needs (never under 260px); the buttons sit on
+   its right while they fit, and drop to their own right-aligned row when
+   they do not - so two or three buttons always line up on one baseline. */
+.lpl-bar-main{flex:1 1 260px;min-width:0}
+.lpl-eyebrow{margin-bottom:4px;line-height:1;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9ca3af}
+.lpl-status{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0 0 3px;font-size:15px;font-weight:700;color:#1e293b;line-height:1.3}
+.lpl-dot{width:8px;height:8px;border-radius:50%;background:var(--st-info-fg);flex-shrink:0}
+/* Last stage reached - green, with a tick, moves kept */
+.lpl-bar.is-done{background:#f6fdf8;border-color:var(--st-ok-bd)}
+.lpl-done-ico{width:20px;height:20px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+  background:var(--st-ok-fg);color:#fff;animation:lpl-done-pop .26s cubic-bezier(.34,1.56,.64,1) backwards}
+.lpl-done-pill{padding:2px 9px;border-radius:999px;border:1px solid var(--st-ok-bd);background:var(--st-ok-bg);color:var(--st-ok-fg);
+  font-size:11px;font-weight:600;line-height:1.4}
+@keyframes lpl-done-pop{from{transform:scale(.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lpl-done-ico{animation:none}}
+.lpl-sub-line{margin:0;font-size:12px;line-height:1.4;color:var(--gray)}
+.lpl-sub-line b,.lpl-sub-line strong{color:var(--navy);font-weight:600}
+.lpl-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;flex:0 1 auto;margin-left:auto;max-width:100%}
+.lpl-btn{--btn-h:34px;--btn-px:16px;--btn-fs:12.5px;height:34px;padding:0 16px;white-space:nowrap}
+.lpl-btn.is-danger,.lpl-btn.is-danger:hover{background:var(--st-bad-fg);border-color:var(--st-bad-fg);color:#fff}
+.lpl-actions .btn-outline.lpl-btn.is-danger{background:#fff;color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+.lpl-actions .btn-outline.lpl-btn.is-danger:hover{background:var(--st-bad-bg)}
+.lpl-actions .cs-wrap{width:220px;min-width:0;margin:0!important}
+.lpl-actions .cs-trigger{height:34px}
+
+/* "More" - moves beyond the first few fold into a menu */
+.lpl-more{position:relative}
+.lpl-more .lpl-btn{display:inline-flex;align-items:center;gap:6px}
+.lpl-more-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:200px;width:max-content;max-width:280px;padding:6px;
+  background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.12)}
+.lpl-more-menu.open{display:block}
+.lpl-more-item{display:block;width:100%;text-align:left;padding:8px 10px;border:0;border-radius:7px;background:none;
+  font:500 12.5px Inter,sans-serif;color:var(--navy);cursor:pointer}
+.lpl-more-item:hover{background:#f3f4f6}
+.lpl-more-item.is-back{color:var(--st-wait-fg)}
+.lpl-more-item:disabled{color:#b0b8c4;cursor:not-allowed;background:none}
+.lpl-more-menu{max-height:320px;overflow-y:auto}
+
+/* ── Status cards (nothing to do here) ─────────────────────────────────── */
+.lpl-state{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  border:1px solid var(--border);border-radius:12px;background:var(--light);padding:28px 20px;margin-bottom:14px}
+.lpl-state-ico{width:44px;height:44px;border-radius:12px;background:#f1f3f5;color:#9ca3af;display:flex;align-items:center;justify-content:center}
+.lpl-state-ico svg{width:20px;height:20px}
+.lpl-state-title{font-size:14px;font-weight:600;color:var(--navy)}
+.lpl-state-sub{font-size:12px;color:var(--gray);line-height:1.5;max-width:380px}
+.lpl-state-sub b{color:var(--navy)}
+.lpl-state .lpl-btn{margin-top:4px}
+.lpl-state.is-wait .lpl-state-ico{background:var(--st-info-bg);color:var(--st-info-fg)}
+.lpl-state.is-done{background:#f6fdf8;border-color:#d1f2dc}
+.lpl-state.is-done .lpl-state-ico{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.lpl-state.is-bad .lpl-state-ico{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+.lpl-state-cur{display:inline-flex;align-items:center;gap:8px;margin-bottom:2px;padding:4px 10px;border:1px solid var(--border);
+  border-radius:99px;background:#fff;font-size:12px}
+.lpl-state-cur span{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9ca3af}
+.lpl-state-cur b{font-weight:600;color:var(--navy)}
+
+/* ── Composer ───────────────────────────────────────────────────────────── */
+.lpl-composer{margin-bottom:16px;border:1px solid var(--border);border-radius:12px;background:#fff;
+  box-shadow:0 4px 16px rgba(15,23,42,.06);overflow:hidden;animation:lpl-in .18s ease-out backwards}
+.lpl-composer[hidden]{display:none}
+/* While composing, the bar and the table step aside - the composer IS the bar. */
+.lpl.is-composing>.lpl-bar,.lpl.is-composing>.lpl-state,.lpl.is-composing>.lpl-log-list,.lpl.is-composing>.lpl-side{display:none}
+.lpl-c-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:var(--light);border-bottom:1px solid var(--border)}
+.lpl-c-move{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:13px}
+.lpl-c-from{color:var(--gray);font-weight:500}
+.lpl-c-arrow{color:#9ca3af}
+.lpl-c-to{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:7px;background:var(--navy);color:#fff;font-weight:600}
+.lpl-composer.is-back .lpl-c-to{background:var(--st-wait-bg);color:var(--st-wait-fg);border:1px solid var(--st-wait-bd)}
+.lpl-c-x{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:none;color:var(--gray);cursor:pointer}
+.lpl-c-x:hover{background:#eef0f3;color:var(--navy)}
+.lpl-c-body{padding:16px}
+.lpl-c-body .lp-logs-form-label{font-size:12px;color:var(--navy);margin-bottom:6px}
+.lpl-c-body .cs-wrap{margin-bottom:12px}
+.lpl-c-body .lp-logs-form-textarea{min-height:88px;margin-bottom:0}
+.lpl-hidden-sel{display:none!important}
+.lpl-c-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #f0f2f5}
+.lpl-c-hint{font-size:11.5px;color:#9ca3af}
+.lpl-c-hint kbd{display:inline-block;padding:0 5px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;background:#fff;
+  font:600 10px Inter,sans-serif;color:var(--gray)}
+.lpl-c-btns{display:flex;gap:8px;margin-left:auto}
+
+/* ── AI recommendation (top of the composer, submit moves only) ───────────
+   Head → verdict banner → checks → "based on" facts → Accept / Edit. Checks
+   use the status tones: green holds, amber needs a look (amber, not red - it
+   is a prompt, not a block; the module's own save still decides what is
+   allowed). */
+.lpl-ai{margin:0 0 14px;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.lpl-ai[hidden],.lpl-ai:empty{display:none}
+.lpl-ai-head{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-bottom:1px solid #f0f2f5;
+  background:linear-gradient(180deg,var(--light),#fff)}
+.lpl-ai-ico{width:28px;height:28px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--navy);color:#fff}
+.lpl-ai-ico svg{width:14px;height:14px}
+.lpl-ai-head-txt{display:flex;flex-direction:column;gap:1px;min-width:0;margin-right:auto}
+.lpl-ai-title{font-size:13px;font-weight:600;color:var(--navy);line-height:1.3}
+.lpl-ai-sub{font-size:11.5px;color:var(--gray);line-height:1.3}
+.lpl-ai-body{padding:14px}
+
+/* Verdict - the one line to read if you read nothing else */
+.lpl-ai-verdict{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--st-ok-bd);border-radius:10px;background:var(--st-ok-bg)}
+.lpl-ai-verdict.is-warn{border-color:var(--st-wait-bd);background:var(--st-wait-bg)}
+.lpl-ai-v-ico{width:22px;height:22px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--st-ok-fg);color:#fff}
+.lpl-ai-verdict.is-warn .lpl-ai-v-ico{background:var(--st-wait-fg)}
+.lpl-ai-v-ico svg{width:12px;height:12px}
+.lpl-ai-v-title{font-size:13px;font-weight:600;color:var(--navy);line-height:1.35}
+.lpl-ai-v-sub{margin-top:1px;font-size:12px;line-height:1.4;color:var(--st-ok-fg)}
+.lpl-ai-verdict.is-warn .lpl-ai-v-sub{color:var(--st-wait-fg)}
+
+.lpl-ai-group{margin:14px 0 8px;line-height:1;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9ca3af}
+
+/* Checks - one row each, flagged first */
+.lpl-ai-checks{list-style:none;margin:0;padding:0;border:1px solid #eef0f3;border-radius:10px;overflow:hidden}
+.lpl-ai-check{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-bottom:1px solid #f1f3f5}
+.lpl-ai-check:last-child{border-bottom:none}
+.lpl-ai-check.is-warn{background:#fffcf5}
+.lpl-ai-mk{width:18px;height:18px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.lpl-ai-check.is-warn .lpl-ai-mk{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.lpl-ai-check-txt{flex:1;min-width:0}
+.lpl-ai-check-row{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:2px 12px}
+.lpl-ai-check-k{font-size:12.5px;color:var(--gray)}
+.lpl-ai-check-v{font-size:12.5px;font-weight:600;color:var(--navy);text-align:right;overflow-wrap:anywhere}
+.lpl-ai-note{margin-top:2px;font-size:11.5px;line-height:1.4;color:var(--gray)}
+.lpl-ai-check.is-warn .lpl-ai-note{color:var(--st-wait-fg)}
+
+/* Based on - the facts the checks read, as a small field grid */
+.lpl-ai-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:0}
+.lpl-ai-fact{min-width:0;padding:8px 10px;border-radius:8px;background:var(--light)}
+.lpl-ai-fact.is-wide{grid-column:1/-1}
+.lpl-ai-fact dt{margin-bottom:2px;font-size:11px;color:var(--gray)}
+.lpl-ai-fact dd{margin:0;font-size:12.5px;font-weight:600;color:var(--navy);line-height:1.4;overflow-wrap:anywhere}
+.lpl-ai-fact.is-wide dd{font-weight:500}
+
+
+/* Design tabs - a small segmented control in the head */
+.lpl-ai-head{flex-wrap:wrap}
+.lpl-ai-tabs{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#fff}
+.lpl-ai-tab{height:24px;padding:0 9px;border:0;border-radius:6px;background:none;font:500 11.5px Inter,sans-serif;color:var(--gray);cursor:pointer;white-space:nowrap}
+.lpl-ai-tab:hover{color:var(--navy)}
+.lpl-ai-tab.active{background:var(--navy);color:#fff;font-weight:600}
+
+/* Compact + Table: the verdict as one tinted line */
+.lpl-ai-strip{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:8px 10px;border:1px solid var(--st-ok-bd);border-radius:8px;background:var(--st-ok-bg);font-size:12.5px;color:var(--navy)}
+.lpl-ai-strip.is-warn{border-color:var(--st-wait-bd);background:var(--st-wait-bg)}
+.lpl-ai-strip b{font-weight:600}
+.lpl-ai-strip-sub{color:var(--st-ok-fg)}
+.lpl-ai-strip.is-warn .lpl-ai-strip-sub{color:var(--st-wait-fg)}
+.lpl-ai-strip .lpl-ai-mk{background:var(--st-ok-fg);color:#fff}
+.lpl-ai-strip.is-warn .lpl-ai-mk{background:var(--st-wait-fg)}
+
+/* Compact */
+.lpl-ai-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lpl-ai-cpill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 8px;border-radius:999px;border:1px solid var(--st-ok-bd);
+  background:var(--st-ok-bg);color:var(--st-ok-fg);font-size:12px}
+.lpl-ai-cpill b{font-weight:600;color:var(--navy)}
+.lpl-ai-cpill.is-warn{border-color:var(--st-wait-bd);background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.lpl-ai-inline{margin:10px 0 0;font-size:12px;line-height:1.7;color:var(--gray)}
+.lpl-ai-inline b{font-weight:600;color:var(--navy)}
+.lpl-ai-sep{margin:0 7px;color:#cbd5e1}
+
+/* Table */
+.lpl-ai-tbl-wrap{margin-top:10px;border:1px solid #eef0f3;border-radius:10px;overflow:auto}
+.lpl-ai-tbl{width:100%;border-collapse:collapse}
+.lpl-ai-tbl th{padding:7px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--gray);background:#fafbfc;border-bottom:1px solid var(--border)}
+.lpl-ai-tbl td{padding:8px 12px;font-size:12.5px;border-bottom:1px solid #f1f3f5;vertical-align:top}
+.lpl-ai-tbl tr:last-child td{border-bottom:none}
+.lpl-ai-tbl tr.is-warn td{background:#fffcf5}
+.lpl-ai-tk{color:var(--gray);white-space:nowrap}
+.lpl-ai-tv{font-weight:600;color:var(--navy);overflow-wrap:anywhere}
+.lpl-ai-tc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--st-ok-fg)}
+.lpl-ai-tc.is-warn{color:var(--st-wait-fg)}
+.lpl-ai-tc.is-warn .lpl-ai-mk{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.lpl-ai-tdash{color:#cbd5e1}
+
+/* Summary */
+.lpl-ai-sum{padding:12px 14px;border-left:3px solid var(--st-ok-fg);border-radius:0 10px 10px 0;background:var(--light)}
+.lpl-ai-sum.is-warn{border-left-color:var(--st-wait-fg)}
+.lpl-ai-sum p{margin:0;font-size:12.5px;line-height:1.6;color:#374151}
+.lpl-ai-sum b{font-weight:600;color:var(--navy)}
+.lpl-ai-sum-lead{display:flex;align-items:flex-start;gap:8px;font-size:13px!important}
+.lpl-ai-sum-p{margin-top:8px!important}
+.lpl-ai-sum-flags{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lpl-ai-sum-flags li{display:flex;gap:8px;font-size:12.5px;line-height:1.5;color:var(--st-wait-fg)}
+.lpl-ai-sum-flags .lpl-ai-mk{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.lpl-ai-sum-lead .lpl-ai-mk{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.lpl-ai-sum.is-warn .lpl-ai-sum-lead .lpl-ai-mk{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+
+.lpl-ai-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid #f0f2f5;background:var(--light)}
+/* Accept pressed with no comment - the comment box's own required error */
+.lpl-req-err{margin-top:6px;font-size:12px;font-weight:500;color:var(--st-bad-fg)}
+
+/* ── Log table ──────────────────────────────────────────────────────────── */
+.lpl-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;background:#fff}
+.lpl-table{width:100%;border-collapse:collapse}
+.lpl-table th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;
+  background:#fafbfc;border-bottom:1px solid var(--border);white-space:nowrap}
+.lpl-table td{padding:10px 12px;font-size:12.5px;color:var(--navy);border-bottom:1px solid #f1f3f5;white-space:nowrap;vertical-align:top}
+.lpl-table tr:last-child td{border-bottom:none}
+.lpl-table tbody tr:hover td{background:#fafbfc}
+.lpl-table td.lpl-sno{color:var(--gray);width:44px}
+.lpl-table td.lpl-st{font-weight:700;white-space:normal;min-width:110px}
+.lpl-table td.lpl-rem{white-space:normal;min-width:180px;max-width:320px;line-height:1.45;color:#374151}
+.lpl-table tr.is-bad td.lpl-st{color:var(--st-bad-fg)}
+.lpl-sub{display:block;font-size:11px;color:#9ca3af;margin-top:2px}
+.lpl-reason{display:block;margin-bottom:2px;font-weight:600;color:var(--st-wait-fg)}
+.lpl-rem-extra{display:block;margin-top:4px;font-size:11.5px;color:var(--gray);line-height:1.45}
+.lpl-rem-extra b{color:var(--navy);font-weight:600}
+.lpl-rem-extra.is-bad{color:var(--st-bad-fg)}
+.lpl-rem .oca-log-view{margin-top:6px}
+.lpl-side{margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+
+@keyframes lpl-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Fill mode backwards, not both: a held transform would break the fixed
+   dropdowns inside the composer. */
+.lp-isb-body>.lpl{animation:lpl-in .18s ease-out backwards}
+
+@media (max-width:640px){
+  .lpl-bar{flex-direction:column;align-items:stretch}
+  .lpl-actions{max-width:none;justify-content:flex-start}
+}

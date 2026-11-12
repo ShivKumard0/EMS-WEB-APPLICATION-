@@ -1,0 +1,237 @@
+/* ══ LISTING / CONTRACTS PAGE HEADERS ══════════════════════════════════ */
+.listing-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.listing-hdr-left{display:flex;align-items:center;gap:10px}
+.listing-hdr-title{font-size:16px;font-weight:700;color:var(--navy)}
+.listing-add-btn{width:30px;height:30px;border-radius:50%;background:var(--orange);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(26,26,26,.35);transition:.15s}
+.listing-add-btn:hover{background:var(--btn-solid-hover);transform:scale(1.08)}
+.contracts-pg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.contracts-pg-hdr-left{display:flex;align-items:center;gap:10px}
+.contracts-pg-title{font-size:18px;font-weight:700;color:var(--navy)}
+.contracts-add-btn{width:30px;height:30px;border-radius:50%;background:var(--orange);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 8px rgba(26,26,26,.35);transition:.15s}
+.contracts-add-btn:hover{background:var(--btn-solid-hover);transform:scale(1.08)}
+
+/* ══ COST CALCULATOR MODAL (legacy entry point, kept as-is) ════════════ */
+.cost-calc-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px}
+.cost-calc-overlay.hidden{display:none}
+.cost-calc-panel{background:#fff;border-radius:18px;width:100%;max-width:700px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(15,23,42,.2)}
+.cost-calc-header{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 28px 16px;border-bottom:1px solid var(--border)}
+.cost-calc-title{font-size:18px;font-weight:700;color:var(--navy)}
+.cost-calc-sub{font-size:12px;color:var(--gray);margin-top:3px}
+.cost-calc-close{width:32px;height:32px;border:none;background:#f1f5f9;border-radius:8px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-family:inherit}
+.cost-calc-close:hover{background:var(--btn-tint-bg);color:var(--btn-accent)}
+.cost-calc-tabs{display:flex;gap:8px;padding:14px 28px;border-bottom:1px solid var(--border);background:#fafbfc;flex-shrink:0}
+.cc-tab{padding:7px 18px;border-radius:var(--r-control);border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--gray);transition:.2s;font-family:inherit}
+.cc-tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.cc-tab:hover:not(.active){background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.cost-calc-body{flex:1;overflow-y:auto;padding:22px 28px}
+.cc-loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+.cc-loader.hidden{display:none}
+.cc-spinner{width:38px;height:38px;border:3px solid #f1f5f9;border-top-color:var(--orange);border-radius:50%;animation:cc-spin .75s linear infinite}
+@keyframes cc-spin{to{transform:rotate(360deg)}}
+.cc-loader-text{font-size:13px;color:var(--gray);font-weight:500}
+.cc-content{display:flex;flex-direction:column;gap:14px}
+.cc-content.hidden{display:none}
+.cc-summary{background:linear-gradient(135deg,#1a1a1a 0%,#3f3f46 100%);border-radius:14px;padding:20px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between}
+.cc-summary-label{font-size:11px;opacity:.82;margin-bottom:4px;font-weight:500}
+.cc-summary-val{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.cc-summary-note{font-size:11px;opacity:.72;margin-top:4px}
+.cc-breakdown{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.cc-breakdown-title{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;padding:12px 18px;border-bottom:1px solid var(--border);background:#fafbfc}
+.cc-row{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.cc-row:last-child{border-bottom:none}
+.cc-row-label{font-size:12px;color:var(--navy);font-weight:500}
+.cc-row-note{font-size:11px;color:var(--gray);margin-top:1px}
+.cc-row-val{font-size:13px;font-weight:700;color:var(--navy);text-align:right}
+.cc-row-pct{font-size:11px;color:var(--orange);font-weight:600;text-align:right}
+.cc-total-row{background:#fdf8f2;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:2px solid var(--orange)}
+.cc-total-label{font-size:13px;font-weight:700;color:var(--navy)}
+.cc-total-val{font-size:16px;font-weight:800;color:var(--orange)}
+.cc-disclaimer{font-size:11px;color:var(--gray);line-height:1.5}
+.cost-calc-btn,.cost-calc-nav-btn{display:flex;align-items:center;gap:7px;font-family:inherit}
+
+/* ══════════════════════════════════════════════════════════════════════
+   COST CALCULATOR PAGE
+   One vertical flow: ask (inputs) → answer (result) → detail (breakdown).
+   ══════════════════════════════════════════════════════════════════════ */
+.ccp{display:flex;flex-direction:column;background:var(--light);margin:-28px -32px;min-height:calc(100vh - 56px)}
+
+/* ── Sub-header ─────────────────────────────────────────────────────── */
+.ccp-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0}
+.ccp-topbar-l{display:flex;align-items:center;gap:12px;min-width:0}
+.ccp-back{display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;background:none;border:none;border-radius:8px;color:var(--gray);cursor:pointer;padding:0;transition:.15s}
+.ccp-back:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.ccp-title{font-size:15px;font-weight:700;color:var(--navy);line-height:1.2}
+.ccp-sub{font-size:12px;color:var(--gray);margin-top:2px}
+
+.ccp-body{padding:20px 28px 28px;display:flex;flex-direction:column;gap:16px;max-width:960px;width:100%;margin:0 auto}
+
+/* ── Generic card ───────────────────────────────────────────────────── */
+.ccp-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-card);overflow:hidden}
+.ccp-card-hdr{padding:16px 22px 14px;border-bottom:1px solid var(--border)}
+.ccp-card-ttl{font-size:14px;font-weight:700;color:var(--navy)}
+.ccp-card-sub{font-size:12px;color:var(--gray);margin-top:3px}
+
+/* ── Inputs ─────────────────────────────────────────────────────────── */
+.ccp-inputs{padding:20px 22px}
+/* Fields sit at their natural width rather than stretching: a 5-digit salary
+   box spanning half the page reads as a mistake. */
+.ccp-inputs-row{display:flex;flex-wrap:wrap;gap:18px 24px}
+.ccp-fld-country{width:300px}
+.ccp-fld-salary{width:210px}
+.ccp-lbl{display:block;font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.04em;text-transform:uppercase;margin-bottom:7px}
+/* The country picker is the app's own select (apCS), not a native one - a
+   browser-drawn option list cannot be styled, so next to every other dropdown
+   in the product it arrived as a piece of stray Chrome UI: its own type, its own
+   blue highlight, its own idea of a row. Only the field's height and weight are
+   set here; everything else the control brings with it. */
+.ccp-fld-country .cs-trigger{height:40px;font-size:13.5px;font-weight:600}
+.ccp-fld-country .cs-trigger.cs-placeholder .cs-value{font-weight:500}
+/* --r-control, NOT --r-input. The two fields sit side by side in one row, so
+   the pill radius the token gives a lone text input read as a different kind
+   of control next to the country select's 8px corners. Matching the neighbour
+   wins over matching the token here. */
+.ccp-money{display:flex;align-items:center;height:40px;border:1px solid var(--border);border-radius:var(--r-control);background:#fff;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.ccp-money:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.ccp-money-sym{display:flex;align-items:center;justify-content:center;min-width:38px;height:100%;padding-left:6px;font-size:13.5px;font-weight:600;color:var(--gray)}
+.ccp-money-inp{flex:1;min-width:0;height:100%;border:none;outline:none;background:none;padding:0 16px 0 2px;font-family:inherit;font-size:15px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+
+/* Slider — the salary control lives with the salary field, not elsewhere */
+.ccp-slider{margin-top:18px}
+.ccp-range{-webkit-appearance:none;appearance:none;display:block;width:100%;height:20px;background:none;outline:none;cursor:pointer;margin:0;padding:0}
+.ccp-range::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--navy) var(--fill,0%),var(--border) var(--fill,0%))}
+.ccp-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#fff;border:2px solid var(--navy);box-shadow:0 1px 4px rgba(15,23,42,.28);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.ccp-range::-webkit-slider-thumb:hover{transform:scale(1.12)}
+.ccp-range:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(15,23,42,.16)}
+.ccp-range::-moz-range-track{height:6px;border-radius:6px;background:var(--border)}
+.ccp-range::-moz-range-progress{height:6px;border-radius:6px;background:var(--navy)}
+.ccp-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--navy);box-shadow:0 1px 4px rgba(15,23,42,.28);cursor:pointer}
+.ccp-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:11.5px;color:var(--gray);font-variant-numeric:tabular-nums}
+
+/* Nothing is usable until a country is chosen — the form leads the user.
+   The slider collapses rather than dimming: a dead track with a ghost thumb
+   and two blank scale labels is just a hole in the layout. */
+.ccp-fld.off{opacity:.45;pointer-events:none}
+.ccp-slider{animation:fadeUp .22s ease}
+.ccp-slider.off{display:none}
+.ccp-money-inp:disabled{cursor:not-allowed;background:none}
+.ccp-calc-row{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);min-height:52px}
+.ccp-calc-row:empty{display:none}
+.ccp-hint{font-size:12px;color:var(--gray)}
+.ccp-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:cc-spin .7s linear infinite;flex-shrink:0}
+/* Replaces the button once results exist — says why no button is needed */
+.ccp-live{display:flex;align-items:center;gap:8px;margin-right:auto;font-size:12px;color:var(--gray);animation:fadeIn .3s ease}
+.ccp-live-dot{width:7px;height:7px;border-radius:50%;background:var(--st-ok-fg);flex-shrink:0;box-shadow:0 0 0 0 rgba(22,163,74,.5);animation:ccp-pulse 2s ease-out infinite}
+@keyframes ccp-pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}70%{box-shadow:0 0 0 7px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+
+/* ── Empty state — shown before anything has been calculated ──────────
+   Left-aligned on the same axis as the form above it, and sized to its
+   content instead of filling the viewport. */
+.ccp-empty{display:flex;align-items:flex-start;gap:15px;padding:24px 22px;background:#fff;border:1px dashed #d5dbe3;border-radius:var(--r-card);animation:fadeIn .25s ease}
+.ccp-empty-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--ol);color:#9aa5b4;flex-shrink:0}
+.ccp-empty-ico svg{width:19px;height:19px}
+.ccp-empty-ttl{font-size:14px;font-weight:700;color:var(--navy)}
+.ccp-empty-txt{font-size:12.5px;color:var(--gray);line-height:1.55;margin-top:4px;max-width:540px}
+.ccp-empty-list{display:flex;flex-wrap:wrap;gap:9px 22px;margin-top:14px}
+.ccp-empty-li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--gray)}
+.ccp-empty-li svg{width:13px;height:13px;color:#9aa5b4;flex-shrink:0}
+
+/* ── Loading state ──────────────────────────────────────────────────── */
+.ccp-loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:54px 24px;background:#fff;border:1px solid var(--border);border-radius:var(--r-card);animation:fadeIn .2s ease}
+.ccp-ring{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:cc-spin .7s linear infinite}
+.ccp-step{font-size:13px;font-weight:600;color:var(--navy);animation:fadeIn .25s ease}
+.ccp-step-dots span{animation:blink 1.1s infinite}
+.ccp-step-dots span:nth-child(2){animation-delay:.18s}
+.ccp-step-dots span:nth-child(3){animation-delay:.36s}
+.ccp-progress{width:190px;height:3px;border-radius:3px;background:var(--border);overflow:hidden}
+.ccp-progress i{display:block;height:100%;width:0;border-radius:3px;background:var(--navy);transition:width .45s ease}
+
+/* ── Results reveal ─────────────────────────────────────────────────── */
+.ccp-results{display:none;flex-direction:column;gap:16px}
+.ccp-results.on{display:flex}
+.ccp-results.on>*{animation:fadeUp .34s ease both}
+.ccp-results.on>*:nth-child(2){animation-delay:.07s}
+.ccp-tbl tbody tr{animation:fadeUp .28s ease both}
+
+/* ── Result card — the answer, stated once, in full ─────────────────── */
+.ccp-result{background:var(--navy);color:#fff;border-radius:var(--r-card);padding:22px 24px 20px}
+.ccp-result-top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.ccp-result-lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.ccp-result-val{font-size:40px;font-weight:800;letter-spacing:-1.2px;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}
+.ccp-result-note{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px}
+.ccp-stats{display:flex;gap:32px;padding-bottom:4px}
+.ccp-stat-lbl{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.ccp-stat-val{font-size:17px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums}
+.ccp-stat-sub{font-size:11.5px;color:rgba(255,255,255,.6);margin-top:2px}
+
+/* Composition bar — answers "how much on top?" without doing the maths */
+.ccp-bar{display:flex;height:8px;border-radius:6px;overflow:hidden;margin-top:20px;background:rgba(255,255,255,.14)}
+/* segments start collapsed and are widened on reveal, so the bar draws itself */
+.ccp-seg{height:100%;width:0;transition:width .55s cubic-bezier(.22,.61,.36,1)}
+.ccp-seg.g{background:#fff}
+.ccp-seg.s{background:rgba(255,255,255,.52)}
+.ccp-seg.b{background:rgba(255,255,255,.26)}
+.ccp-legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:11px}
+.ccp-lg{display:flex;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.75)}
+.ccp-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.ccp-dot.g{background:#fff}
+.ccp-dot.s{background:rgba(255,255,255,.52)}
+.ccp-dot.b{background:rgba(255,255,255,.26)}
+
+/* ── Breakdown table ────────────────────────────────────────────────── */
+.ccp-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.ccp-tbl th{font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.04em;text-transform:uppercase;text-align:left;padding:11px 22px;background:#fafbfc;border-bottom:1px solid var(--border)}
+.ccp-tbl th.r,.ccp-tbl td.r{text-align:right}
+.ccp-tbl td{padding:12px 22px;font-size:13px;color:var(--navy);border-bottom:1px solid #f1f3f5;vertical-align:middle}
+.ccp-tbl tr:last-child td{border-bottom:none}
+.ccp-w-rate{width:88px}
+.ccp-w-num{width:132px}
+.ccp-tbl .num{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ccp-tbl .rate{color:var(--gray);font-weight:500;font-variant-numeric:tabular-nums}
+.ccp-tbl .sub{display:block;font-size:11.5px;color:var(--gray);font-weight:400;margin-top:2px}
+/* base salary row */
+.ccp-r-base td{font-weight:600;background:#fcfcfd}
+/* group sub-total row */
+.ccp-r-grp td{background:#fafbfc;font-size:11.5px;font-weight:700;color:var(--navy);letter-spacing:.03em;text-transform:uppercase;padding-top:11px;padding-bottom:11px;border-top:1px solid var(--border)}
+.ccp-r-grp td.num{font-size:13px;letter-spacing:0;text-transform:none}
+/* individual line */
+.ccp-r-item td.line{padding-left:34px;color:var(--navy)}
+/* grand total */
+.ccp-r-total td{background:var(--navy);color:#fff;font-size:13.5px;font-weight:700;border-bottom:none;padding-top:15px;padding-bottom:15px}
+.ccp-r-total td.num{font-size:15px;font-weight:800}
+
+/* The app's standing-note shape - .ar-note and .tsx-note are the same three
+   rules. flex-start, not center: this note wraps to two lines at most widths,
+   and a centred icon then floats in the gap between them instead of marking
+   where the sentence starts. The 1px nudge sits the glyph on the first line's
+   cap height rather than its box. */
+.ccp-foot{display:flex;align-items:flex-start;gap:9px;padding:13px 22px;
+  font-size:11.5px;line-height:1.5;color:var(--gray);
+  background:#fafbfc;border-top:1px solid var(--border)}
+.ccp-foot svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:#9ca3af;fill:none;stroke:currentColor}
+/* A card-wide line of 11.5px text is a very long measure to track back from.
+   Capped at a readable one; the strip still runs the full width of the card. */
+.ccp-foot span{min-width:0;max-width:96ch}
+
+/* ── Respect a reduced-motion preference ────────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  .ccp-results.on>*,.ccp-tbl tbody tr,.ccp-empty,.ccp-loading,.ccp-step{animation:none}
+  .ccp-seg{transition:none}
+  .ccp-ring,.ccp-spin{animation-duration:1.4s}
+}
+
+/* ── Narrow screens ─────────────────────────────────────────────────── */
+@media (max-width:900px){
+  .ccp{margin:-20px -16px}
+  .ccp-topbar,.ccp-body{padding-left:16px;padding-right:16px}
+  .ccp-fld-country,.ccp-fld-salary{width:100%}
+  .ccp-empty{flex-direction:column;gap:12px}
+  .ccp-result-top{flex-direction:column;align-items:flex-start;gap:18px}
+  .ccp-stats{gap:24px}
+  .ccp-result-val{font-size:34px}
+  .ccp-tbl th,.ccp-tbl td{padding-left:14px;padding-right:14px}
+  /* The note is part of the same card and has to keep its gutters. */
+  .ccp-foot{padding-left:14px;padding-right:14px}
+  .ccp-w-num{width:96px}
+  .ccp-w-rate{width:64px}
+  .ccp-r-item td.line{padding-left:24px}
+}

@@ -1,0 +1,49 @@
+/* ══ CREATE / EDIT FORMS AS PAGES (js/form-page.js) ═════════════════════
+   A .ct-modal--form shown as a page in the content area, in the contract
+   request layout (contract-intake.css): Back, a 20px title and its line,
+   the fields in a card, the actions underneath. Same width (880px), same
+   card, same spacing - so a Create Template page and a New Contractor
+   Request page are visibly the same kind of screen. */
+
+/* The overlay covers the content area only; sidebar and top bar stay. */
+.ct-modal-overlay.fp-page{position:fixed;inset:auto;top:var(--fp-top,60px);left:var(--fp-left,240px);
+  width:var(--fp-w,calc(100vw - 240px));height:var(--fp-h,calc(100vh - 60px));
+  display:block;background:var(--light);z-index:400;animation:fp-in .2s var(--e-out,ease-out) both}
+@keyframes fp-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* The form itself is the page and its scroller. Side padding centres an
+   880px column, the width of every contract request page. */
+.fp-page>.ct-modal.ct-modal--form{width:100%;height:100%;max-width:none;max-height:none;border-radius:0;box-shadow:none;
+  background:transparent;overflow-y:auto;animation:none;transform:none;
+  padding:20px max(var(--pg-gutter,32px),calc((100% - 880px)/2)) 40px}
+.fp-page>.ct-modal.ct-modal--form.csag-modal.is-preview,
+.fp-page>.ct-modal.ct-modal--form.hdoc-modal-wide{padding-left:max(var(--pg-gutter,32px),calc((100% - 1080px)/2));padding-right:max(var(--pg-gutter,32px),calc((100% - 1080px)/2))}
+
+/* Back, then the title */
+.fp-top{display:flex;align-items:center;margin-bottom:14px}
+.fp-back{margin-top:0}
+.fp-page .ct-modal-hdr{margin-bottom:6px}
+.fp-page .ct-modal-title{font-size:20px;font-weight:700;letter-spacing:-.2px;color:var(--navy)}
+.fp-page .ct-modal-close{display:none}
+.fp-page .ct-modal-sub{margin:0 0 4px;font-size:13px;line-height:1.5;max-width:72ch}
+.fp-page .ct-modal-hdr+.fp-card,.fp-page .ct-modal-sub+.fp-card,.fp-page .ct-modal-hdr+.fp-card-own,.fp-page .ct-modal-sub+.fp-card-own{margin-top:16px}
+.fp-card-own{background:var(--card)}
+
+/* The fields, in the contract page's card */
+.fp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card,14px);padding:22px;
+  box-shadow:0 1px 2px rgba(15,23,42,.03)}
+/* Cards inside the form (status toggles, sections) sit flat in the page card. */
+.fp-card .ep-form-card{box-shadow:none}
+
+/* The actions sit under the card, like the contract page's foot. */
+.fp-page .fp-foot{position:static;margin:22px 0 0;padding:0;border:0;border-radius:0;background:none;
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.fp-page .ct-modal-foot.fp-foot{justify-content:space-between}
+
+/* A form page owns the screen: the top bar's page actions are not for it. */
+body.fp-on #tb-page-add-btn,body.fp-on #tb-cost-calc-btn,body.fp-on #tb-opt-hol-btn{display:none!important}
+
+@media (max-width:720px){
+  .fp-page>.ct-modal.ct-modal--form{padding:16px 16px 32px}
+  .fp-card{padding:16px}
+}

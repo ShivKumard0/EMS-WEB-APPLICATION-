@@ -1,0 +1,180 @@
+/* ══ CREATE NEW EMPLOYEE ═══════════════════════════════════════════════════
+   Everything structural comes from the app's form system — .ep-page,
+   .ep-form-card, .ep-form-grid, .ep-form-group, .ep-form-label,
+   .ep-form-input, .choice-card, .cs-toggle. What is here is the furniture the
+   wizard adds on top: the stepper, the chip multi-select, the derived
+   checklist and the access preview.
+
+   The contract wizard draws its stepper from ~25 lines of inline style inside
+   buildContractFormHTML(). This one is a component, so hover, focus and the
+   mobile stack are expressible at all. */
+
+.ea-page{max-width:960px}
+.ea-page-sub{font-size:13px;color:#98a2b3}
+.ea-kind{font-size:11.5px;font-weight:700;color:#64748b;background:#f1f5f9;
+  border:1px solid var(--border);padding:4px 12px;border-radius:999px;letter-spacing:.3px;white-space:nowrap}
+
+/* ── Stepper ───────────────────────────────────────────────────────────────
+   A button, not a div: the completed steps are genuinely clickable, so they
+   should be reachable by keyboard and say so on hover. */
+.ea-stepper{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:16px 22px;gap:0}
+.ea-step{display:flex;align-items:center;gap:10px;background:none;border:none;padding:4px 6px;
+  border-radius:8px;font-family:inherit;text-align:left;cursor:pointer;transition:.15s;min-width:0}
+.ea-step:hover{background:#f8fafc}
+.ea-step.is-todo{cursor:default}
+.ea-step.is-todo:hover{background:none}
+.ea-step-mark{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;border:1.5px solid var(--border);background:#fff;color:#b6bdc7;transition:.18s}
+.ea-step-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ea-step-title{font-size:12.5px;font-weight:600;color:#9aa3af;line-height:1.25;white-space:nowrap}
+.ea-step-sub{font-size:10.5px;color:#b6bdc7;line-height:1.25;white-space:nowrap}
+/* Done is green because it is a completed check, matching every other tick in
+   the app; the step you are ON takes the app accent. */
+.ea-step.is-done .ea-step-mark{background:var(--st-ok-bg);border-color:var(--st-ok-fg);color:var(--st-ok-fg)}
+.ea-step.is-done .ea-step-title{color:var(--navy)}
+.ea-step.is-now .ea-step-mark{background:var(--orange);border-color:var(--orange);color:#fff;
+  box-shadow:0 0 0 3px rgba(70,70,70,.10)}
+.ea-step.is-now .ea-step-title{color:var(--navy);font-weight:700}
+.ea-step.is-now .ea-step-sub{color:#7b8794}
+.ea-step-line{flex:1;height:1.5px;background:#e5e7eb;margin:0 14px;min-width:18px;border-radius:2px;transition:.2s}
+.ea-step-line.is-done{background:var(--st-ok-fg);opacity:.4}
+
+/* ── Confirmation banner ───────────────────────────────────────────────────*/
+.ea-banner{display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:10px;
+  background:var(--st-ok-bg);border:1px solid var(--st-ok-bd);color:var(--st-ok-fg);
+  font-size:12.5px;font-weight:500}
+.ea-banner svg{flex-shrink:0}
+
+/* ── Card head ─────────────────────────────────────────────────────────────*/
+.ea-card{padding:0;overflow:visible}
+.ea-card-head{padding:18px 24px;border-bottom:1px solid var(--border);
+  background:#fafbfc;border-radius:12px 12px 0 0}
+.ea-card-title{font-size:14px;font-weight:700;color:var(--navy)}
+.ea-card-sub{font-size:12px;color:var(--gray);margin-top:3px;line-height:1.4}
+/* One padded body, NOT a margin rule per child type. The margin version had to
+   name every block the four steps can render, and it set them with a `margin`
+   shorthand — which silently zeroed the vertical margins those blocks set for
+   themselves, collapsing the rule off the divider between the ID proofs and
+   the payroll toggle. Padding on the parent cannot do that. */
+.ea-card-body{padding:22px 24px}
+
+/* ── Field extras ──────────────────────────────────────────────────────────*/
+.ea-hint{font-size:11px;color:#98a2b3;line-height:1.4}
+.ea-err{font-size:11px;color:#b83a3a;font-weight:600;line-height:1.4}
+/* Red on the control itself, not a red border around the whole group - the
+   label has to stay readable. */
+.ep-form-input.ea-bad,.ea-phone.ea-bad{border-color:#b83a3a}
+.ea-bad-wrap .cs-trigger,.ea-bad-wrap .cd-trigger,.ea-bad-wrap .ea-chip,
+.ea-bad-wrap .choice-card{border-color:#b83a3a}
+.ea-phone{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center}
+/* One height for every control in the wizard. .cs-trigger stands 42px and
+   .cd-trigger 38px by default, so a select next to a text input (36px) read
+   as a step in the row; the phone code already took 36px for exactly this
+   reason, and the rest now agree with it. */
+.ea-page .cs-trigger,.ea-page .cd-trigger{height:36px}
+/* A value the form states rather than asks for. Reads as a field so the grid
+   still lines up, but is visibly not an input. Control shape, not the pill
+   --r-input: main.css makes every control in a form card square-cornered, and
+   this one was the only pill in the grid. Fixed height, because min-height
+   left it at the mercy of the line box while its neighbours are sized. */
+.ea-locked{display:flex;align-items:center;gap:7px;padding:0 12px;border:1px dashed var(--border);
+  border-radius:var(--r-control);background:#f8fafc;font-size:13px;font-weight:600;color:var(--navy);
+  box-sizing:border-box;height:36px}
+.ea-locked svg{color:#9aa3af;flex-shrink:0}
+.ea-locked.is-muted{font-weight:400;color:#98a2b3;border-style:dashed}
+.ea-inline-link{display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;
+  font-family:inherit;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;transition:.15s}
+.ea-inline-link:hover{color:var(--navy)}
+.ea-inline-link.accent{color:var(--orange)}
+/* Sits between the team chips and the two dependent selects, so it needs real
+   air underneath or "Create New Team" reads as a label for Reporting Manager. */
+.ea-inline-actions{display:flex;gap:18px;margin:12px 0 22px}
+.ea-divider{height:1px;background:var(--border);margin-top:22px;margin-bottom:22px}
+
+/* ── Blocks and chips ──────────────────────────────────────────────────────*/
+.ea-block-head{font-size:13px;font-weight:700;color:var(--navy)}
+.ea-block-sub{font-size:11.5px;color:var(--gray);margin-top:3px;line-height:1.45}
+.ea-block{display:flex;flex-direction:column;gap:4px}
+.ea-block .ea-chips{margin-top:9px}
+/* Chips wrap on their own instead of sitting in a fixed grid - six ID proofs
+   and any number of teams have to share this control. */
+.ea-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ea-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 11px;border-radius:10px;
+  border:1.5px solid var(--border);background:#fff;font-size:12.5px;color:var(--navy);
+  cursor:pointer;transition:.15s;user-select:none}
+.ea-chip:hover{border-color:#cbd5e1;background:#fafbfc}
+.ea-chip input{position:absolute;opacity:0;width:0;height:0}
+.ea-chip-box{width:16px;height:16px;border-radius:5px;border:1.5px solid #cbd5e1;background:#fff;
+  display:flex;align-items:center;justify-content:center;color:transparent;flex-shrink:0;transition:.15s}
+.ea-chip.is-on{border-color:var(--st-ok-fg);background:var(--st-ok-bg);color:var(--st-ok-fg);font-weight:600}
+.ea-chip.is-on .ea-chip-box{background:var(--st-ok-fg);border-color:var(--st-ok-fg);color:#fff}
+.ea-chip input:focus-visible+.ea-chip-box{box-shadow:0 0 0 3px rgba(148,163,184,.35)}
+.ea-empty{font-size:12px;color:#98a2b3;padding:12px;background:#f8fafc;border:1px dashed var(--border);border-radius:9px}
+
+/* ── Payroll toggle + derived checklist ────────────────────────────────────*/
+.ea-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ea-checklist{margin-top:16px;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.ea-checklist-head{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:12.5px;font-weight:700;color:var(--navy)}
+.ea-checklist-count{font-size:10.5px;font-weight:700;color:#64748b;background:#eef1f5;border-radius:999px;padding:2px 8px}
+.ea-checklist-count.is-done{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.ea-checklist-sub{font-size:11px;color:#98a2b3;margin:4px 0 11px;line-height:1.45}
+.ea-check{display:flex;align-items:center;gap:8px;font-size:12px;color:#64748b;padding:5px 0;line-height:1.4}
+.ea-check svg{flex-shrink:0;color:var(--st-wait-fg)}
+.ea-check.is-ok{color:var(--st-ok-fg);font-weight:600}
+.ea-check.is-ok svg{color:var(--st-ok-fg)}
+.ea-check em{font-style:normal;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+  color:#98a2b3;background:#eef1f5;border-radius:999px;padding:1px 7px;margin-left:auto;flex-shrink:0}
+.ea-note{margin-top:16px;font-size:12px;color:#64748b;background:#f8fafc;border:1px dashed var(--border);
+  border-radius:10px;padding:13px 15px;line-height:1.5}
+
+/* ── Access step ───────────────────────────────────────────────────────────*/
+.ea-access-split{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:start}
+.ea-access-main{min-width:0}
+.ea-roles{margin-top:11px}
+.ea-preview{position:sticky;top:0;background:#fafbfc;border:1px solid var(--border);border-radius:12px;padding:16px}
+.ea-preview-head{font-size:13px;font-weight:700;color:var(--navy)}
+.ea-preview-sub{font-size:11px;color:#98a2b3;margin-top:2px}
+.ea-preview-role{margin-top:14px;font-size:12.5px;font-weight:700;color:var(--navy)}
+.ea-preview-desc{font-size:11.5px;color:var(--gray);line-height:1.45;margin-top:3px}
+.ea-perms{width:100%;border-collapse:collapse;margin-top:11px}
+.ea-perms td{font-size:11.5px;padding:6px 0;border-bottom:1px solid #eef1f5;color:#64748b;vertical-align:top}
+.ea-perms td:last-child{text-align:right;font-weight:600;color:var(--navy);white-space:nowrap;padding-left:10px}
+.ea-perms tr:last-child td{border-bottom:none}
+.ea-preview-foot{margin-top:11px;font-size:11px;color:#98a2b3;line-height:1.45;
+  border-top:1px dashed var(--border);padding-top:10px}
+.ea-preview-empty{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;
+  padding:30px 8px;color:#b6bdc7;font-size:11.5px;line-height:1.45}
+
+/* ── Footer ────────────────────────────────────────────────────────────────*/
+.ea-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ea-footer-right{display:flex;gap:10px}
+.ea-btn-ghost,.ea-btn-primary{border-radius:99px;padding:9px 24px}
+
+@media (max-width:900px){
+  .ea-access-split{grid-template-columns:1fr}
+  .ea-preview{position:static}
+  /* The stepper keeps the numbers and drops the wording - four marks in a row
+     still say where you are, where four wrapped labels would not. */
+  .ea-step-text{display:none}
+  .ea-step.is-now .ea-step-text{display:flex}
+  .ea-stepper{padding:14px}
+}
+@media (max-width:620px){
+  .ea-footer{flex-direction:column-reverse;align-items:stretch}
+  .ea-footer-right{flex-direction:column-reverse}
+  .ea-footer button{width:100%}
+}
+
+/* ── As a popup ────────────────────────────────────────────────────────────
+   The wizard opens in the standard create popup (.ct-modal--form) over the
+   Employees listing. Stepper, fields and footer are unchanged; this is only
+   the spacing the popup frame needs. */
+.ea-modal .ct-modal-title{display:flex;align-items:center;gap:10px}
+.ea-modal .ea-kind{font-size:10.5px;padding:3px 10px}
+.ea-modal .ea-stepper{padding:12px 16px;margin-bottom:16px;background:#fcfcfd}
+.ea-modal .ea-step-line{margin:0 8px}
+.ea-modal .ea-banner{margin-bottom:16px}
+.ea-step-head{margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.ea-step-body{margin-bottom:26px}

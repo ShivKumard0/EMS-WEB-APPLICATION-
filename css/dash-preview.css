@@ -1,0 +1,88 @@
+/* ══ DASHBOARD PREVIEW SWITCHES (js/dash-preview.js) ══════════════════════
+   Two rows in the profile menu, and the motion each one plays on the
+   dashboard. Every row is one button - icon, label, a sub-line saying what the
+   current position means, and the switch - so the whole row is the target. */
+
+/* ── In the menu ── */
+.dp-group{margin:4px 0;padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #eef1f5}
+.dp-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 8px}
+.dp-head-title{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8}
+.dp-head-tag{font-size:10px;font-weight:600;color:#64748b;background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:1px 8px}
+
+.dp-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border:0;border-radius:9px;background:transparent;
+  font-family:inherit;text-align:left;cursor:pointer;transition:background var(--t-micro,110ms) ease}
+.dp-row+.dp-row{margin-top:2px}
+.dp-row:hover{background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.dp-row:focus-visible{outline:2px solid var(--btn-accent);outline-offset:1px}
+
+.dp-ico{position:relative;width:32px;height:32px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:#eef1f5;color:#94a3b8;
+  transition:background var(--t-base,260ms) var(--e-out),color var(--t-base,260ms) var(--e-out),transform var(--t-base,260ms) var(--e-spring)}
+.dp-ico svg{width:16px;height:16px}
+.dp-row.is-on .dp-ico{background:var(--navy);color:#fff}
+/* A small press of the tile when it flips, so the change is felt where the
+   eye already is. */
+.dp-row:active .dp-ico{transform:scale(.92)}
+
+.dp-txt{flex:1;min-width:0}
+.dp-lbl{display:block;font-size:13px;font-weight:600;color:var(--navy);line-height:1.3}
+/* Two sub-lines stacked in one slot; the one that is true slides in. */
+.dp-sub{position:relative;display:block;height:16px;margin-top:1px;overflow:hidden;font-size:11px;color:var(--gray)}
+.dp-sub>span{position:absolute;left:0;right:0;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:transform var(--t-base,260ms) var(--e-out),opacity var(--t-base,260ms) var(--e-out)}
+.dp-sub .dp-when-on{transform:translateY(100%);opacity:0}
+.dp-sub .dp-when-off{transform:none;opacity:1}
+.dp-row.is-on .dp-when-on{transform:none;opacity:1}
+.dp-row.is-on .dp-when-off{transform:translateY(-100%);opacity:0}
+.dp-sub b{font-weight:600;color:#334155}
+
+/* The switch. The knob travels on the spring curve and widens for a moment
+   mid-travel, the way a real toggle squashes as it is pushed. */
+.dp-switch{position:relative;width:34px;height:20px;flex-shrink:0;border-radius:999px;background:#d5dbe3;
+  transition:background var(--t-base,260ms) var(--e-out)}
+.dp-row.is-on .dp-switch{background:var(--st-ok-fg)}
+.dp-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;
+  box-shadow:0 1px 3px rgba(15,23,42,.25);
+  transition:left var(--t-base,260ms) var(--e-spring),width var(--t-fast,170ms) var(--e-out)}
+.dp-row.is-on .dp-knob{left:16px}
+.dp-row:active .dp-knob{width:20px}
+.dp-row.is-on:active .dp-knob{left:12px}
+
+/* ── On the dashboard: the tracker collapses and returns ──
+   One grid row animating 1fr <-> 0fr, so the block closes up to exactly its
+   own height with no measuring, and everything under it slides up with it. */
+#emp-life-dash{display:grid;grid-template-rows:1fr;
+  transition:grid-template-rows .5s var(--e-in-out),margin-bottom .5s var(--e-in-out),opacity .35s var(--e-out)}
+.emp-life-clip{min-height:0;overflow:hidden}
+.emp-life-clip>.emp-trk{transition:transform .5s var(--e-in-out)}
+#emp-life-dash.is-off{grid-template-rows:0fr;margin-bottom:0;opacity:0}
+#emp-life-dash.is-off .emp-trk{transform:translateY(-10px) scale(.985)}
+
+/* Its rows in Action Required fade along with it. */
+@keyframes dp-row-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+tr.dp-row-in>td{animation:dp-row-in .35s var(--e-out) backwards;animation-delay:inherit}
+tr.dp-row-out>td{opacity:0;transition:opacity .22s ease}
+
+/* ── On the dashboard: the announcements body hands over ── */
+.ann-scroll.is-out{opacity:0;transform:translateY(-6px);transition:opacity .17s ease,transform .17s ease}
+@keyframes dp-ann-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ann-scroll.is-in>.ann-empty{animation:dp-ann-in .42s var(--e-out) backwards}
+.ann-scroll.is-in .ann-row{animation:dp-ann-in .38s var(--e-out) backwards}
+.ann-scroll.is-in .ann-list>li:nth-child(2) .ann-row{animation-delay:50ms}
+.ann-scroll.is-in .ann-list>li:nth-child(3) .ann-row{animation-delay:100ms}
+.ann-scroll.is-in .ann-list>li:nth-child(4) .ann-row{animation-delay:150ms}
+.ann-scroll.is-in .ann-list>li:nth-child(n+5) .ann-row{animation-delay:200ms}
+@keyframes dp-pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+.ann-count.is-pop{animation:dp-pop .4s var(--e-spring) backwards .15s}
+/* The caught-up art draws itself in: rings, then the disc, then the tick. */
+.ann-scroll.is-in .ann-ring-out{animation:dp-pop .5s var(--e-out) backwards .05s}
+.ann-scroll.is-in .ann-disc{animation:dp-pop .5s var(--e-spring) backwards .15s}
+.ann-scroll.is-in .ann-badge{animation:dp-pop .45s var(--e-spring) backwards .4s}
+
+@media (prefers-reduced-motion:reduce){
+  #emp-life-dash,.emp-life-clip>.emp-trk,.dp-knob,.dp-sub>span{transition:none}
+}
+
+/* The rows need a little more room than the menu's 240px default. */
+#user-dd{min-width:300px}

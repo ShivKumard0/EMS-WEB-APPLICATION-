@@ -1,0 +1,128 @@
+/* ══ SMALL SCREENS ═══════════════════════════════════════════════════════════
+   Everything the app does below a laptop width, in one place and loaded last,
+   so the screen sheets stay as they are and these only ever narrow them.
+
+   Three widths, each a real step down rather than a device:
+     1180px  a small laptop  - the header names start giving way
+     1024px  a tablet        - the rail folds to icons (sbFitViewport, core.js),
+                               the header keeps icons only, filters stack
+      640px  a phone         - tighter gutters, an opened rail lies over the
+                               page, side panels and popups take the full width
+
+   The filter bar / status tiles row needs no breakpoint: it wraps when the two
+   no longer fit side by side, whatever the width (see below). */
+
+/* ── Filters beside the status tiles ──
+   Every listing puts its filter bar and its tiles in one wrapping row, the bar
+   on an inline flex:1;min-width:0. That let the bar shrink to a single column
+   of inputs beside the tiles rather than wrap - there was nothing to say how
+   narrow was too narrow. A 440px basis says it: below that the tiles move down
+   to a row of their own and the bar keeps the full width. Scoped to bars that
+   have tiles after them, the only place the row exists. */
+.lp-filter-bar:has(~ .listing-stats){flex:1 1 440px!important}
+/* Tiles that are wider than the room they get scroll sideways inside their own
+   rounded box instead of running out of the page. */
+.listing-stats{max-width:100%;overflow-x:auto;scrollbar-width:none}
+.listing-stats::-webkit-scrollbar{display:none}
+
+/* ── Header: the page title never runs under the + button ── */
+.topbar-page{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tb-page-add,.page-add-btn{flex-shrink:0}
+.hdr-sel-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.company-sel,.user-sel{white-space:nowrap;flex-shrink:0}
+
+@media (max-width:1180px){
+  .hdr-sel-label{max-width:120px}
+  .topbar-right{gap:8px}
+}
+
+@media (max-width:1024px){
+  :root{--pg-gutter:24px}
+  /* The entity and the user are recognised by their icon and initials; the
+     names are in the dropdowns they open (and in the hover title). */
+  .hdr-sel-label{display:none}
+  .topbar-right{flex:0 0 auto;gap:4px}
+  .company-sel,.user-sel{padding:5px 6px}
+}
+
+@media (max-width:640px){
+  :root{--pg-gutter:16px}
+  .topbar{padding:0 12px}
+  .topbar-left{gap:8px}
+  /* The rail's 62px strip is the logo's place in the header; on a phone the
+     header cannot spare it, so the logo sits in the ordinary flow. */
+  .view.sb-collapsed .adt-logo,.adt-logo{margin-left:0;margin-right:4px;min-width:0}
+  .adt-logo img{height:26px}
+  .tb-icon{width:32px;height:32px}
+  .company-sel svg.hdr-dd-chev,.user-sel svg.hdr-dd-chev{display:none}
+  /* Header menus open inside the screen, not off its right edge. */
+  .hdr-dd-panel{position:fixed;top:60px;left:12px;right:12px;min-width:0}
+  .notif-wrap .notif-pop{position:fixed;top:60px;left:12px;right:12px;width:auto;max-width:none}
+  .hdr-dd-panel-right{left:12px;right:12px}
+  /* Page actions beside the title keep their icon, drop their label. */
+  .tb-cost-calc,.tb-opt-hol{font-size:0;gap:0;padding:0 9px}
+
+  /* An opened rail lies over the page instead of pushing it off the screen. */
+  .content-area{position:relative}
+  #adt-sidebar:not(.collapsed){position:absolute;top:0;left:0;bottom:0;z-index:60;
+    max-height:none;box-shadow:12px 0 32px rgba(15,23,42,.16)}
+
+  .page-content{padding-top:20px;padding-bottom:20px}
+  .page-content:has(.lp-table thead th,.at-table thead th){margin-top:20px}
+  .listing-stat{min-width:68px;padding:10px 12px}
+  .listing-stat-count{font-size:19px}
+  .lp-filter-bar-row .cs-wrap,.lp-filter-bar-row .cd-wrap{flex:1 1 130px;min-width:0}
+  .lp-search-input,.ct-search-input{flex:1 1 100%;width:auto}
+}
+
+/* ── Listing tables ──
+   A table that is wider than its card was CLIPPED, not scrolled: the card is
+   overflow:clip so its column heads can pin to the page, and whatever did not
+   fit simply sat out of reach under the pinned Action column (a few pixels on
+   a laptop, most of the table on a phone).
+
+   First, where space is tight, the column heads may wrap onto two lines - the
+   rule the Assets / IT Access tables already follow - so a table sized by its
+   longest heading ("Carry Forward Limit") stops being wider than its card.
+   S.No and Action keep one line. */
+@media (max-width:1366px){
+  .lp-table thead th:not(:first-child):not(:last-child){white-space:normal}
+}
+/* Then, below a laptop, a table that still does not fit scrolls sideways
+   inside its card, Action pinned at the right with its edge shadow while
+   columns remain (sticky-actions.js already tracks this). The column heads
+   scroll with the table here rather than pinning to the page - a card that
+   scrolls sideways is its own scroller, and CSS gives no way to have both. */
+@media (max-width:1024px){
+  .lp-table-card,.at-card,.listing-card{overflow-x:auto;overscroll-behavior-x:contain}
+  .ts-cal-card{overflow-x:auto}
+  /* A side panel takes most of the width; the page behind is not usable at
+     this size anyway, and 68% left its fields cramped. */
+  .lp-split-sb.open{width:88%}
+}
+@media (max-width:640px){
+  .lp-split-sb.open{width:100%}
+  .lp-sb-detail-grid,.lp-sb-form-grid,.prof-field-grid{grid-template-columns:minmax(0,1fr)}
+  .prof-field-grid-wide{grid-template-columns:minmax(0,1fr)}
+  /* Dashboard widgets: a table inside a card scrolls inside the card. */
+  .hr-leave-table{display:block;overflow-x:auto;white-space:nowrap}
+}
+@media (max-width:640px){
+  /* Timesheet filters: one row on a desktop, wrapped here. */
+  .ts-filter-bar{flex-wrap:wrap}
+  /* Dashboard tracker: the current status drops under the title, the
+     percentage line wraps, and the four stat cards pair up. */
+  .emp-trk .hr-section-header{flex-wrap:wrap;row-gap:6px}
+
+  .ts-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ts-stat-card{padding:14px;min-width:0}
+}
+
+/* ── Compact status tiles ──
+   A strip with many tiles (Tickets has six) sizes each tile to its own label
+   instead of to the widest one, with tighter padding, so the strip and the
+   filter bar fit on one row at desktop width. Below that the strip still
+   wraps under the filters, as every listing does. */
+.listing-stats.is-compact{grid-auto-columns:auto}
+.listing-stats.is-compact .listing-stat{min-width:64px;padding:10px 11px}
+.lp-filter-bar:has(~ .listing-stats.is-compact) .lp-search-input{width:130px}

@@ -1,0 +1,979 @@
+/* Multi-role Dashboard (Employee / HR / Manager / Super Admin / Finance / CSM / Compliance / Ops / Entity Owner) */
+.dashboard-tabs-wrap{position:relative;margin-bottom:24px}
+.dashboard-tabs{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding:2px 1px}
+.dashboard-tabs::-webkit-scrollbar{display:none}
+.tab-btn{padding:9px 16px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:var(--ds-title);font-weight:600;color:var(--navy);position:relative;transition:border-color .2s,background .2s,color .2s,box-shadow .2s;border-radius:var(--r-control);display:flex;align-items:center;gap:6px;white-space:nowrap;font-family:'Inter',sans-serif;flex-shrink:0}
+.tab-btn:hover{background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.dt-edge{position:absolute;top:0;bottom:0;width:44px;display:flex;align-items:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:3}
+.dt-edge-left{left:0;justify-content:flex-start;background:linear-gradient(to right,var(--light) 45%,rgba(248,249,251,0))}
+.dt-edge-right{right:0;justify-content:flex-end;background:linear-gradient(to left,var(--light) 45%,rgba(248,249,251,0))}
+.dt-edge.show{opacity:1}
+.dt-scroll-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(15,23,42,.14);flex-shrink:0;padding:0;pointer-events:none}
+.dt-edge.show .dt-scroll-btn{pointer-events:auto}
+.dt-scroll-btn:hover{background:var(--card);border-color:var(--btn-accent);color:var(--btn-accent)}
+.dt-scroll-btn svg{width:14px;height:14px}
+.dashboard-view{display:none}
+.dashboard-view.active{display:block;animation:fadeIn .25s ease}
+.hr-header{margin-bottom:20px}
+/* Date line above the greeting - small and quiet, it is context, not a title. */
+.hr-header-eyebrow{margin-bottom:4px;font-size:var(--ds-caption);font-weight:500;color:var(--gray);letter-spacing:.1px}
+.hr-header-eyebrow:empty{display:none}
+.hr-header-title{font-size:var(--ds-h1);font-weight:700;color:var(--navy);margin-bottom:4px;letter-spacing:-.3px}
+.hr-header-desc{font-size:var(--ds-body);color:var(--gray);line-height:1.5;font-weight:400}
+/* ══ ONE CARD SIZE, EVERY DASHBOARD ═══════════════════════════════════════
+   A KPI tile is the same object wherever it appears, so it is the same size
+   wherever it appears. It wasn't: the column count was set inline on each
+   grid - 5 on Ops, 4 on Super Admin, 3 on Finance, 2 on the Finance basic
+   second row - so one component rendered at 228, 289, 324, 389 and 591px,
+   and three dashboards changed their card width halfway down the page.
+
+   Worse, an inline grid-template-columns outranks the media queries at the
+   bottom of this file, so those grids never responded to viewport width at
+   all: the 5-col Ops strip stayed 5-col down to phone size.
+
+   The track now lives here and only here. Rules:
+     · 4 equal columns, one 14px gutter in both axes.
+     · A dashboard's tiles are ONE grid, however many rows they take. Splitting
+       them into a grid per row made each row's height independent and forced a
+       hand-set margin-bottom to imitate the row gap.
+     · A short last row is left short. Cards keep the standard width and stay
+       aligned with the rows above instead of stretching to fill.
+     · Anything wider than a tile spans whole columns (.hr-stat-span2), so it
+       is still measured in the same track.                                  */
+/* ══ ONE TILE SIZE, EVERYWHERE ═════════════════════════════════════════════
+   The track is 12 columns and a tile spans 3, so four to a row. A last row
+   holding fewer than four stops where it stops and leaves the rest of the row
+   empty.
+
+   THIS REVERSES AN EARLIER DECISION, and the reason is worth keeping. The
+   grid used to deal a short last row across the full width - two left over
+   became half each, three became a third each - so that no row ended on a
+   gap. It worked, but it bought a tidy right-hand edge with a worse problem:
+   the last row's tiles came out visibly larger than the rows above, so nine
+   tiles rendered as four small, four small, then three big. Size is the first
+   thing the eye reads on a grid of cards, and making it mean "this row is
+   short" rather than "these are the same kind of thing" is a poor trade. A
+   metric tile is not more important because of where it happens to land.
+
+   Empty space at the end of a row costs nothing and reads as what it is. Rows
+   are also pinned to one height (grid-auto-rows), so a tile whose label wraps
+   to two lines cannot make its row taller than the others. */
+.hr-stat-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:22px;align-items:stretch}
+.hr-stat-grid>*{grid-column:span 3}
+/* Every row the same height, so the grid reads as one block rather than as
+   rows of slightly different sizes. Held away from any grid with a
+   double-width tile in it - that one sets its own rhythm. */
+.hr-stat-grid:not(:has(.hr-stat-span2)){grid-auto-rows:1fr}
+.hr-stat-span2{grid-column:span 6}
+/* Column, so the caption can be pinned to the bottom edge: a wrapped label on
+   one card then pushes nothing out of line on its neighbours - label, metric
+   and caption stay on their own baselines right across the row. */
+.hr-stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;text-align:left;display:flex;flex-direction:column;min-height:106px}
+
+/* ══ TWO KINDS OF DASHBOARD CARD ═══════════════════════════════════════════
+   A dashboard tile is one of exactly two things, and they used to look
+   identical: every card lifted its border and took a shadow on hover, so all
+   56 of them promised a click and none of them delivered one. A promise every
+   tile makes and none keeps is worse than no promise at all - it teaches the
+   user to stop trying, including on the tiles that would have worked.
+
+   THE DIRECTION OF THE DIFFERENCE IS THE WHOLE DESIGN.  The first attempt
+   separated them by fill: doors stayed white, read-only tiles were painted in
+   --light so they sat flush with the page. It separated them, and it was
+   wrong. Greying a surface is the one visual move the whole interface already
+   reserves for "you cannot use this", so "Total Invoiced ₹14.3L" - the single
+   most important number on the Finance dashboard - came out looking switched
+   off. Nothing was disabled; it just looked it.
+
+   So the difference now runs the other way. Read-only tiles are left exactly
+   as they always were: white, same border, same everything, a perfectly
+   ordinary card. Nothing is taken away from them, because there is nothing
+   wrong with them. The DOORS are what gain, and they gain the two marks that
+   have meant "you can press this" since long before screens:
+
+     1. ELEVATION. A resting shadow, so a door sits physically proud of the
+        page while a read-only tile lies flat on it. Deepens on hover, and the
+        card lifts 2px into it. Same fill, different plane.
+     2. A CONTROL, VISIBLE AT REST. A round chevron chip in the bottom-right -
+        the app's own "go this way" shape, borrowed straight from the tab-strip
+        scroll buttons (.dt-scroll-btn). A bare chevron was too quiet to carry
+        this on its own. A chip is unmistakably a thing you press, and it
+        reacts to hover on the CARD, not on itself, which is what teaches that
+        the whole tile is the target and the chip is only its mark.
+
+   No colour separates the two. Label, metric, caption, fill and border are
+   identical on both; a read-only tile differs only in what it does NOT have.
+
+   Which is which is decided in one place, by data - see DASH_CARD_LINK in
+   js/core.js. A card is a door if, and only if, a listing exists that holds
+   the records it is counting. ═══════════════════════════════════════════ */
+
+/* A quick action is a door, and so is a clickable stat tile, so both carry the
+   chevron chip defined below. They are NOT, however, the same kind of door, and
+   giving them the same card chrome was where this went wrong.
+
+   A stat tile's first job is to report a number; the click is a second job it
+   also happens to have - a drill-down into the figure you have just read. A
+   quick action reports nothing. It exists only to be pressed. Rendering both as
+   white 14px cards with the same border, the same resting shadow and the same
+   hover lift left a dashboard of a dozen equally-weighted pressable rectangles,
+   with nothing to say where "here is the state of the business" ended and "here
+   is what you can do about it" began. The band headings named the two regions;
+   the cards then went on to contradict them.
+
+   SO THE DIFFERENCE IS IN FORM, NOT IN FILL. The rule further up still holds -
+   nothing here is greyed, because a grey surface is how this interface says
+   "you cannot use this", and these are the most pressable things on the page.
+   What changes is that the actions stop being cards at all. They become
+   segments of ONE control bar: a single bordered panel, hairline dividers
+   between the segments, one resting shadow for the whole instrument instead of
+   one per tile. Same white fill, same border colour, same chip - a completely
+   different silhouette.
+
+   The hover fill this file once ruled out is now the correct answer rather than
+   the wrong one. The old objection was that a filling card sat beside lifting
+   cards doing the same job. A segment in a bar is not a card and has no
+   neighbours to contradict: filling on hover is exactly how a segmented control
+   behaves, and lifting one segment out of a shared panel would be nonsense. */
+.hr-stat-card.is-link,
+.hr-action-card{
+  position:relative;
+  cursor:pointer;
+  transition:border-color var(--t-fast) var(--e-out),
+             box-shadow var(--t-fast) var(--e-out),
+             background-color var(--t-fast) var(--e-out),
+             transform var(--t-fast) var(--e-out);
+}
+/* A stat tile is a card, so it carries its own elevation. An action segment is
+   not; .hr-actions carries one for the whole bar. */
+.hr-stat-card.is-link{
+  box-shadow:0 1px 2px rgba(15,23,42,.05),0 2px 6px rgba(15,23,42,.045);
+}
+
+/* THE TOP-RIGHT CORNER NOW BELONGS TO AN ICON, so the round chevron chip that
+   used to sit bottom-right on a stat tile is gone. A tile is identified at a
+   glance by its icon and separated from its neighbours by it; adding a second
+   mark in the opposite corner made a 106px card carry two competing signals
+   and cost the caption 40px of its line.
+
+   What the chip was carrying - "you can press this, visible at rest" - is now
+   carried by the icon tile itself: on a door it is inked (dark on tint), on a
+   read-only tile it is grey on grey. Same corner, same shape, one signal.
+   Actions keep an arrow, but a plain one, because an action card is a wide row
+   with a free right-hand edge and nothing competing for it. */
+.hr-action-card::after{
+  content:'';
+  position:absolute;right:14px;top:50%;margin-top:-14px;
+  width:28px;height:28px;
+  /* 10px, the same radius as .hr-action-icon at the other end of this card.
+     The chip and the icon tile are the card's two square marks and they sit on
+     one line, so a shared radius makes them read as a pair. The square corners
+     came from an earlier version of this rule losing its border-radius while
+     keeping the dark fill that needed one. */
+  border-radius:10px;
+  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3Cpolyline points='12 5 19 12 12 19'/%3E%3C/svg%3E") center/16px 16px no-repeat;
+  transition:background-color var(--t-fast) var(--e-out),
+             transform var(--t-fast) var(--e-out);
+}
+/* The chip answers to the CARD's hover, never its own - the card is the
+   target, the chip is only the mark that says so. */
+.hr-action-card:hover::after{
+  background-color:#0f172a;
+  transform:translateX(3px);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3Cpolyline points='12 5 19 12 12 19'/%3E%3C/svg%3E");
+}
+
+/* ── The tile head: label left, icon right ───────────────────────────────
+   The label keeps the top-left because that is where the card is read from.
+   The icon is the card's identity - it is what lets you find "Payroll
+   Blockers" in a grid of nine without reading nine labels. */
+.hr-stat-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.hr-stat-head .hr-stat-label{margin-bottom:0;flex:1;min-width:0}
+.hr-stat-ico{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#f1f3f5;color:#64748b;
+  transition:background-color var(--t-fast) var(--e-out),color var(--t-fast) var(--e-out);
+}
+.hr-stat-ico svg{width:16px;height:16px;stroke-width:1.8}
+/* A door's icon is inked; a read-only tile's stays grey. This is the whole of
+   the at-rest difference now, and it lives in one place. */
+.hr-stat-card.is-link .hr-stat-ico{background:#eef2f7;color:#0f172a}
+.hr-stat-card.is-link:hover .hr-stat-ico{background:#0f172a;color:#fff}
+
+.hr-stat-card.is-link:hover{
+  border-color:#cbd5e1;
+  box-shadow:0 10px 26px rgba(15,23,42,.10),0 2px 6px rgba(15,23,42,.05);
+  transform:translateY(-2px);
+}
+.hr-stat-card.is-link:active,.hr-action-card:active{transform:translateY(0) scale(.995)}
+.hr-stat-card.is-link:focus-visible,.hr-action-card:focus-visible{outline:2px solid var(--btn-accent,#1a1a1a);outline-offset:2px}
+
+/* Read-only: an ordinary card. It is not styled here because there is nothing
+   to add - it keeps the base .hr-stat-card exactly. The one thing it must not
+   inherit is a hover response, which the base no longer has. */
+.hr-stat-card.is-static{cursor:default}
+
+/* ── THE ALERT TILE ───────────────────────────────────────────────────────
+   One metric on a dashboard is sometimes not a number you read but a thing
+   blocking you - "Payroll Blockers: 4" stops a payroll run on Tuesday. Tinting
+   it is the exception the no-tinting rule above is worth breaking for: that
+   rule exists so a grey surface is never mistaken for "disabled", and red is
+   not grey. It says the opposite of disabled.
+
+   Used sparingly and on purpose - a dashboard where three tiles are red has
+   no alert tile, it just has a red dashboard. The NUMBER stays navy: it is
+   still the figure you came to read, and colouring it too would leave the
+   card with nothing to anchor on. */
+.hr-stat-card.is-alert{background:#fef5f5;border-color:#f6cccc}
+.hr-stat-card.is-alert .hr-stat-ico{background:#fde8e8;color:#c0392b}
+.hr-stat-card.is-alert .hr-stat-sub{color:#c0392b;font-weight:500}
+.hr-stat-card.is-alert.is-link:hover{border-color:#e9a8a8}
+.hr-stat-card.is-alert.is-link:hover .hr-stat-ico{background:#c0392b;color:#fff}
+
+@media (prefers-reduced-motion:reduce){
+  .hr-stat-card.is-link,.hr-stat-card .hr-stat-ico,
+  .hr-action-card,.hr-action-card::after{transition:none}
+  .hr-stat-card.is-link:hover{transform:none}
+  .hr-action-card:hover::after{transform:none}
+}
+.hr-stat-label{font-size:var(--ds-label);color:var(--gray);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+/* Every widget value renders at the same size so metric baselines line up across a row.
+   Numeric ("12") and short word values ("Ready", "Apr") share --ds-metric. */
+.hr-stat-number{font-size:var(--ds-metric);font-weight:700;color:var(--navy);margin-bottom:6px;letter-spacing:-.5px;line-height:1.25;min-height:calc(var(--ds-metric) * 1.25)}
+/* Only exception: a long text value (entity/company name) steps down one level
+   and truncates, so it can never wrap and break the row rhythm. It keeps the same
+   row height as a full-size metric, so captions stay on one baseline across the row. */
+.hr-stat-number.is-text{font-size:var(--ds-metric-text);letter-spacing:-.3px;line-height:calc(var(--ds-metric) * 1.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr-stat-number.green{color:var(--st-ok-fg)}
+.hr-stat-number.orange{color:var(--st-wait-fg)}
+.hr-stat-number.red{color:var(--st-bad-fg)}
+/* line-height is stated rather than inherited so the caption's line box is a
+   known 16px — the chevron chip above is positioned against it. */
+.hr-stat-sub{font-size:var(--ds-caption);line-height:1.45;color:var(--gray);display:flex;align-items:center;gap:4px;font-weight:400;margin-top:auto}
+.hr-stat-sub.green{color:var(--st-ok-fg)}
+.hr-stat-sub.orange{color:#b45309}
+
+/* ══ BAND HEADINGS ═══════════════════════════════════════════════════════
+   A dashboard is three kinds of thing stacked in one column: NUMBERS you
+   read, ACTIONS you take, and PANELS you scan. The first two were built from
+   cards of the same width, fill, border and radius, one gap apart - so
+   "148 · Total Employees" and "Add Employee · onboard a new team member" read
+   as neighbours in a single list rather than as a fact and a button. Nothing
+   on the page said where the reading stopped and the doing started.
+
+   THE SEPARATOR IS A LABEL, NOT A SURFACE. Tinting the action row, or boxing
+   it, is the obvious move and it is the one this file already rules out
+   further up: a greyed surface is how this interface says "you cannot use
+   this", and these are the most pressable things on the page. A heading costs
+   no fill, names the band in the user's own words, and is the same device
+   .hr-section-header already uses one level down - so the page gains a level
+   of hierarchy rather than a new kind of decoration.
+
+   The rule runs out to the right edge. That is what does the actual work: it
+   draws a full-width line the eye reads as the start of a new region, which a
+   short label floating over a gap does not. Panels are not banded - each one
+   already carries its own .hr-section-header, and a third label above them
+   would name a thing that has just named itself. */
+.hr-band{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.hr-band-title{font-size:var(--ds-micro);font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.hr-band-rule{flex:1;height:1px;background:var(--border)}
+/* The band can carry a note on its right - freshness, a count, a scope. The
+   rule still flexes, so the note sits hard against the right edge and the
+   line closes the gap between them whatever the note says. */
+.hr-band-meta{font-size:var(--ds-caption);color:var(--gray);font-weight:400;white-space:nowrap}
+/* A band that follows another band's content needs the gap to read as a break
+   rather than as the grid's own row gap, which is 14px. */
+.hr-stat-grid+.hr-band,.hr-actions+.hr-band,.hr-section+.hr-band,.hr-grid-2+.hr-band{margin-top:26px}
+/* ── THE QUICK ACTIONS PANEL ──────────────────────────────────────────────
+   The band heading that used to sit above this row is now the panel's own
+   header, inside it. Two reasons. A floating label with a rule to the right
+   names a REGION of the page, which is right for Key Metrics - a grid of
+   tiles with nothing holding them together. Quick Actions is not a region, it
+   is one object: a short, fixed list of shortcuts. An object carries its own
+   title, the way .hr-section already does one level down.
+
+   And it settles the original complaint. Metrics are a grid of tiles on the
+   page; actions are a panel with a header, containing cards. The two bands no
+   longer differ only in what their cards say - they are different shapes. */
+.hr-actions{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px 18px;margin-bottom:20px;
+}
+.hr-actions-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.hr-actions-head .hr-actions-bolt{
+  width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--navy)}
+.hr-actions-head .hr-actions-bolt svg{width:15px;height:15px}
+.hr-actions-title{font-size:var(--ds-micro);font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+/* Sentence case beside an uppercase title: it is a description, not a second
+   heading, and setting both the same way would make it read as one. */
+.hr-actions-sub{font-size:var(--ds-caption);color:var(--gray);font-weight:400;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hr-actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.hr-actions--2 .hr-actions-grid{grid-template-columns:repeat(2,1fr)}
+.hr-actions--4 .hr-actions-grid{grid-template-columns:repeat(4,1fr)}
+
+/* A card again, but a quieter one than a stat tile: no elevation, because it
+   is already inside a panel and a card inside a card does not need to float
+   out of it. The border and the arrow carry it. */
+/* padding-right clears the chip: 14px edge + 28px chip + 10px of air. */
+.hr-action-card{background:var(--card);border:1px solid var(--border);border-radius:11px;
+  padding:14px 52px 14px 14px;display:flex;align-items:center;gap:12px}
+.hr-action-card:hover{background:#f8fafc;border-color:#cbd5e1}
+.hr-action-icon{width:40px;height:40px;border-radius:10px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0}
+.hr-action-icon svg{width:18px;height:18px;stroke-width:1.5}
+.hr-action-text{flex:1}
+.hr-action-name{font-size:var(--ds-title);font-weight:700;color:var(--navy);margin-bottom:2px}
+.hr-action-desc{font-size:var(--ds-caption);color:var(--gray);font-weight:400}
+/* ── QUICK LINKS (Employee Dashboard) ──────────────────────────────────────
+   Where an employee goes next: one compact button per destination, in a row
+   that wraps. Lighter than an action card - a name and an icon, no line of
+   description - because each is a door, not a task. The icon tile is the
+   action card's, scaled down, so the two read as one family. */
+/* Equal columns, not content-width pills: content-width left a ragged right
+   edge that never lined up with the cards below it. Six across on desktop,
+   three on a tablet, two on a phone - always a full row. */
+.hr-links{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 22px}
+@media(max-width:1100px){.hr-links{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.hr-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hr-link{display:flex;align-items:center;gap:10px;min-width:0;height:46px;padding:0 12px 0 8px;white-space:nowrap;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;cursor:pointer;
+  font-family:inherit;font-size:var(--ds-title);font-weight:500;color:var(--navy);
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  transition:border-color var(--t-fast) var(--e-out),background-color var(--t-fast) var(--e-out),transform var(--t-fast) var(--e-out)}
+.hr-link:hover{background:#f8fafc;border-color:#cbd5e1;transform:translateY(-1px)}
+.hr-link:active{transform:none}
+.hr-link:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(148,163,184,.35)}
+.hr-link-ico{width:30px;height:30px;border-radius:8px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;color:var(--gray);flex-shrink:0}
+.hr-link-ico svg{width:15px;height:15px}
+.hr-link-txt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){.hr-link,.hr-link:hover{transition:none;transform:none}}
+.hr-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:0}
+.hr-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.hr-section-title{font-size:var(--ds-title);font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.3px}
+/* ══ NAVIGATION LINKS ══════════════════════════════════════════════════════
+   "View All", "Apply Leave", "View calendar" - every one of these leaves the
+   dashboard for another screen, and none of them said so. They read as plain
+   grey labels sitting in a panel header, indistinguishable from the header's
+   own title until you hovered and an underline appeared. A signal that only
+   exists on hover cannot be found by someone who has not already found it.
+
+   The chevron is NOT a new invention here. It is the same mark, and the same
+   polyline, that .hr-stat-card.is-link already wears in its corner chip and
+   that .csm-panel-link already renders inline - the app's established "go this
+   way" shape. These links were simply the ones it never reached.
+
+   IT IS A MASK, NOT AN IMAGE, so background-color:currentColor paints it and
+   the chevron inherits the link's colour in every state for free. An SVG with
+   a baked-in stroke would need its own rule for rest and hover, and would
+   quietly drift the first time either colour moved.
+
+   THE UNDERLINE IS GONE ON PURPOSE. Text decoration propagates to flex items,
+   so with the chevron in flow the hover underline drew straight through it.
+   The chevron at rest is a better answer than the underline was: it marks the
+   link BEFORE the pointer arrives rather than after, and hover now darkens the
+   ink and nudges the chevron 2px - the same response the stat-card chip gives,
+   so the whole "this goes somewhere" language behaves alike wherever it lands. */
+.hr-section-link,.lp-sb-section-link{display:inline-flex;align-items:center;gap:4px}
+.hr-section-link::after,.lp-sb-section-link::after{
+  content:"";width:12px;height:12px;flex-shrink:0;
+  background-color:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'/%3E%3C/svg%3E") center/contain no-repeat;
+  transition:transform var(--t-fast) var(--e-out);
+}
+.hr-section-link{font-size:var(--ds-caption);color:#64748b;font-weight:500;text-decoration:none;cursor:pointer;transition:color .2s}
+.hr-section-link:hover{color:var(--btn-accent);text-decoration:none}
+.hr-section-link:hover::after,.lp-sb-section-link:hover::after{transform:translateX(2px)}
+@media (prefers-reduced-motion:reduce){
+  .hr-section-link::after,.lp-sb-section-link::after{transition:none}
+  .hr-section-link:hover::after,.lp-sb-section-link:hover::after{transform:none}
+}
+.hr-leave-table{width:100%;border-collapse:collapse;font-size:var(--ds-body)}
+.hr-leave-table th{text-align:left;padding:8px 0;border-bottom:1px solid var(--border);color:var(--gray);font-weight:600;font-size:var(--ds-micro);text-transform:uppercase;letter-spacing:.4px}
+.hr-leave-table td{padding:11px 0;border-bottom:1px solid #f1f3f5;color:var(--navy);font-size:var(--ds-body);font-weight:400;vertical-align:middle}
+.hr-leave-table tr:hover td{background:#fafbfc}
+.hr-leave-table tr:last-child td{border-bottom:0}
+.hr-emp-name{font-weight:600;color:var(--navy);font-size:var(--ds-body)}
+/* Status pills on these dashboards are the listing page's .lp-status-badge,
+   not a lookalike. Three near-copies used to live in this file - .hr-leave-badge,
+   .csm-status-pill and .manager-expense-status - and each dropped the 1.5px tone
+   border and picked its own padding, weight and font-size, so the same "Pending"
+   read three ways depending on which dashboard you were on. One rule in main.css
+   now, and its tone modifiers (.approved, .pending, .blocked, .active ...) are the
+   ones generated from SB_STATUS_TONE, so a dashboard pill cannot drift from the
+   listing pill for the same status. */
+.hr-action-btn{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:var(--r-control);font-size:var(--ds-micro);font-weight:600;white-space:nowrap;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s}
+.hr-action-btn.approve{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+/* .hr-action-btn approve/reject/neutral hovers used to tint green/red/grey here.
+   buttons.css owns all three now - Approve is the filled variant, the other two
+   are outline, and none of them carry a semantic colour. */
+.hr-action-btn.reject{background:#fee2e2;color:#b83a3a}
+.hr-action-btn.neutral{background:#f1f3f5;color:#475569}
+.hr-holiday-list{display:flex;flex-direction:column;gap:0}
+.hr-holiday-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f3f5}
+.hr-holiday-item:last-child{border-bottom:0;padding-bottom:0}
+.hr-holiday-item:first-child{padding-top:0}
+.hr-holiday-date{font-size:var(--ds-title);font-weight:700;color:var(--navy);min-width:28px;letter-spacing:-.2px;background:#f1f3f5;border-radius:6px;padding:4px 8px;text-align:center;flex-shrink:0}
+.hr-holiday-info{flex:1;margin-left:10px}
+.hr-holiday-name{font-size:var(--ds-body);font-weight:600;color:var(--navy)}
+.hr-holiday-type{font-size:var(--ds-caption);color:var(--gray);margin-top:1px;font-weight:400}
+.holiday-tag{display:inline-block;font-size:var(--ds-micro);font-weight:600;padding:2px 7px;border-radius:var(--r-status);letter-spacing:.2px}
+.holiday-tag.regional{background:#e0e7ff;color:#4338ca}
+.holiday-tag.national{background:var(--st-ok-bg);color:var(--st-ok-fg)}
+.hr-birthday-list{display:flex;flex-direction:column;gap:0}
+.hr-birthday-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f3f5}
+.hr-birthday-item:first-child{padding-top:0}
+.hr-birthday-item:last-child{border-bottom:0;padding-bottom:0}
+.hr-birthday-avatar{width:36px;height:36px;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;color:#3b5bdb;font-size:var(--ds-caption);font-weight:700;flex-shrink:0}
+.hr-birthday-info{flex:1}
+.hr-birthday-name{font-size:var(--ds-body);font-weight:600;color:var(--navy)}
+.hr-birthday-date{font-size:var(--ds-caption);color:var(--gray);margin-top:2px;font-weight:400}
+.manager-expense-list{display:flex;flex-direction:column;gap:0}
+.manager-expense-item{display:flex;align-items:flex-start;gap:12px;padding:12px 8px;border-bottom:1px solid #f1f3f5;text-decoration:none;color:inherit;border-radius:10px;margin:0 -8px;transition:background .15s}
+.manager-expense-item:hover{background:#f8f9fb}
+.manager-expense-item:last-child{border-bottom:0;padding-bottom:8px}
+.manager-expense-item:first-child{padding-top:8px}
+.manager-expense-avatar{width:34px;height:34px;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;color:#3b5bdb;font-size:var(--ds-caption);font-weight:700;flex-shrink:0;margin-top:1px}
+.manager-expense-body{flex:1;min-width:0}
+.manager-expense-name{font-size:var(--ds-body);font-weight:600;color:var(--navy);margin-bottom:2px}
+.manager-expense-desc{font-size:var(--ds-caption);color:var(--gray);line-height:1.45;margin-bottom:5px}
+.manager-expense-tag{display:inline-block;font-size:var(--ds-micro);font-weight:600;padding:2px 7px;border-radius:var(--r-status);background:#f1f3f5;color:#64748b;letter-spacing:.1px}
+.manager-expense-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.manager-expense-amount{font-size:var(--ds-title);font-weight:700;color:var(--navy)}
+.manager-leave-table{table-layout:fixed}
+.manager-leave-table th,.manager-leave-table td{padding-left:12px;padding-right:12px}
+.manager-leave-table th:first-child,.manager-leave-table td:first-child{padding-left:0}
+.manager-leave-table th:last-child,.manager-leave-table td:last-child{padding-right:0}
+.manager-leave-table .col-employee{width:24%}
+.manager-leave-table .col-type{width:22%}
+.manager-leave-table .col-duration{width:19%}
+.manager-leave-table .col-days{width:52px;text-align:center}
+.manager-leave-table .col-action{width:148px}
+.manager-days{text-align:center;font-weight:600;color:var(--navy)}
+.manager-action-cell{display:flex;gap:7px;align-items:center;justify-content:flex-start}
+.manager-action-cell .hr-action-btn{height:28px;min-width:60px;justify-content:center;border-radius:var(--r-control)}
+/* A lone action button in a table cell fills its column, and the column is
+   only as wide as its longest label - so every row's button is the SAME width
+   ("Acknowledge", "Submit", "Update" used to be three widths stacked in one
+   column). Pairs (Approve / Reject) keep their own widths via :only-child. */
+td:has(> .hr-action-btn:only-child){width:1%;white-space:nowrap}
+td > .hr-action-btn:only-child{width:100%;justify-content:center}
+.hr-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px}
+.finance-action-grid .hr-actions-grid{grid-template-columns:repeat(3,1fr)}
+.finance-tables-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.csm-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.csm-status-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;min-height:84px}
+/* Each card opens the Tickets listing already filtered to what it counted,
+   so it has to look like something you can press. Same restraint as
+   .listing-stat, which is the control these cards are a remote for: the
+   surface lifts on hover, nothing moves on the page. */
+.csm-status-card{cursor:pointer;user-select:none;
+  transition:background var(--t-micro) ease,border-color var(--t-fast) ease,box-shadow var(--t-fast) var(--e-out),transform var(--t-fast) var(--e-out)}
+.csm-status-card:hover{background:#f8fafc;border-color:#d8dce2;box-shadow:0 2px 10px -4px rgba(15,23,42,.16)}
+.csm-status-card:active{transform:translateY(1px);box-shadow:none}
+/* Keyboard users get the same affordance - the card carries role=button and
+   tabindex, so it lands in the tab order and must show where it is. */
+.csm-status-card:focus-visible{outline:2px solid var(--row-sel-rail,#0f172a);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .csm-status-card{transition:background var(--t-micro) ease}
+  .csm-status-card:active{transform:none}
+}
+/* Neutral, like the action-card chips on these dashboards
+   (.hr-action-icon): same #f1f3f5 fill, same navy glyph. These four used to
+   wear their status colour - red, green, amber, grey - which made a row of
+   four cards read as four alerts. The number is the news here; the icon only
+   says which number it is. Status colour still appears where it means
+   something: on the pills in the ticket list below. */
+.csm-status-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;color:var(--navy);background:#f1f3f5}
+.csm-status-icon svg{width:17px;height:17px;stroke-width:1.8}
+/* Matches .hr-stat-number / .hr-stat-label exactly — same metric, same weight. */
+.csm-status-value{font-size:var(--ds-metric);font-weight:700;color:var(--navy);line-height:1.2;text-align:right;letter-spacing:-.5px}
+.csm-status-label{grid-column:1/3;font-size:var(--ds-label);font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-top:-2px}
+.csm-main-grid{display:grid;grid-template-columns:1.35fr .9fr;gap:14px;margin-bottom:14px}
+.csm-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+.csm-panel-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;margin-bottom:2px;border-bottom:1px solid var(--border)}
+.csm-panel-title{font-size:var(--ds-title);font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.3px}
+.csm-panel-link{font-size:var(--ds-caption);color:#64748b;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px}
+.csm-panel-link svg{width:12px;height:12px;stroke-width:2}
+.csm-ticket-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:13px 0;border-bottom:1px solid #f1f3f5;align-items:center}
+.csm-ticket-row:last-child{border-bottom:0;padding-bottom:0}
+.csm-ticket-meta{font-size:var(--ds-caption);color:#64748b;font-weight:600;margin-bottom:5px}
+.csm-ticket-title{font-size:var(--ds-title);font-weight:700;color:var(--navy);margin-bottom:3px}
+.csm-ticket-desc{font-size:var(--ds-caption);color:var(--gray);line-height:1.45;margin-bottom:5px}
+.csm-ticket-time{font-size:var(--ds-caption);color:#94a3b8;font-weight:500}
+.csm-chat-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5;transition:background .15s;border-radius:10px}
+.csm-chat-row:hover{background:#f8f9fb;margin-left:-8px;margin-right:-8px;padding-left:8px;padding-right:8px}
+.csm-chat-row:last-child{border-bottom:0;padding-bottom:0}
+.csm-chat-avatar-wrap{position:relative;flex-shrink:0}
+.csm-chat-avatar{width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:var(--ds-caption);font-weight:700;letter-spacing:.2px}
+.csm-chat-dot{position:absolute;right:1px;bottom:1px;width:9px;height:9px;border-radius:50%;background:#94a3b8;border:2px solid #fff}
+.csm-chat-dot.online{background:var(--st-ok-fg)}
+.csm-chat-info{flex:1;min-width:0}
+.csm-chat-name{font-size:var(--ds-body);font-weight:600;color:var(--navy);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.csm-chat-time{font-size:var(--ds-caption);color:var(--gray)}
+.csm-chat-chevron{width:16px;height:16px;color:#94a3b8;flex-shrink:0}
+.emp-payslip-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f1f3f5}
+.emp-payslip-row:last-child{border-bottom:0;padding-bottom:0}
+.emp-payslip-month{font-size:var(--ds-body);font-weight:600;color:var(--navy);margin-bottom:2px}
+.emp-payslip-sub{font-size:var(--ds-caption);color:var(--gray)}
+.emp-payslip-amount{font-size:var(--ds-title);font-weight:700;color:var(--navy);text-align:right;margin-bottom:3px}
+.emp-doc-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f3f5}
+.emp-doc-row:last-child{border-bottom:0;padding-bottom:0}
+/* uniform action column: every row button matches the widest label ("Download") */
+.emp-doc-row .hr-action-btn{min-width:92px;flex-shrink:0}
+.emp-doc-icon{width:30px;height:30px;border-radius:7px;background:#f1f3f5;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.emp-doc-icon svg{width:13px;height:13px;stroke:var(--navy);fill:none;stroke-width:1.8}
+.emp-doc-name{font-size:var(--ds-body);font-weight:600;color:var(--navy);margin-bottom:1px}
+.emp-doc-date{font-size:var(--ds-caption);color:var(--gray)}
+.emp-upcoming-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f1f3f5}
+.emp-upcoming-row:last-child{border-bottom:0;padding-bottom:0}
+.emp-upcoming-date{width:36px;height:36px;border-radius:8px;background:#f8f9fb;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.emp-upcoming-day{font-size:var(--ds-title);font-weight:700;color:var(--navy);line-height:1.1}
+.emp-upcoming-mon{font-size:var(--ds-micro);font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.3px;line-height:1.2}
+.emp-upcoming-title{font-size:var(--ds-body);font-weight:600;color:var(--navy);margin-bottom:2px}
+.emp-upcoming-sub{font-size:var(--ds-caption);color:var(--gray)}
+.emp-support-card{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-radius:16px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.emp-support-title{font-size:var(--ds-h2);font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:-.2px}
+.emp-support-desc{font-size:var(--ds-body);color:rgba(255,255,255,.6);line-height:1.5;max-width:460px}
+.emp-support-btn{background:var(--orange);color:#fff;border:none;border-radius:var(--r-control);padding:9px 20px;font-size:var(--ds-body);font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:.2s}
+/* .emp-support-btn hover used to be opacity:.9 - a translucent button reads as
+   disabled.  It sits on the dark support card, so buttons.css hovers it with
+   the ON-DARK primary rule (white -> #e2e8f0) alongside .btn-primary.on-dark. */
+.emp-support-btn.ghost{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25)}
+/* Contract pipeline mini-widgets — same label/metric/caption scale as .hr-stat-card,
+   only the alignment and border treatment differ. */
+.pipeline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.pipeline-card{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:border-color .2s}
+.pipeline-card:hover{border-color:#1a1a1a}
+.pipeline-label{font-size:var(--ds-label);font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.pipeline-value{font-size:var(--ds-metric);font-weight:700;color:var(--navy);letter-spacing:-.5px;line-height:1.2}
+.pipeline-sub{font-size:var(--ds-caption);font-weight:400;margin-top:6px;color:var(--gray)}
+.pipeline-sub.green{color:var(--st-ok-fg)}
+.pipeline-sub.orange{color:#b45309}
+/* Entity setup progress panel */
+.setup-title{font-size:var(--ds-h2);font-weight:700;color:var(--navy);margin-bottom:3px;letter-spacing:-.2px}
+.setup-desc{font-size:var(--ds-body);color:var(--gray);font-weight:400}
+.setup-desc a{color:#de7909;text-decoration:none;font-weight:500}
+.setup-pill{background:#f1f5f9;border:1px solid var(--border);border-radius:var(--r-status);padding:5px 16px;font-size:var(--ds-caption);font-weight:600;color:var(--navy);white-space:nowrap;align-self:center}
+.setup-meter-label{font-size:var(--ds-caption);color:var(--gray);font-weight:500}
+.setup-meter-value{font-size:var(--ds-caption);color:var(--navy);font-weight:600}
+.setup-step-name{font-size:var(--ds-body);font-weight:600;color:var(--navy);line-height:1.3}
+.setup-step-status{font-size:var(--ds-caption);font-weight:500;margin-top:3px;color:var(--gray)}
+.setup-step-status.done{color:var(--st-ok-fg)}
+@media(max-width:1200px){
+  /* Two to a row: a tile takes 6 of the 12. Every 4-per-row orphan rule above
+     has to be cancelled first — at two columns a :nth-child(4n+1) tile is not
+     the start of a short row at all. An odd count leaves one tile over, and
+     here it does take the full row, because at this width "full row" is only
+     two tiles wide, not four. */
+  .hr-stat-grid>*{grid-column:span 6}                  /* two to a row */
+  .hr-stat-grid>.hr-stat-span2{grid-column:span 12}   /* a double tile is the whole row here */
+  .hr-grid-2{grid-template-columns:1fr}
+  .hr-actions-grid,
+  .hr-actions--2 .hr-actions-grid,
+  .hr-actions--4 .hr-actions-grid,
+  .finance-action-grid .hr-actions-grid{grid-template-columns:repeat(2,1fr)}
+  .csm-main-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  /* One to a row: every tile takes the full track and no short row can exist,
+     so all the orphan rules are cancelled outright. */
+  .hr-stat-grid>*,
+  .hr-stat-grid>.hr-stat-span2{grid-column:span 12}   /* one to a row */
+  .hr-actions-grid,
+  .hr-actions--2 .hr-actions-grid,
+  .hr-actions--4 .hr-actions-grid,
+  .finance-action-grid .hr-actions-grid{grid-template-columns:1fr}
+  .emp-support-card{flex-direction:column;gap:14px}
+  .tab-btn{padding:8px 14px;font-size:12px}
+  .finance-tables-grid{grid-template-columns:1fr}
+  .csm-status-grid{grid-template-columns:repeat(2,1fr)}
+  .pipeline-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:520px){
+  .csm-status-grid{grid-template-columns:1fr}
+  .csm-ticket-row{grid-template-columns:1fr}
+  .csm-ticket-row .lp-status-badge{justify-self:flex-start}
+}
+
+
+/* ── OPENDHI COMPLIANCE ADMIN DASHBOARD ────────────────────────────────────
+   Header, a strip of count tiles that act as the filter, and one paged list.
+   Rows carry two lines where a single value is not enough on its own, so the
+   table stays scannable without a horizontal scroll. */
+#oca-dash{display:flex;flex-direction:column;gap:16px}
+
+/* ── Header ── */
+.oca-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.oca-head-id{min-width:0}
+.oca-head-title{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-.3px;line-height:1.25}
+.oca-role{
+  display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:5px;
+  background:var(--ol);color:var(--gray);font-size:10px;font-weight:700;letter-spacing:.6px}
+.oca-head-sub{font-size:13px;color:var(--gray);margin-top:5px}
+
+/* ── Status tiles — the only filter on this dashboard ── */
+/* One tile per lifecycle state, in the order the day runs. The count is the
+   headline; the state name sits under it as the label. Numbers stay navy like
+   every other figure in the app — the status pills in the rows carry the
+   colour, and repeating it up here would make five tiles compete at once. */
+.oca-tiles{
+  display:flex;gap:10px;padding:10px;background:#fff;border:1px solid var(--border);
+  border-radius:14px;overflow-x:auto;scrollbar-width:thin}
+.oca-tile{
+  flex:1 1 0;min-width:132px;display:flex;flex-direction:column;gap:3px;padding:12px 14px;
+  border:1px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;
+  font-family:inherit;text-align:left;transition:border-color .15s,box-shadow .15s}
+.oca-tile:hover{border-color:#cbd5e1;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.oca-tile.is-on{border-color:var(--navy);box-shadow:inset 0 -3px 0 var(--navy)}
+.oca-tile-n{font-size:21px;font-weight:700;color:var(--navy);line-height:1.1}
+.oca-tile-l{font-size:11.5px;color:var(--gray);line-height:1.35}
+/* an empty state is not a thing to act on, so it recedes */
+.oca-tile.is-zero .oca-tile-n,.oca-tile.is-zero .oca-tile-l{color:#cbd5e1}
+
+/* ── The decision bar ── */
+/* Sits at the top of the detail panel, above the fields. Reviewing a document
+   is the job, so the approve/reject pair is a control, not a status buried in
+   a dropdown. Only the affirmative move is filled — Reject is outlined, so the
+   irreversible-feeling direction is never the one the eye lands on first. */
+/* Stacked, not a row. It now sits in the Logs tab's right-hand column, which
+   is half the panel wide — side by side the question wrapped to three lines and
+   the buttons were squeezed against the edge. margin-bottom is gone because
+   .lp-logs-side owns the gap between its children. */
+.oca-actbar{
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  padding:12px 14px;border:1px solid var(--border);border-radius:12px;
+  background:var(--light)}
+.oca-actbar-q{font-size:12.5px;color:var(--gray);line-height:1.4;min-width:0}
+.oca-actbar-btns{display:flex;gap:8px}
+.oca-actbar-btns .oca-act{flex:1}
+.oca-act{
+  height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--border);background:#fff;
+  color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  transition:border-color .15s,background .15s,color .15s;white-space:nowrap}
+.oca-act:hover{border-color:#cbd5e1;background:var(--ol)}
+.oca-act-approve{background:var(--navy);border-color:var(--navy);color:#fff}
+.oca-act-approve:hover{background:#1e293b;border-color:#1e293b;color:#fff}
+.oca-act-reject{color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+.oca-act-reject:hover{background:var(--st-bad-bg);border-color:var(--st-bad-fg);color:var(--st-bad-fg)}
+
+/* ── The document itself ── */
+/* Reviewing means reading, and until there was a viewer the panel asked for a
+   decision on a file it would not open. Everything here is an affordance ONTO
+   that viewer: the strip that names the file above the decision bar, the icon
+   button in places that already name the document, and the link on the log
+   entries that record it changing hands. */
+
+/* The strip. Same card language as .oca-actbar, which sits directly under it,
+   so the pair reads as one column: what you are deciding about, then the
+   decision. */
+.oca-docstrip{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.oca-docstrip-ico{
+  flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ol);
+  display:flex;align-items:center;justify-content:center;color:var(--gray)}
+.oca-docstrip-txt{min-width:0;flex:1}
+.oca-docstrip-name{
+  font-size:12.5px;font-weight:600;color:var(--navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oca-docstrip-meta{font-size:11.5px;color:var(--gray);margin-top:2px}
+.oca-act-view{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+/* Nothing has arrived, so the strip states that and offers no button - the
+   muted form is the message. */
+.oca-docstrip.is-empty{background:var(--light);border-style:dashed}
+.oca-docstrip.is-empty .oca-docstrip-name{color:var(--gray);font-weight:500}
+
+/* On a log entry: a link, not a button, because the card it sits in is a
+   record of something that happened and not a place decisions are taken. */
+/* ── Attachments tab ── */
+/* The document under review and the supporting paper are two different things,
+   so they are two sections with their own headings rather than one list. */
+.oca-att{display:flex;flex-direction:column;gap:10px}
+.oca-att-h{font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.2px;margin-top:6px}
+.oca-att-h:first-child{margin-top:0}
+.oca-att-sub{font-size:11.5px;color:var(--gray);line-height:1.5;margin-top:-6px}
+.oca-att-card{
+  display:flex;flex-direction:column;gap:12px;
+  padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--light)}
+.oca-att-card .oca-docstrip{background:#fff}
+.oca-att-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+.oca-att-f{display:flex;flex-direction:column;gap:2px;min-width:0}
+.oca-att-k{font-size:10.5px;font-weight:600;color:#9ca3af;letter-spacing:.4px;text-transform:uppercase}
+.oca-att-v{font-size:12.5px;font-weight:600;color:var(--navy);word-break:break-word}
+.oca-att-acts{display:flex;gap:8px}
+.oca-att-acts .oca-act{flex:1}
+@media (max-width:720px){.oca-att-grid{grid-template-columns:1fr}}
+/* ── The step that has not happened yet ── */
+/* Dashed and muted throughout: it is the only row on the timeline that records
+   nothing, and it must not read as an event that occurred. No author, no
+   timestamp, no comment - the three things every real entry has.
+
+   THIS ROW IS THE COMPLIANCE PANEL'S ALONE. It was briefly promoted to a
+   shared .lp-next-* and drawn on the contracts Logs tab too; that made
+   Contracts the one Logs tab in the system carrying a kind of row none of the
+   others have, so it was taken back out. Do not generalise it again without
+   adding it everywhere. */
+.oca-next-card{background:var(--light);border-style:dashed;box-shadow:none}
+.oca-next-avatar{background:var(--light);border:1.5px dashed #cbd5e1;color:#9aa3b0}
+.oca-next-dot{background:transparent;border:1.5px dashed #b6bec9;box-sizing:border-box}
+.oca-next-title{font-size:12.5px;font-weight:600;color:var(--gray)}
+.oca-next-tag{
+  margin-left:auto;padding:1px 8px;border-radius:var(--r-status,999px);
+  background:#eef1f6;color:#8a93a1;font-size:10px;font-weight:700;letter-spacing:.4px}
+.oca-next-text{font-size:12px;color:#8a93a1;line-height:1.5;margin-top:6px}
+.oca-next-row .lp-log-connector{background:transparent;
+  background-image:linear-gradient(#d5dae2 55%,transparent 0);background-size:2px 8px}
+
+.lp-wf-card .oca-log-view{margin-top:10px}
+.oca-log-view{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:0;
+  border:0;background:none;color:var(--navy);cursor:pointer;
+  font-family:inherit;font-size:11.5px;font-weight:600}
+.oca-log-view span{border-bottom:1px solid transparent}
+.oca-log-view:hover span{border-bottom-color:currentColor}
+
+/* ── The viewer ── */
+/* Full-screen because reading is the task while it is open, and a document
+   read through a 400px keyhole is not read. Header names the file, the bar
+   under it holds the reader's controls, the footer holds the decision - so the
+   thing being decided and the decision itself are never on separate screens. */
+.oca-doc-ov{
+  position:fixed;inset:0;z-index:700;background:rgba(15,23,42,.55);
+  display:flex;align-items:center;justify-content:center;padding:24px}
+.oca-doc-modal{
+  display:flex;flex-direction:column;width:min(920px,100%);height:min(88vh,100%);
+  background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(15,23,42,.3)}
+.oca-doc-hd{
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+  padding:14px 16px;border-bottom:1px solid var(--border)}
+.oca-doc-hd-ico{
+  flex-shrink:0;width:34px;height:34px;border-radius:9px;background:var(--ol);
+  display:flex;align-items:center;justify-content:center;color:var(--gray)}
+.oca-doc-hd-txt{min-width:0;flex:1}
+.oca-doc-hd-name{
+  font-size:14px;font-weight:700;color:var(--navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oca-doc-hd-sub{
+  font-size:11.5px;color:var(--gray);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oca-doc-close{
+  flex-shrink:0;width:28px;height:28px;border:none;background:var(--ol);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;color:#64748b;cursor:pointer;padding:0}
+.oca-doc-close:hover{background:#e2e8f0;color:var(--navy)}
+/* Reader controls, not record controls: page position, zoom, and the copy. */
+.oca-doc-bar{
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+  padding:8px 16px;border-bottom:1px solid var(--border);background:var(--light)}
+.oca-doc-pgind{font-size:11.5px;font-weight:600;color:var(--gray);flex:1}
+.oca-doc-zoom{display:flex;align-items:center;gap:2px}
+.oca-doc-zbtn{
+  width:26px;height:26px;border:1px solid var(--border);background:#fff;border-radius:7px;
+  color:var(--navy);font-family:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0}
+.oca-doc-zbtn:hover{background:var(--ol);border-color:#cbd5e1}
+.oca-doc-zlbl{
+  min-width:44px;text-align:center;font-size:11.5px;font-weight:600;color:var(--gray);
+  font-variant-numeric:tabular-nums}
+.oca-doc-dl{
+  display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;
+  border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--navy);
+  font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.oca-doc-dl:hover{background:var(--ol);border-color:#cbd5e1}
+
+/* The page surface. --oca-z is the zoom, and every measurement on a page is em
+   off the page's own font-size, so zooming re-lays the document out rather than
+   scaling a picture of it: the scrollbars stay true at every step. */
+.oca-doc-viewer{
+  --oca-z:1;
+  flex:1;min-height:0;overflow:auto;background:#eef1f6;
+  padding:20px;scrollbar-width:thin}
+.oca-doc-page{
+  position:relative;display:block;margin:0 auto 18px;box-sizing:border-box;
+  width:calc(var(--oca-z)*620px);min-height:calc(var(--oca-z)*820px);
+  font-size:calc(var(--oca-z)*13px);padding:3.4em 3.2em 3.6em;
+  background:#fff;border:1px solid #dfe4ec;border-radius:4px;
+  box-shadow:0 2px 10px rgba(15,23,42,.09)}
+.oca-doc-lh{
+  display:flex;align-items:baseline;justify-content:space-between;gap:1em;
+  padding-bottom:.8em;border-bottom:2px solid var(--navy)}
+.oca-doc-lh-org{font-size:1.15em;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+.oca-doc-lh-kind{font-size:.8em;font-weight:600;color:var(--gray);letter-spacing:.4px;text-transform:uppercase}
+.oca-doc-h1{font-size:1.5em;font-weight:700;color:var(--navy);margin:1.6em 0 1em;line-height:1.3}
+.oca-doc-h2{font-size:1.1em;font-weight:700;color:var(--navy);margin:0 0 1.2em}
+.oca-doc-meta{
+  display:grid;grid-template-columns:1fr 1fr;gap:.5em 1.6em;
+  padding:1em 1.2em;background:#f8fafc;border:1px solid #e8edf4;border-radius:.5em;margin-bottom:1.6em}
+.oca-doc-mrow{display:flex;flex-direction:column;gap:.15em;min-width:0}
+.oca-doc-mk{font-size:.72em;font-weight:600;color:#9ca3af;letter-spacing:.4px;text-transform:uppercase}
+.oca-doc-mv{font-size:.92em;font-weight:600;color:var(--navy);word-break:break-word}
+.oca-doc-p{font-size:.95em;line-height:1.8;color:#334155;margin:0 0 1.1em}
+.oca-doc-p strong{color:var(--navy)}
+/* The fine print is SET, not written. Inventing clause text for a compliance
+   document a real admin is meant to read would be worse than showing plainly
+   that this prototype abstracts it. */
+.oca-doc-rules{display:flex;flex-direction:column;gap:.65em;margin-top:1.4em}
+.oca-doc-rule{height:.55em;border-radius:.3em;background:#eef1f6}
+.oca-doc-sign{display:grid;grid-template-columns:1fr 1fr;gap:2em;margin-top:4em}
+.oca-doc-sign-rule{height:1px;background:#cbd5e1;margin-bottom:.6em}
+.oca-doc-sign-k{font-size:.72em;font-weight:600;color:#9ca3af;letter-spacing:.4px;text-transform:uppercase}
+.oca-doc-sign-v{font-size:.92em;font-weight:600;color:var(--navy);margin-top:.2em}
+.oca-doc-pg-no{
+  position:absolute;left:0;right:0;bottom:1.4em;text-align:center;
+  font-size:.72em;color:#9ca3af}
+/* An ID scan is not a page of prose and is not drawn as one. */
+.oca-doc-page:last-child{margin-bottom:0}
+.oca-doc-page.is-scan{min-height:0;padding:1.8em}
+.oca-doc-scan{border:1px solid #e2e8f0;border-radius:.6em;overflow:hidden}
+.oca-doc-scan-hd{
+  display:flex;justify-content:space-between;gap:1em;padding:.8em 1em;
+  background:var(--navy);color:#fff;font-size:.8em;font-weight:600}
+.oca-doc-scan-body{display:flex;gap:1.2em;padding:1.2em}
+.oca-doc-scan-photo{
+  flex-shrink:0;width:7em;height:9em;border:1px dashed #cbd5e1;border-radius:.4em;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4em;
+  color:#9ca3af;font-size:.7em;letter-spacing:.5px;background:#f8fafc}
+.oca-doc-scan-fields{flex:1;display:flex;flex-direction:column;gap:.7em;min-width:0}
+.oca-doc-scan-mrz{padding:0 1em 1.2em}
+
+/* The footer states what the viewer is FOR and carries the same two moves the
+   panel offers - reusing ocaApprove()/ocaReject(), so a rejection still has to
+   collect its reason on the Logs form. */
+.oca-doc-ft{
+  display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap;
+  padding:12px 16px;border-top:1px solid var(--border);background:#fff}
+.oca-doc-ft-q{flex:1;min-width:180px;font-size:12.5px;color:var(--gray);line-height:1.4}
+.oca-doc-ft-btns{display:flex;gap:8px;flex-shrink:0}
+.oca-doc-ft-btns .oca-act{min-width:110px}
+
+@media (max-width:720px){
+  .oca-doc-ov{padding:0}
+  .oca-doc-modal{width:100%;height:100%;border-radius:0}
+  .oca-doc-viewer{padding:12px}
+  .oca-doc-page{width:100%;min-height:0;padding:2.2em 1.8em 2.6em}
+  .oca-doc-meta,.oca-doc-sign{grid-template-columns:1fr}
+  .oca-doc-hd .lp-status-badge{display:none}   /* the footer already says what is pending */
+}
+
+/* ── The decision dialog ── */
+/* Approve used to commit on the click and write its own log line. A compliance
+   record whose history is the system paraphrasing its own buttons cannot say on
+   what basis anything was accepted, so every move now stops here first and will
+   not go through without the admin's own words.
+
+   It carries the document strip, so "read it before you decide" is one click
+   away, and the move it is about to make, stated as from → to. Nothing else:
+   this is a dialog for one decision, not a second edit form. */
+.oca-dec-ov{
+  position:fixed;inset:0;z-index:640;background:rgba(15,23,42,.5);
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.oca-dec{
+  width:min(480px,100%);max-height:90vh;overflow-y:auto;background:#fff;
+  border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.28);scrollbar-width:thin}
+.oca-dec-hd{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.oca-dec-hd>div:first-child{flex:1;min-width:0}
+.oca-dec-title{font-size:15px;font-weight:700;color:var(--navy)}
+.oca-dec-sub{font-size:12.5px;color:var(--gray);line-height:1.5;margin-top:4px}
+.oca-dec-body{display:flex;flex-direction:column;gap:12px;padding:16px 18px}
+/* from → to, said once and in the same pills the table uses, so the move is
+   read the same way here as it is read on the row afterwards. */
+.oca-dec-move{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.oca-dec-arrow{display:inline-flex;color:#cbd5e1}
+.oca-dec-label{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:-6px}
+.oca-dec-ta{
+  width:100%;min-height:92px;box-sizing:border-box;resize:vertical;
+  padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;
+  color:var(--navy);font-family:inherit;font-size:12.5px;line-height:1.6;
+  transition:border-color .15s,box-shadow .15s}
+.oca-dec-ta::placeholder{color:#a3a8b2}
+.oca-dec-ta:focus{outline:0;border-color:#c7ccd6;box-shadow:0 0 0 3px rgba(15,23,42,.04)}
+.oca-dec-ta.is-bad{border-color:var(--st-bad-fg)}
+/* Raised by trying to commit empty, cleared by typing - it never scolds someone
+   who is already doing the thing it is asking for. */
+.oca-dec-err{display:none;font-size:11.5px;color:var(--st-bad-fg);margin-top:-6px}
+.oca-dec-err.is-on{display:block}
+.oca-dec-ft{
+  display:flex;gap:10px;padding:14px 18px 18px;border-top:1px solid var(--border)}
+.oca-dec-ft .oca-act{flex:1;height:38px}
+/* The confirm button is painted by what it does: filed/approved reads as a good
+   outcome, a rejection as a refusal, a renewal as neither. */
+.oca-dec-go.tone-ok{background:var(--navy);border-color:var(--navy);color:#fff}
+.oca-dec-go.tone-ok:hover{background:#1e293b;border-color:#1e293b;color:#fff}
+.oca-dec-go.tone-bad{background:var(--st-bad-fg);border-color:var(--st-bad-fg);color:#fff}
+.oca-dec-go.tone-bad:hover{background:#962f2f;border-color:#962f2f;color:#fff}
+.oca-dec-go.tone-idle{background:var(--navy);border-color:var(--navy);color:#fff}
+.oca-dec-go.tone-idle:hover{background:#1e293b;border-color:#1e293b;color:#fff}
+@media (max-width:720px){
+  .oca-dec-ov{padding:12px}
+  .oca-dec-ft{flex-direction:column-reverse}
+}
+
+/* ── Listing ── */
+/* No heading and no bottom padding: the table header opens the card and the
+   pagination row closes it. overflow:hidden lets the rounded corners clip both,
+   so the table reads as the card rather than as something sitting inside one. */
+.oca-list{background:#fff;border:1px solid var(--border);border-radius:14px;padding:0 20px;overflow:hidden}
+/* Row cells use the shared .lp-c-* two-line cell from main.css — this table is
+   where that pattern was worked out, and the support listings now use it too. */
+
+/* The list itself is a plain .lp-table in the same split wrap every listing
+   page uses — table, pagination and detail panel all behave identically. Only
+   the bits this card adds on top live here. */
+.oca-split-wrap.has-sb{min-height:500px}   /* a short page must still hold the panel */
+/* The table spans the full card so its row tint and the pager's divider reach
+   the edges; the first column and the pager are re-padded to the card's own
+   20px so the columns are not flush against the card border. */
+/* width:auto, and it is doing the work here. .lp-split-wrap sets width:100%,
+   which pins the used width to the card's CONTENT box - so the negative margins
+   below could only shift the table 20px left, never widen it. The table ended up
+   overhanging the left edge with a 40px white gutter down the right, and the
+   header band and row rules stopped short of the border they were meant to
+   reach. With width:auto the margins widen it, as they were always meant to. */
+.oca-split-wrap{margin:0 -20px;width:auto}
+.oca-list .lp-split-main{border:none;border-radius:0}   /* the card is the border */
+.oca-list .lp-table th:first-child,.oca-list .lp-table td:first-child{padding-left:20px}
+.oca-list .lp-table th:last-child,.oca-list .lp-table td:last-child{padding-right:20px}
+.oca-list .lp-pagination{padding:12px 20px}
+/* the panel's Due field, where "Today" still has to read as urgent */
+.oca-due{white-space:nowrap}
+.oca-due.is-now{font-weight:700;color:var(--st-bad-fg)}
+
+@media (max-width:720px){
+  .oca-list{padding:0 14px}
+  .oca-split-wrap{margin:0 -14px}
+  .oca-list .lp-table th:first-child,.oca-list .lp-table td:first-child{padding-left:14px}
+  .oca-list .lp-table th:last-child,.oca-list .lp-table td:last-child{padding-right:14px}
+  .oca-list .lp-pagination{padding:12px 14px}
+}
+
+/* The Ops Admin contract-pipeline cards used to be a bespoke, centre-aligned
+   tile defined here. They now use .hr-stat-card like every other card in every
+   other dashboard, so there is nothing left to style. */
+
+/* ── Escalated Tickets: the flame flickers on hover ───────────────────────
+   One short flicker per hover, in the icon's own colours - the same kind of
+   small motion every other icon makes (see css/sidebar-icons.css). It sways
+   and stretches from its base and settles back where it started. */
+.ico-flame{transform-origin:50% 92%}
+.hr-stat-card:is(:hover,:focus-visible) .ico-flame{animation:flame-flicker .7s var(--e-out,ease-out)}
+@keyframes flame-flicker{
+  0%,100%{transform:none}
+  20%{transform:scale(.94,1.1) skewX(-5deg)}
+  45%{transform:scale(1.04,.95) skewX(4deg)}
+  70%{transform:scale(.98,1.05) skewX(-2deg)}}
+@media (prefers-reduced-motion:reduce){
+  .hr-stat-card:is(:hover,:focus-visible) .ico-flame{animation:none}
+}
+/* Dashboard card CTAs (Apply Leave, Raise Ticket) share one width as well as
+   one height, so the two read as the same kind of control from across the
+   page - the icon in Apply Leave used to make it 22px wider. */
+.dash-cta{min-width:140px}
+/* Documents & Compliance row actions: the standard 34px button (not the 28px
+   in-row size), one width for all, so Download and Sign line up as a column. */
+.emp-doc-btn{min-width:104px;flex-shrink:0}

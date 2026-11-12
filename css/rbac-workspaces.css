@@ -1,0 +1,50 @@
+/* ══ RBAC WORKSPACES (js/rbac-workspaces.js) ════════════════════════════════
+   The standard listing + detail panel. Only the Teams and Members tabs are
+   new: a card per team (its template, its people) and a members table. */
+
+/* Listing */
+.lp-page .ws-top .lp-filter-bar .lp-filter-bar-row .lp-search-input{width:290px}
+.ws-top .lp-filter-bar-row .cs-wrap{width:170px}
+.ws-table .lp-c-plain.is-none{color:var(--gray)}
+.ws-table .ax-c-trunc{max-width:280px;white-space:nowrap}
+/* Even gaps: no column is left holding empty width. */
+.ws-table th:nth-child(2){width:26%}
+.ws-table th:nth-child(3){width:16%}
+.ws-table th:nth-child(4){width:14%}
+.ws-table th:nth-child(5){width:13%}
+
+/* Teams tab */
+.ws-teams{display:flex;flex-direction:column;gap:12px}
+.ws-team{border:1px solid var(--border);border-radius:var(--r-card);background:var(--card);overflow:hidden}
+.ws-team-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--light);border-bottom:1px solid var(--border)}
+.ws-team-ttl{flex:1;min-width:0}
+.ws-team-name{font-size:13px;font-weight:600;color:var(--navy)}
+.ws-team-sub,.ws-team-meta{font-size:11.5px;color:var(--gray)}
+.ws-team-meta{display:block}
+.ws-team-tpl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px}
+.ws-team-tpl .ws-team-meta{display:inline}
+.ws-team-lbl{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray);width:76px;flex-shrink:0}
+.ws-tpl-link{color:var(--navy);font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.ws-team-ppl{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
+.ws-person{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 3px;border:1px solid var(--border);
+  border-radius:var(--r-status);font-size:12px;color:var(--navy);background:var(--card)}
+.ws-av{width:20px;height:20px;border-radius:50%;background:var(--ol);border:1px solid var(--border);display:inline-grid;place-items:center;
+  font-size:9.5px;font-weight:600;color:var(--gray);flex-shrink:0;text-transform:uppercase}
+.ws-x{width:26px;height:26px;border-radius:var(--r-control);border:1px solid transparent;background:none;color:var(--gray);
+  display:inline-grid;place-items:center;cursor:pointer}
+.ws-x:hover{border-color:var(--border);background:var(--card);color:var(--st-bad-fg)}
+
+/* Members tab */
+.ws-mem{width:100%}
+.ws-mem td{vertical-align:top}
+.ws-mem .ws-mem-n{text-align:right;width:90px;font-variant-numeric:tabular-nums}
+.ws-mem-team{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ws-mem-team+.ws-mem-team{margin-top:6px}
+.ws-mem-team b{display:block;font-weight:600;color:var(--navy)}
+.ws-mem-name{display:flex;align-items:center;gap:8px}
+.ws-mem-name .ws-av{width:26px;height:26px;font-size:10px}
+.ws-mem-name b{display:block;font-weight:600;color:var(--navy)}
+
+/* Inline add form on the Teams / Members tab */
+.ws-add{border:1px solid var(--border);border-radius:var(--r-card);background:var(--light);padding:14px;margin-bottom:14px}
+.ws-add .lp-sb-form-actions{margin-top:12px}

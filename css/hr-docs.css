@@ -1,0 +1,271 @@
+/* ══ HR DOCS ═══════════════════════════════════════════════════════════════
+   The tables are .lp-table and every popup is .ct-modal--form. This sheet
+   adds the two-column layout - the document-type catalogue and the drafts
+   rail - the letter preview page and the template editor. */
+
+/* ── Page header ───────────────────────────────────────────────────────── */
+.hdoc-page{max-width:1280px}
+.hdoc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.hdoc-title{margin:0;font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-.3px;line-height:1.25}
+.hdoc-sub{margin:4px 0 0;font-size:13px;color:var(--gray);line-height:1.5}
+.hdoc-head{align-items:center}
+.hdoc-stats .listing-stat{cursor:default}
+.hdoc-stats .listing-stat:hover{background:none;transform:none;box-shadow:none}
+
+/* ── Two columns: the work, and what is waiting ────────────────────────── */
+.hdoc-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.hdoc-main{min-width:0}
+.hdoc-rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:0;min-width:0}
+@media(max-width:1100px){
+  .hdoc-layout{grid-template-columns:minmax(0,1fr)}
+  .hdoc-rail{position:static}
+}
+
+.hdoc-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.hdoc-panel-head{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.hdoc-panel-title{font-size:13.5px;font-weight:700;color:var(--navy)}
+.hdoc-pill{min-width:22px;height:20px;padding:0 7px;border-radius:99px;background:var(--ol);color:#475569;
+  font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.hdoc-pill.is-wait{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.hdoc-panel-search{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdoc-panel-search .lp-search-input{width:240px}
+
+/* ── The catalogue ─────────────────────────────────────────────────────── */
+.hdoc-group+.hdoc-group{border-top:1px solid var(--border)}
+.hdoc-group-label{display:flex;align-items:center;gap:8px;padding:16px 20px 6px}
+/* One neutral grey dot for every group, like the icon tiles below. */
+.hdoc-group-dot{width:8px;height:8px;border-radius:50%;background:var(--st-idle-fg);flex-shrink:0}
+.hdoc-group-name{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--navy)}
+.hdoc-group-hint{font-size:12px;color:#9aa3af}
+.hdoc-group-hint::before{content:'·';margin-right:8px;color:#cbd5e1}
+.hdoc-row{display:flex;align-items:center;gap:14px;padding:13px 20px;cursor:pointer;transition:background .12s}
+.hdoc-row+.hdoc-row{border-top:1px solid #f3f4f6}
+.hdoc-row:hover{background:#f8fafc}
+.hdoc-row:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
+.hdoc-row-ico{flex-shrink:0;width:40px;height:40px;border-radius:11px;background:var(--light);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--navy);transition:background .15s,color .15s,border-color .15s}
+.hdoc-row-ico svg{width:18px;height:18px}
+/* One neutral tile for every letter type - the same soft grey and dark ink as
+   the dashboard's clickable stat icons (.hr-stat-card.is-link .hr-stat-ico) -
+   rather than a colour per group. The tone-* classes the markup still carries
+   no longer tint it. */
+.hdoc-row-ico[class*="tone-"]{background:#eef2f7;border-color:transparent;color:#0f172a}
+/* Hover is one colour for every row - the same ink as the Create button's
+   hover - rather than each section lighting up in its own tone. */
+.hdoc-row:hover .hdoc-row-ico{background:var(--btn-accent);border-color:var(--btn-accent);color:#fff}
+.hdoc-row-ico.is-lg{width:52px;height:52px;border-radius:12px}
+.hdoc-row-ico.is-lg svg{width:24px;height:24px}
+.hdoc-row-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hdoc-row-name{font-size:14.5px;font-weight:600;color:var(--navy)}
+.hdoc-row-desc{font-size:12.5px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-warn{color:var(--st-bad-fg);font-weight:600}
+/* Counts in a fixed-width column, so they line up down the list. */
+.hdoc-row-stats{flex-shrink:0;width:160px;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.hdoc-chip{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:99px;background:var(--ol);
+  font-size:11.5px;font-weight:600;color:#475569;white-space:nowrap}
+.hdoc-chip.is-zero{background:none;color:#9aa3af;font-weight:500}
+.hdoc-chip.is-draft{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.hdoc-row-acts{flex-shrink:0;display:flex;align-items:center;gap:6px}
+/* Templates is a Super Admin tool, not part of the row's message: it waits
+   in the row until the row is pointed at. */
+.hdoc-icon-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:none;border-radius:8px;
+  background:none;color:#64748b;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.hdoc-row:hover .hdoc-icon-btn,.hdoc-icon-btn:focus-visible{opacity:1}
+.hdoc-icon-btn:hover{background:var(--btn-ghost-bg);color:var(--btn-accent)}
+.hdoc-create{--btn-h:32px;--btn-px:14px;--btn-fs:12.5px;gap:6px}
+.hdoc-create svg{width:12px;height:12px}
+.hdoc-row:hover .hdoc-create:not(:disabled){border-color:var(--btn-accent);color:var(--btn-accent)}
+.hdoc-create:not(:disabled):hover{background:var(--btn-accent)!important;border-color:var(--btn-accent)!important;color:#fff!important}
+@media(max-width:700px){
+  .hdoc-row{flex-wrap:wrap}
+  .hdoc-row-stats{width:auto}
+  .hdoc-icon-btn{opacity:1}
+}
+
+/* ── Rail items: drafts and recently issued ────────────────────────────── */
+.hdoc-item{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;transition:background .12s}
+.hdoc-item+.hdoc-item{border-top:1px solid #f3f4f6}
+.hdoc-item:hover{background:#f8fafc}
+.hdoc-item:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
+.hdoc-av{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--st-wait-bg);color:var(--st-wait-fg);
+  display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;letter-spacing:.3px}
+.hdoc-av.is-issued{background:var(--ol);color:#475569}
+.hdoc-av.is-sm{width:26px;height:26px;font-size:10px}
+.hdoc-item-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hdoc-item-name{font-size:13px;font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-item-name i{font-style:normal;color:var(--gray)}
+.hdoc-item-sub{font-size:11.5px;color:var(--gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-item-go{display:flex;color:#c0c7d1}
+.hdoc-item:hover .hdoc-item-go{color:var(--navy)}
+.hdoc-item-del{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;border-radius:7px;
+  background:none;color:#9aa3af;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+/* The age sits where Delete appears: one is information, the other an action
+   you only want while pointing at the draft. */
+.hdoc-item-age{flex-shrink:0;font-size:11px;color:#9aa3af;white-space:nowrap}
+.hdoc-item-del{display:none}
+.hdoc-item:hover .hdoc-item-age,.hdoc-item:focus-within .hdoc-item-age{display:none}
+.hdoc-item:hover .hdoc-item-del,.hdoc-item:focus-within .hdoc-item-del{display:flex;opacity:1}
+.hdoc-item-del:hover{background:var(--st-bad-bg);color:var(--st-bad-fg)}
+.hdoc-rail-empty{padding:18px;font-size:12.5px;line-height:1.55;color:var(--gray)}
+.hdoc-rail-empty b{color:var(--navy)}
+
+/* ── A type's screen ───────────────────────────────────────────────────── */
+.hdoc-back{margin:0 0 16px}
+.hdoc-type-head{align-items:center;justify-content:flex-start}
+.hdoc-type-txt{flex:1;min-width:240px}
+.hdoc-type-tpl{margin:6px 0 0;font-size:12px;color:var(--gray)}
+.hdoc-type-tpl b{color:var(--navy);font-weight:600}
+.hdoc-type-btns{display:flex;gap:10px}
+.hdoc-type-btns button{gap:6px}
+.hdoc-type-btns svg{width:14px;height:14px}
+.hdoc-table{border:none}
+.hdoc-cell-who{display:inline-flex;align-items:center;gap:9px}
+.hdoc-table-empty{padding:36px 20px!important;text-align:center;color:var(--gray)!important;font-size:12.5px;line-height:1.7}
+.hdoc-table-empty b{color:var(--navy)}
+.hdoc-sm-btn{--btn-h:30px;--btn-px:12px;--btn-fs:12px;gap:5px}
+.hdoc-sm-btn svg{width:13px;height:13px}
+
+/* ── Form popup ────────────────────────────────────────────────────────── */
+.hdoc-auto{margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--st-info-bg);color:var(--st-info-fg);
+  font-size:10px;font-weight:700;letter-spacing:.2px;vertical-align:1px}
+.hdoc-auto-input{background:var(--light)!important;color:#475569}
+.ct-modal textarea.ep-form-input.hdoc-textarea{height:96px!important;min-height:72px;padding-top:10px;resize:vertical;line-height:1.5}
+/* The popup title is a row: back button and title text centred on one line,
+   rather than the button nudged down by a fixed offset to look aligned. */
+.hdoc-modal .ct-modal-title{display:flex;align-items:center;gap:10px;min-width:0}
+.hdoc-hdr-back{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0;
+  border:1px solid var(--border);border-radius:7px;background:#fff;color:#64748b;cursor:pointer}
+.hdoc-hdr-back:hover{border-color:var(--btn-accent);color:var(--btn-accent)}
+.ct-modal-btns button svg{vertical-align:-2px;margin-right:4px}
+.hdoc-miss-note{color:var(--st-wait-fg);font-weight:600}
+
+/* ── The letter ────────────────────────────────────────────────────────── */
+/* THE PREVIEW IS THE POINT OF THIS POPUP, so it gets the room: the popup may
+   grow to 92% of the screen and the paper area takes everything the title and
+   the buttons leave (a flex column, the paper area the only part that scrolls),
+   and the letter is drawn as a page - narrower, slightly smaller type - so far
+   more of it is in view at once, the way a document viewer shows a page. */
+.ct-modal.ct-modal--form.hdoc-modal-wide{width:min(940px,94vw);max-height:92vh;display:flex;flex-direction:column}
+.hdoc-modal-wide>*{flex-shrink:0}
+.hdoc-modal-wide>.hdoc-paper-wrap{flex:1 1 auto;min-height:0;max-height:none}
+.hdoc-paper-wrap{background:#eef1f5;border-radius:12px;padding:24px;max-height:62vh;overflow:auto}
+.hdoc-paper{background:#fff;max-width:640px;margin:0 auto;padding:40px 48px 48px;border-radius:4px;
+  box-shadow:0 1px 3px rgba(15,23,42,.1),0 8px 24px rgba(15,23,42,.08);
+  font-size:12.5px;line-height:1.65;color:#1e293b}
+.hdoc-lh{border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:16px}
+.hdoc-lh-name{font-size:19px;font-weight:800;color:var(--navy);letter-spacing:-.2px}
+.hdoc-lh-sub{font-size:11px;color:var(--gray);margin-top:2px}
+.hdoc-ref{font-size:11px;color:var(--gray);text-align:right}
+.hdoc-heading{text-align:center;font-weight:800;font-size:15px;letter-spacing:1.2px;margin:18px 0 20px;color:var(--navy)}
+.hdoc-body p{margin:0 0 12px}
+.hdoc-val{font-weight:600}
+.hdoc-miss{display:inline-block;padding:0 6px;border:1px dashed var(--st-wait-fg);border-radius:4px;background:var(--st-wait-bg);
+  color:var(--st-wait-fg);font-size:11.5px;font-weight:600;line-height:1.6}
+
+/* ── Templates (Super Admin) ───────────────────────────────────────────── */
+.hdoc-tpl-table{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.hdoc-tpl-table td{vertical-align:middle}
+.hdoc-tpl-table .hdoc-sm-btn{margin-right:6px}
+.hdoc-tpl-sub{font-size:11.5px;color:var(--gray);margin-top:2px}
+.ct-modal textarea.ep-form-input.hdoc-tpl-body{height:280px!important;min-height:200px;padding-top:10px;resize:vertical;line-height:1.55;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.hdoc-ins-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.hdoc-ins-lbl{font-size:11px;font-weight:600;color:var(--gray);margin-right:4px}
+.hdoc-ins{padding:3px 9px;border:1px dashed var(--border);border-radius:99px;background:#fff;font-family:inherit;
+  font-size:11px;color:#475569;cursor:pointer}
+.hdoc-ins:hover{border-style:solid;border-color:var(--btn-accent);color:var(--btn-accent)}
+.hdoc-fchips{display:flex;flex-wrap:wrap;gap:6px}
+.hdoc-fchip{padding:4px 10px;border-radius:99px;background:var(--ol);color:var(--navy);font-size:11.5px;font-weight:600}
+.hdoc-fchip.is-auto{background:var(--st-info-bg);color:var(--st-info-fg)}
+.hdoc-chip-empty{font-size:12px;color:var(--gray)}
+.hdoc-check{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--navy);cursor:pointer}
+.hdoc-check input{width:16px;height:16px;accent-color:var(--navy)}
+.ct-modal-sub code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+
+@media(max-width:640px){
+  .hdoc-paper{padding:28px 22px 36px}
+  .hdoc-search .lp-search-input{width:100%}
+}
+
+/* ── Popup end spacing ─────────────────────────────────────────────────────
+   The footer bar sits flush under whatever the popup's last block is, so
+   that block needs its own room above the bar; without it the last row of
+   fields - or the bottom of the letter preview - ran straight into it. */
+.hdoc-modal>.ep-form-grid,.hdoc-modal>.hdoc-paper-wrap,.hdoc-modal>.hdoc-tpl-table{margin-bottom:26px}
+
+/* FR-22.1: on a document type's screen, Saved Drafts sits at the top with its
+   count, above Issued Documents. */
+.hdoc-drafts-top{margin-bottom:16px}
+.hdoc-drafts-top .hdoc-rail-empty{padding:18px 16px}
+
+/* ══ FR-07.7 SEND IN MAIL (hdocSendHTML) ═══════════════════════════════════
+   A small dialog over the letter: who it goes to, Send, Cancel. It sits above
+   the create / review page, which stays where it was underneath. */
+.hdoc-send-ov{position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:rgba(15,23,42,.45);animation:hdoc-send-fade .15s ease-out}
+.hdoc-send{width:100%;max-width:440px;box-sizing:border-box;padding:22px 24px 20px;background:#fff;border-radius:14px;
+  box-shadow:0 20px 50px rgba(15,23,42,.25);display:flex;flex-direction:column;animation:hdoc-send-in .18s ease-out}
+.hdoc-send-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.hdoc-send-head > div{flex:1;min-width:0}
+.hdoc-send-head h3{margin:0;font-size:16px;font-weight:700;color:var(--navy)}
+.hdoc-send-head p{margin:3px 0 0;font-size:12.5px;color:var(--gray)}
+.hdoc-send-ico{width:36px;height:36px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--ol);color:var(--navy)}
+.hdoc-send-ico svg{width:17px;height:17px}
+.hdoc-send-x{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:none;color:var(--gray);cursor:pointer}
+.hdoc-send-x:hover{background:var(--ol);color:var(--navy)}
+.hdoc-send .ep-form-label{margin-bottom:6px}
+/* A form field, not a toolbar search: same control shape and height as every
+   field in a form card (main.css / form-system.css), not the standalone pill. */
+.hdoc-send .ep-form-input{border-radius:var(--r-control);height:42px;padding:0 12px}
+.hdoc-send .ep-form-input.is-bad{border-color:var(--st-bad-fg);box-shadow:0 0 0 3px rgba(184,58,58,.1)}
+.hdoc-send-hint{margin:7px 0 0;font-size:12px;line-height:1.45;color:var(--gray)}
+.hdoc-send-err{margin:6px 0 0;font-size:12.5px;font-weight:500;color:var(--st-bad-fg)}
+.hdoc-send-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+@keyframes hdoc-send-fade{from{opacity:0}to{opacity:1}}
+@keyframes hdoc-send-in{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hdoc-send-ov,.hdoc-send{animation:none}}
+/* Final review meta: status, who created it, and — once mailed — who it went to.
+   Each item stays whole; the row wraps between items, never inside one. */
+.hdoc-final-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.hdoc-fm-item{white-space:nowrap;color:var(--gray)}
+.hdoc-fm-item b{font-weight:600;color:var(--navy)}
+.hdoc-fm-sent{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 10px 3px 8px;
+  border:1px solid var(--border);border-radius:var(--r-status);background:#f8fafc;color:var(--gray);font-size:12px}
+.hdoc-fm-sent svg{width:13px;height:13px;flex-shrink:0;color:var(--navy)}
+.hdoc-fm-sent > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-fm-sent b{font-weight:600;color:var(--navy)}
+
+/* ── FR-07.8 Mail: the Send dialog with its full mail, and Mail Templates ── */
+.hdoc-mail-btn{display:inline-flex;align-items:center;gap:6px}
+.hdoc-mail-btn svg{width:14px;height:14px}
+.hdoc-type-btns .ep-cancel-btn svg{width:14px;height:14px}
+.ct-modal textarea.ep-form-input.hdoc-tpl-body.hdoc-mail-body{height:220px!important}
+.hdoc-mail-subj{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-mail-addr{white-space:nowrap;font-size:12.5px}
+/* Send in Mail, full mail: fixed header and footer, the mail scrolls between. */
+.hdoc-send.hdoc-send-wide{max-width:620px;max-height:calc(100vh - 48px);padding:0;overflow:hidden}
+.hdoc-send-wide .hdoc-send-head{margin:0;padding:20px 24px 18px;border-bottom:1px solid var(--border)}
+.hdoc-send-scroll{flex:1;min-height:0;overflow-y:auto;padding:20px 24px 22px;display:flex;flex-direction:column;gap:18px}
+.hdoc-sf{display:flex;flex-direction:column;min-width:0}
+.hdoc-send-wide .ep-form-label{display:block;margin:0 0 7px;font-size:12.5px}
+.hdoc-sf-row{display:grid;grid-template-columns:1.25fr 1fr;gap:12px 14px}
+.hdoc-sf-row .hdoc-send-hint{grid-column:1/-1;margin:-4px 0 0}
+.hdoc-send-from{display:flex;align-items:center;height:42px;padding:0 12px;border-radius:var(--r-control);
+  background:var(--light);border:1px solid var(--border);font-size:13px;font-weight:600;color:var(--navy);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdoc-send textarea.ep-form-input.hdoc-send-msg{height:200px;padding:11px 12px;line-height:1.6;resize:vertical;font-family:inherit}
+.hdoc-send-att{display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;border:1px dashed var(--border);border-radius:var(--r-control);font-size:12.5px;color:var(--navy)}
+.hdoc-send-att svg{width:16px;height:16px;flex-shrink:0;color:var(--gray)}
+.hdoc-send-att-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.hdoc-send-att-tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;color:var(--st-ok-fg);background:var(--st-ok-bg);border:1px solid var(--st-ok-bd)}
+.hdoc-send-warn{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r-control);
+  font-size:12.5px;line-height:1.5;color:var(--st-wait-fg);background:var(--st-wait-bg);border:1px solid var(--st-wait-bd)}
+.hdoc-send-warn svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.hdoc-send-wide .hdoc-send-err{margin:-6px 0 0}
+.hdoc-send-wide .hdoc-send-btns{margin:0;padding:14px 24px;border-top:1px solid var(--border);background:#fbfcfd}
+@media (max-width:560px){.hdoc-sf-row{grid-template-columns:1fr}}
+/* Employee type-ahead under To / CC (hdocSuggest). Reuses the .ax-suggest list
+   from admin-access.css; raised over the Send dialog (1300). */
+.hdoc-suggest{z-index:1350}
+.hdoc-sug-av{width:30px;height:30px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--ol);color:var(--navy);font-size:11px;font-weight:700}

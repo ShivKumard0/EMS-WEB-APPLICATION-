@@ -1,0 +1,135 @@
+/* ══ ALL TIMESHEET — SALARY TAB & PAYSLIP ══════════════════════════════════
+   Styles for js/at-salary.js. The panel shell, tabs, buttons, inputs, status
+   pills and the popup are the shared ones (.lp-isb-*, .btn-*, .ep-form-*,
+   .lp-status-badge, .segmented, .ct-modal); only what this tab adds is here. */
+
+.atsal{display:flex;flex-direction:column;gap:14px}
+/* The listing is only three rows tall, which left the panel — and the salary
+   form inside it — a 500px letterbox. Give it the viewport instead. */
+.at-split-wrap.has-sb{min-height:max(500px,calc(100vh - 250px))}
+
+/* ── Where the month stands ── */
+.atsal-strip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#f8f9fb}
+.atsal-strip-title{font-size:13px;font-weight:700;color:var(--navy)}
+.atsal-strip-sub{font-size:12px;color:var(--gray);margin-top:2px;line-height:1.4}
+
+/* ── Cards ── */
+.atsal-card{border:1px solid var(--border);border-radius:var(--r-card,14px);background:#fff;padding:14px 16px 16px}
+.atsal-card-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+
+/* Read-only facts: label over value, three across. */
+.atsal-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.atsal-fact{
+  background:#f8f9fb;border:1px solid #eef0f3;border-radius:10px;padding:9px 12px;
+  display:flex;flex-direction:column;gap:5px;min-width:0}
+.atsal-fact>span{font-size:11px;color:#9ca3af;font-weight:500;line-height:1.2}
+.atsal-fact>b{font-size:13.5px;font-weight:600;color:#1e293b;font-variant-numeric:tabular-nums}
+
+/* What HR types: four across, the last one derived. */
+.atsal-inputs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+.atsal-inputs .ep-form-input{height:42px}
+.atsal-derived{
+  height:42px;display:flex;align-items:center;padding:0 12px;border-radius:var(--r-control);
+  background:var(--light,#f1f3f5);color:var(--gray);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.atsal-errors{
+  margin-top:10px;padding:9px 12px;border-radius:9px;
+  background:var(--st-bad-bg);border:1px solid var(--st-bad-bd);color:var(--st-bad-fg);
+  font-size:12px;font-weight:600;line-height:1.5}
+.atsal-errors[hidden]{display:none}
+.atsal-type{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.atsal-hint{font-size:11.5px;color:var(--gray)}
+
+.atsal-empty{
+  padding:22px 16px;text-align:center;font-size:12.5px;color:var(--gray);line-height:1.5;
+  border:1px dashed var(--border);border-radius:10px;background:#fafbfc}
+.atsal-empty b{color:var(--navy)}
+
+/* ── Earnings / Deductions books ── */
+.atsal-facts--3{margin-bottom:14px}
+.atsal-books{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.atsal-book{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.atsal-book th{
+  padding:9px 12px;text-align:left;font-size:10.5px;font-weight:600;color:#6b7280;background:#f8fafc;
+  border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.atsal-book td{padding:6px 12px;font-size:12.5px;color:var(--navy);border-bottom:1px solid #f1f3f5;vertical-align:middle}
+.atsal-book tbody tr:last-child td{border-bottom:none}
+.atsal-book tfoot td{padding:10px 12px;font-weight:700;background:#f8fafc;border-top:1px solid var(--border)}
+.atsal-num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+.atsal-sign{width:14px;padding-left:0!important;padding-right:4px!important;color:var(--gray);text-align:center}
+.atsal-note{font-size:11px;color:#9ca3af;font-weight:500}
+.atsal-amt{
+  width:104px;height:32px;padding:0 10px;text-align:right;box-sizing:border-box;
+  border:1px solid var(--border);border-radius:var(--r-control);background:#fff;
+  font:inherit;font-size:12.5px;color:var(--navy);font-variant-numeric:tabular-nums;outline:none;transition:border-color .11s}
+.atsal-amt:focus{border-color:var(--orange);box-shadow:0 0 0 2px rgba(26,26,26,.1)}
+/* An amount HR overrode reads differently from a computed one — the one
+   exception on the card, so it is the one thing marked. */
+.atsal-amt.is-edited{border-color:var(--st-wait-bd);background:var(--st-wait-bg)}
+.atsal-amt:disabled{background:var(--light,#f1f3f5);color:var(--gray);cursor:default}
+.atsal-amt-ro{display:inline-block;min-width:104px;padding:0 11px;font-weight:600}
+
+.atsal-net{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;
+  padding:12px 16px;border-radius:10px;background:var(--navy);color:#fff}
+.atsal-net>div>span{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;opacity:.75}
+.atsal-net small{display:block;font-size:11.5px;opacity:.85;margin-top:3px}
+.atsal-net b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── Actions ── */
+/* Sticky, like .ct-modal-foot: the tab is taller than the panel, and Approve
+   must stay reachable while the earnings are reviewed above it. The negative
+   margins reach the edges of .lp-isb-body's 18px/20px padding. */
+.atsal-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  position:sticky;bottom:-18px;z-index:2;margin:0 -20px -18px;padding:12px 20px;
+  background:#fff;border-top:1px solid var(--border)}
+.atsal-foot-r{display:flex;gap:10px;margin-left:auto}
+
+@media (max-width:900px){
+  .atsal-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .atsal-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .atsal-books{grid-template-columns:1fr}
+}
+
+/* ══ PAYSLIP DOCUMENT ══════════════════════════════════════════════════════
+   One markup, two places: the preview popup and the printed PDF. A document,
+   not a screen — square rules and boxed bands like a printed slip — but in the
+   app's ink, so the preview does not look pasted in from another product. */
+.atsal-slip-modal{max-height:88vh}
+.atsal-slip-scroll{overflow-x:auto;margin-bottom:6px}
+.psl{
+  min-width:640px;border:1px solid #1e293b;background:#fff;color:#0f172a;
+  font-family:'Inter',system-ui,sans-serif;font-size:11.5px;line-height:1.4}
+.psl-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-bottom:1px solid #1e293b}
+.psl-logo{height:30px;width:auto}
+.psl-co{text-align:right}
+.psl-co b{display:block;font-size:15px;font-weight:700}
+.psl-co span{font-size:10px;color:#475569}
+.psl-addr{padding:8px 18px;border-bottom:1px solid #1e293b;text-align:center;font-size:10px;font-weight:600;letter-spacing:.2px}
+.psl-title{padding:7px 18px;border-bottom:1px solid #1e293b;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;background:#f8fafc}
+.psl-info{display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:0 18px;padding:10px 18px;border-bottom:1px solid #1e293b}
+.psl-kv{display:flex;gap:5px;padding:2px 0}
+.psl-kv span{color:#64748b;text-transform:uppercase;font-size:10px;white-space:nowrap;padding-top:1px}
+.psl-kv span::after{content:' :'}
+.psl-kv b{font-weight:600}
+.psl-table{width:100%;border-collapse:collapse}
+.psl-table th{padding:7px 10px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #1e293b;background:#f8fafc}
+.psl-table td{padding:5px 10px;border-bottom:1px solid #e2e8f0}
+.psl-table tfoot td{font-weight:700;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#f8fafc}
+.psl-num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+.psl-sep{border-right:1px solid #1e293b}
+.psl-net{padding:9px 18px;border-bottom:1px solid #1e293b}
+.psl-net b{font-weight:700}
+.psl-foot{padding:7px 18px;font-size:9.5px;color:#94a3b8;text-align:center}
+
+/* ── Printing just the payslip ── */
+#psl-print-root{display:none}
+@media print{
+  html.psl-printing body>*:not(#psl-print-root){display:none!important}
+  html.psl-printing #psl-print-root{display:block}
+  html.psl-printing,html.psl-printing body{background:#fff!important}
+  html.psl-printing .psl{min-width:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:14mm}
+}

@@ -1,0 +1,13 @@
+/* ══ NO BLUE INFORMATION NOTES WITHOUT AN ACTION (product owner, 11 Nov 2026) ══════════════════════════════
+   "Remove blue notes from everywhere which don't provide any actions." A blue (information) note is not shown when it
+   holds nothing to act on - no button, link or field. Amber notes (waiting, needs attention) and red notes (problems)
+   are not touched, and a blue note that carries an action keeps showing. Kept too, at the product owner's choice: the
+   blue boxes that show a record's own details (.is-data) - an advance's policy check, cost centre and project, budget
+   check and settlement due date; a statement's reconciliation sign-off; a card request's enrollment summary.
+   The notes stay in the page, so nothing a screen computes is lost; they are only not displayed. */
+.wb-note:not(.is-wait):not(.is-bad):not(.is-data):not(:has(button, a, input, select, textarea, [onclick])),
+.ar-note:not(:has(button, a, input, select, textarea, [onclick])),
+.tsx-note:not(:has(button, a, input, select, textarea, [onclick])),
+.at-sb-note:not(:has(button, a, input, select, textarea, [onclick])),
+.oh-d-note:not(.is-wait):not(.is-bad):not(:has(button, a, input, select, textarea, [onclick])),
+.ts-sb-wknote:not(.is-wait):not(.is-bad):not(:has(button, a, input, select, textarea, [onclick])){display:none!important}

@@ -1,0 +1,122 @@
+/* ══ TIMESHEET BILLING — week states, submission, approval, invoice drafts ══
+   Pairs with js/ts-billing.js and the lock model in js/core.js. Only the five
+   --st-* tones are used, and each says who owes the next move:
+     Locked     idle   settled, nothing owed yet
+     Unlocked   info   open again for a correction
+     Submitted  wait   the approver owes a decision
+     Approved   ok     done, and billed from
+     Rejected   bad    the employee owes a correction
+   ========================================================================== */
+
+/* ── Week rail ── */
+/* A week's state is an lp-status-badge toned by who owes the next move
+   (tsWeekChipHTML): Locked idle · Unlocked info · Submitted wait ·
+   Approved ok · Rejected bad. Its actions: .ts-wk-act under it, and the "⋯" menu (main.css). */
+/* Where a Weekly billing week really runs, when it crosses the month edge. */
+.ts-wk-span{font-size:9.5px;font-weight:600;color:var(--gray);white-space:nowrap;line-height:1}
+/* The tick that puts a locked week into the next submission. */
+.ts-wk-pick{display:inline-flex;align-items:center;gap:4px;margin-top:2px;font-size:10px;font-weight:600;
+  color:var(--navy);cursor:pointer;user-select:none;white-space:nowrap}
+.ts-wk-pick input{width:13px;height:13px;margin:0;accent-color:var(--btn-ink);cursor:pointer}
+/* Its current home: leading the week label, like a table row's checkbox.
+   The whole "☐ WEEK 1" label is the hit area. A ticked week's rail is
+   shaded so the selection can be seen down the column. */
+.ts-wk-head{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.ts-wk-check{width:14px;height:14px;margin:0;flex-shrink:0;accent-color:var(--btn-ink);cursor:pointer}
+.ts-wk-head:hover .ts-wk-label{color:var(--navy)}
+.ts-week-cell.is-picked,
+.ts-cal-card .ts-week-cell.is-picked{background:#eef1f5}
+.ts-week-cell.is-picked .ts-wk-label{color:var(--navy)}
+
+/* ── The checkbox, in the app's own style ──
+   These were the browser's native box with only accent-color set, so the
+   unticked state was Windows' heavy, sharp grey square — unlike every other
+   control here. Drawn instead to the system: the 1.5px slate border the form
+   inputs use, a 4px corner (a small cousin of --r-control), the --btn-ink
+   fill of the primary button when ticked, a white tick, and the same focus
+   ring as the buttons. Covers the week tick, Select all, the month pick and
+   the older .ts-wk-pick. */
+.ts-wk-check,
+.ts-month-pick input,
+.ts-wk-pick input{
+  -webkit-appearance:none;appearance:none;flex-shrink:0;
+  width:16px;height:16px;margin:0;border-radius:4px;
+  border:1.5px solid #cbd5e1;background:#fff center/10px 10px no-repeat;
+  cursor:pointer;vertical-align:middle;
+  transition:background-color var(--t-fast,170ms) ease,border-color var(--t-fast,170ms) ease,box-shadow var(--t-fast,170ms) ease}
+.ts-wk-head:hover .ts-wk-check,
+.ts-month-pick:hover input,
+.ts-wk-pick:hover input,
+.ts-wk-check:hover{border-color:#94a3b8}
+.ts-wk-check:checked,
+.ts-month-pick input:checked,
+.ts-wk-pick input:checked{
+  background-color:var(--btn-ink);border-color:var(--btn-ink);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.2 5 8.6 9.5 3.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ts-wk-check:focus-visible,
+.ts-month-pick input:focus-visible,
+.ts-wk-pick input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(53,53,53,.15)}
+.ts-month-pick.is-off input{background-color:#f1f5f9;border-color:#e2e8f0;cursor:not-allowed}
+
+/* ── Day cells: a settled week with nothing logged reads 0, quietly ── */
+.ts-day-hrs.is-zero,
+.ts-cal-card .ts-day-hrs.is-zero{color:#cbd5e1;font-weight:600}
+
+/* Sales Details › Payment Cycle: what the cycle means, under its name. */
+.tsb-cycle-desc{display:block;margin-top:2px;font-size:11.5px;font-weight:400;color:var(--gray)}
+
+/* ── Calendar header: how this sheet is billed ── */
+/* Drawn by .lp-status-badge.tone-idle like every status pill in the app; this
+   only spaces it from the month name and says it has a tooltip. */
+.ts-cycle-chip{margin-left:4px;min-width:0;vertical-align:middle;cursor:help}
+
+/* ── Footer: Monthly billing's month-level tick ── */
+.ts-month-pick{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;user-select:none}
+.ts-month-pick input{width:15px;height:15px;margin:0;accent-color:var(--btn-ink);cursor:pointer}
+.ts-month-pick.is-off{color:#94a3b8;cursor:not-allowed}
+.ts-month-pick.is-off input{cursor:not-allowed}
+.ts-month-pick + .ts-foot-note{margin-left:4px}
+
+/* ── Day panel: a week reopened, or sent back with a reason ── */
+.ts-sb-wknote{margin-bottom:10px;padding:9px 11px;border-radius:8px;font-size:12px;line-height:1.45;
+  background:var(--st-info-bg);color:var(--st-info-fg);border:1px solid var(--st-info-bd)}
+.ts-sb-wknote.is-bad{background:var(--st-bad-bg);color:var(--st-bad-fg);border-color:var(--st-bad-bd)}
+
+/* ── Sales Details: Payment Cycle ── */
+.tsb-rate-note{display:block;margin-top:2px;font-size:11px;font-weight:500;color:var(--gray)}
+
+/* ── Sales Order › Timesheets / Receivable tables ── */
+.tsb-cycle-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:4px 0 14px;font-size:12.5px;line-height:1.5;color:var(--gray);word-spacing:1px}
+.tsb-cycle-line b{color:var(--navy);font-weight:600}
+.tsb-cycle-line i{font-style:normal;color:var(--border,#cbd5e1)}
+.tsb-sub{margin-top:2px;font-size:11px;color:var(--gray);font-weight:500}
+.tsb-split{color:var(--st-wait-fg)}
+/* The detail panel is narrower than eight nowrap columns, which pushed Status
+   out of view. Text cells wrap here; the figures and the actions do not. */
+.tsb-table .csag-td{vertical-align:top;white-space:normal;padding-left:10px;padding-right:10px}
+.tsb-table th{padding-left:10px;padding-right:10px;white-space:normal}
+.tsb-table .csag-td.csag-act{white-space:nowrap}
+.tsb-table .tsb-num{white-space:nowrap}
+.tsb-week-row .csag-td{background:#fbfcfd;font-size:12px;padding-top:7px;padding-bottom:7px}
+.tsb-week-name{position:relative;padding-left:14px;color:var(--navy);font-weight:600}
+.tsb-week-name::before{content:'';position:absolute;left:2px;top:-2px;width:7px;height:9px;
+  border-left:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;border-bottom-left-radius:3px}
+.tsb-acts{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}
+.tsb-decided{display:inline-block;max-width:200px;font-size:11.5px;color:var(--gray);white-space:normal;text-align:right}
+.tsb-rcv-title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--navy)}
+.tsb-rcv-title span{font-weight:500;color:var(--gray);font-size:12px}
+.tsb-empty{font-size:13px;color:#9ca3af}
+
+/* ── Reject dialog, invoice document ── */
+.tsb-err{margin-top:6px;font-size:12px;color:var(--st-bad-fg)}
+#tsb-modal .lp-logs-form-textarea{width:100%;min-height:90px;margin-top:6px}
+.tsb-inv-basis{margin-top:1px;font-size:10px;color:#64748b}
+.tsb-table .lp-status-badge{white-space:nowrap}
+
+/* Receivable: six columns that fit the detail panel without a sideways
+   scroll - the rate sits under the charges it produced. */
+.tsb-rcv-table{min-width:0}
+.tsb-rcv-table .csag-td{vertical-align:middle;padding-top:12px;padding-bottom:12px}
+.tsb-rcv-table .tsb-nowrap{white-space:nowrap}
+.tsb-rcv-table .tsb-r{text-align:right}
+.tsb-rcv-table .tsb-acts{gap:8px}
