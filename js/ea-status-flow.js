@@ -9,9 +9,8 @@
                Ready to Disburse · Disbursement Processing · Disbursed · Disbursement Failed · Settled */
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
-  const FLOW=['Draft','Pending Manager Approval','Pending Finance Verification','Sent Back','Ready to Reimburse','Reimbursement Processing',
-    'Reimbursed','Reimbursement Failed','Ready to Disburse','Disbursement Processing','Disbursed','Disbursement Failed','Settled','Closed','Approved',
-    'Rejected','Withdrawn','Cancelled'];
+  const FLOW=['Draft','Pending Manager Approval','Pending Finance Verification','Sent Back','Approved','Reimbursed','Reimbursement Failed',
+    'Disbursed','Disbursement Failed','Settled','Rejected','Withdrawn','Cancelled'];
   const TONE={'Draft':'idle','Pending Manager Approval':'wait','Pending Finance Verification':'wait','Sent Back':'wait','Ready to Reimburse':'info',
     'Reimbursement Processing':'info','Reimbursed':'ok','Reimbursement Failed':'bad','Ready to Disburse':'info','Disbursement Processing':'info',
     'Disbursed':'ok','Disbursement Failed':'bad','Settled':'ok','Closed':'ok','Approved':'ok','Rejected':'bad','Withdrawn':'idle','Cancelled':'idle'};
@@ -28,22 +27,19 @@
       return {label:k==='Manager'?'Pending Manager Approval':k==='Finance'?'Pending Finance Verification':'Pending '+(k||'Approval'),at:names(st&&st.approvers)||'—',role:k==='Manager'?'Manager':k==='Finance'?'Finance':(k||'')};
     }
     if(s==='Rejected'||s==='Withdrawn'||s==='Cancelled')return {label:s,at:'',role:''};
+    /* Once the manager and finance have approved: Approved, with nothing pending (product owner, 12 Nov 2026). Paid,
+       disbursed, settled and failed payments keep their own names. */
     if(x.kind==='exp'){
       const p=x.pay;
-      if(p==='Not Applicable')return {label:'Closed',at:'',role:''};
-      if(p==='Ready for Payment')return {label:'Ready to Reimburse',at:'Finance',role:'Reimbursement'};
-      if(p==='Pending Verification'||p==='Processing'||p==='On Hold'||p==='Partially Paid')return {label:'Reimbursement Processing',at:'Finance',role:'Reimbursement'};
       if(p==='Paid')return {label:'Reimbursed',at:'',role:''};
-      if(p==='Failed')return {label:'Reimbursement Failed',at:'Finance',role:'Reimbursement'};
-      return {label:'Approved',at:'Finance',role:'Reimbursement'};
+      if(p==='Failed')return {label:'Reimbursement Failed',at:'',role:''};
+      return {label:'Approved',at:'',role:''};
     }
     if(x.kind==='adv'){
       if(x.set==='Settled'||x.set==='Closed')return {label:'Settled',at:'',role:''};
       const p=x.pay;
-      if(p==='Not Initiated'||p==='Ready for Disbursement')return {label:'Ready to Disburse',at:'Finance',role:'Disbursement'};
-      if(p==='Processing'||p==='Partially Disbursed')return {label:'Disbursement Processing',at:'Finance',role:'Disbursement'};
       if(p==='Disbursed')return {label:'Disbursed',at:'',role:''};
-      if(p==='Failed')return {label:'Disbursement Failed',at:'Finance',role:'Disbursement'};
+      if(p==='Failed')return {label:'Disbursement Failed',at:'',role:''};
       return {label:'Approved',at:'',role:''};
     }
     return {label:s,at:'',role:''};
@@ -71,7 +67,7 @@
       /* One line each: the list has no sub-lines (product owner, 11 Nov 2026). */
       tr.children[5].innerHTML=axBadge(TONE[x.flow]||'idle',x.flow);
       const at=x.at?(x.atRole&&x.at!=='Finance'?x.at+' ('+x.atRole+')':x.at):'';
-      tr.children[6].innerHTML=at?'<div class="lp-c-plain ax-c-trunc" title="'+attrSafe(at)+'">'+sbEsc(at)+'</div>':'<div class="lp-c-plain is-none">—</div>';
+      tr.children[6].innerHTML=at?'<div class="lp-c-plain ax-c-trunc" title="'+attrSafe(at)+'">'+sbEsc(at)+'</div>':'';   // nothing pending: blank
       return tr.outerHTML;
     };
   }
@@ -85,7 +81,7 @@
       out=out.replace('<th>Payment</th>','<th>Pending At</th>');
       /* Tiles: where the requests are waiting. */
       const all=eaRows(),cnt=function(s){return all.filter(function(x){return x.flow===s;}).length;};
-      const T=['Pending Manager Approval','Pending Finance Verification','Sent Back','Ready to Reimburse'];
+      const T=['Pending Manager Approval','Pending Finance Verification','Sent Back','Approved'];
       const tiles=T.map(function(s){return caStat(s,cnt(s),eaApprF===s,'eaStat(\''+s+'\')',TONE[s]);}).join('');
       const tmp=document.createElement('div');tmp.innerHTML=out;
       const box=tmp.querySelector('.exp-stats');if(box){box.innerHTML=tiles;out=tmp.innerHTML;}
