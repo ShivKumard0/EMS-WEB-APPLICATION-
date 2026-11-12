@@ -978,7 +978,7 @@ function submitAddExpense(submit){
   expModalOpen=false;expDraft=null;
   renderADTPage();
   const st0=typeof caActiveStage==='function'?caActiveStage(r):null;
-  showToast(submit?'Expense submitted':'Draft saved','success',expKey(r)+' · '+expMoney(expTotal(r),r.currency)+(submit?' is awaiting approval'+(st0?' - Stage 1 with '+(st0.approvers.join(', ')||'nobody'):'')+'.':''));
+  showToast(submit?'Expense submitted':'Draft saved','success',expKey(r)+' · '+expMoney(expTotal(r),r.currency)+(submit?' is awaiting approval'+(st0?' - Stage 1 with '+((typeof caNs==='function'?caNs(st0.approvers):st0.approvers.join(', '))||'nobody'):'')+'.':''));
 }
 
 /* ── Wiring ────────────────────────────────────────────────────────────── */
