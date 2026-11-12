@@ -307,7 +307,8 @@ function eaListHTML(){
   const emp=caOwnScope()&&!advCan('advance.view.all')&&!advCan('advance.view.team');
   const all=eaRows(),rows=all.filter(eaRowPass);
   /* Newest first: requested date, drafts on top. */
-  rows.sort(function(a,b){return (b.date||'9999')>(a.date||'9999')?1:(b.date||'9999')<(a.date||'9999')?-1:b.id-a.id;});
+  /* Newest first: by when the request was created (js/ems-tidy-1112.js), then by date and number (12 Nov 2026). */
+  rows.sort(function(a,b){const t=typeof eaTs==='function'?eaTs(b)-eaTs(a):0;if(t)return t;return (b.date||'9999')>(a.date||'9999')?1:(b.date||'9999')<(a.date||'9999')?-1:b.id-a.id;});
   const sig=[eaQ,eaTypeF,eaApprF,eaPayF,eaSetF,eaWhoF,eaFrom,eaTo,eaCatF,eaDeptF].join('|');
   const pgn=listPage('ea-all',sig,rows.map(eaRowHTML),'<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--gray)">No request matches this filter.</td></tr>');
   const cnt=function(s){return all.filter(function(x){return x.status===s;}).length;};
