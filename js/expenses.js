@@ -844,8 +844,8 @@ function expLineTouched(l){return !!(l.title||l.amount||l.subCat||l.start||l.end
 function expAddModalLine(){
   expSyncBasic();expSyncLine();
   const d=expDraft;
-  if(!d.category){showToast('Pick the Sub Category first','error','Expense types come from the sub category.');return;}
-  if(!expWithLine(function(){return expCheckLine(d.line,d.category);}))return;
+  if(!(d.line.category||d.category)){showToast('Pick the Sub Category first','error','Expense types come from the sub category.');return;}
+  if(!expWithLine(function(){return expCheckLine(d.line,d.line.category||d.category);}))return;
   d.lines.push(Object.assign({},d.line,{cols:Object.assign({},d.line.cols)}));
   d.line=expBlankLine();
   expRepaintForm();
@@ -854,14 +854,14 @@ function expRemoveModalLine(i){expSyncBasic();expSyncLine();expDraft.lines.splic
 function expModalLinesHTML(d){
   if(!d.lines.length)return '';
   return d.lines.map(function(l,i){
-    const fits=(EXP_SUBCATS[d.category]||[]).indexOf(l.subCat)>=0;
+    const fits=(EXP_SUBCATS[l.category||d.category]||[]).indexOf(l.subCat)>=0;
     return '<div class="exp-line exp-mline">'
       +'<div class="exp-line-hd"><span class="exp-line-n">'+(i+1)+'</span>'
       +'<div class="exp-line-ttl"><div class="exp-line-name">'+l.title+'</div>'
       +'<div class="exp-line-amt">'+expMoney(l.amount,d.currency)+' · '+l.subCat+' · '+cdLabel(l.start)
         +(l.end&&l.end!==l.start?' – '+cdLabel(l.end):'')+' · paid by '+(l.paidBy||'—')+(l.advanceId&&typeof advRefLabel==='function'?' ('+advRefLabel(l.advanceId)+' '+expMoney(l.advAmount,d.currency)+')':'')
         +(l.paidBy==='Corporate Card'&&typeof ccCard==='function'&&ccCard(l.cardId)?' ('+ccMask(ccCard(l.cardId).last4)+' '+expMoney(l.cardAmount,d.currency)+')':'')+(l.merchant?' · '+l.merchant:'')+(l.proof?' · '+l.proof:'')+'</div>'
-      +(fits?'':'<div class="ea-hint exp-cap-over">'+l.subCat+' is not a sub category of '+d.category+' - remove and add again.</div>')
+      +(fits?'':'<div class="ea-hint exp-cap-over">'+l.subCat+' is not a sub category of '+(l.category||d.category)+' - remove and add again.</div>')
       +'</div>'
       +'<button type="button" class="att-row-btn is-danger" onclick="expRemoveModalLine('+i+')" title="Remove item">'+AX_ICO.trash+'</button>'
       +'</div></div>';
@@ -940,11 +940,12 @@ function submitAddExpense(submit){
   const items=d.lines.slice();
   /* The form counts as an item when something is typed in it, or when it is the only one. */
   if(expLineTouched(d.line)||!items.length){
-    if(!expWithLine(function(){return expCheckLine(d.line,d.category);}))return;
+    if(!expWithLine(function(){return expCheckLine(d.line,d.line.category||d.category);}))return;
     items.push(d.line);
   }
-  const bad=items.find(function(l){return (EXP_SUBCATS[d.category]||[]).indexOf(l.subCat)<0;});
-  if(bad){showToast('Sub categories no longer fit','error','"'+bad.title+'" uses '+bad.subCat+', which is not a sub category of '+d.category+'.');return;}
+  /* An item may carry its own Sub Category (12 Nov 2026); otherwise the claim's. */
+  const bad=items.find(function(l){return (EXP_SUBCATS[l.category||d.category]||[]).indexOf(l.subCat)<0;});
+  if(bad){showToast('Sub categories no longer fit','error','"'+bad.title+'" uses '+bad.subCat+', which is not a sub category of '+(bad.category||d.category)+'.');return;}
   /* Policy gate: a Blocking breach or a missing justification stops a submission, never a draft. */
   if(submit&&typeof epGate==='function'){
     const g=epGate({eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},d.just);
@@ -957,7 +958,7 @@ function submitAddExpense(submit){
     status:'Draft',appliedOn:axToday(),reimbursedOn:'',createdBy:caMe(),createdAt:axStamp(),
     policyJust:Object.assign({},d.just||{}),dupJust:d.dupJust||'',migrated:true,entity:typeof caEntity==='function'?caEntity():'',
     costCentreId:d.costCentreId||'',projectId:d.projectId||'',bgJust:d.bgJust||'',
-    lines:items.map(function(l,i){return Object.assign({id:i+1,title:l.title,amount:parseFloat(l.amount),subCat:l.subCat,start:l.start,end:l.end||l.start,
+    lines:items.map(function(l,i){return Object.assign({id:i+1,title:l.title,amount:parseFloat(l.amount),category:l.category||d.category,subCat:l.subCat,start:l.start,end:l.end||l.start,
       proof:l.proof,proofUrl:l.proofUrl,comments:l.comments,cols:Object.assign({},l.cols),status:'Pending',approved:null,
       paidBy:l.paidBy||'',merchant:l.merchant||'',invoice:l.invoice||'',advanceId:l.paidBy==='Company Advance'?l.advanceId||'':'',
       advAmount:l.paidBy==='Company Advance'?Math.round((parseFloat(l.advAmount)||0)*100)/100:null,

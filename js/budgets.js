@@ -901,7 +901,7 @@ function bgClaimEvals(c,amounts){
     const fundC=funded?Math.min(Number(amt),amounts&&amounts[l.id]&&amounts[l.id].adv!=null?Number(amounts[l.id].adv):caCeilAdv(l)):0;
     /* Linked: drawn from money already counted as the holder's exposure. A holder frozen in a closed year was counted there. */
     const lk=hm&&fundC>0?bgLinkAmt(P,l,c.currency,holder,fundC):{l:0,s:0},linked=lk.l,skip=lk.s;
-    const ev=bgEvaluate({entity:c.entity||bgEnt(),date:l.start||wbToday(),dept:bgEmpDept(c.employeeEid),category:c.category,subCat:l.subCat,ccId:c.costCentreId||'',prjId:c.projectId||'',
+    const ev=bgEvaluate({entity:c.entity||bgEnt(),date:l.start||wbToday(),dept:bgEmpDept(c.employeeEid),category:l.category||c.category,subCat:l.subCat,ccId:c.costCentreId||'',prjId:c.projectId||'',
       amount:bgM(Number(amt)-skip),currency:c.currency,funded:linked,holderAlloc:linked>0?hm.alloc:null,exclude:ex,batch:batch,excKey:'EXP-'+c.key});
     bgAddBatch(batch,ev);out.push({line:l,ev:ev});
   });
