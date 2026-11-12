@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.8';
+const PRES_DATA_VERSION='2026-11-12.10';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -364,6 +364,26 @@ function presBuildBaseline(){
         rbacTemplatesData.push(rbSeed(id,x[1],x[2],x[3],[],'Active','Karan Shah',at,x[4]));
         const t=w.teams.find(function(y){return y.name===x[0];});if(t){t.tpl=id;wsNote(w,x[0]+' given the '+x[1]+' template.');}
         codes[x[0]]=x[3].length;
+      });
+      /* A template for each designation of the Expense Management Team (product owner, 12 Nov 2026), listed first in
+         RBAC → Templates: what that designation may do, module by module. Shown, not applied: the team carries no access. */
+      const DES=[
+        ['Reporting Manager',['Reporting Manager Access','Expense Team Approver','Advance Team Approver','Budget Approval (Reporting Manager)','Card Approval (Reporting Manager)'],
+          'Approves the claims, advances, budget requests and card requests of the people who report to them.'],
+        ['Approver',['Expense Approver','Advance Team Approver','Card Approver'],'Reviews and approves claims and advances at their approval step, and the card requests sent to them.'],
+        ['Finance Approver',['Expense Finance Administrator','Advance Finance Administrator','Budget Approver','Funding Verifier','Finance Admin Access'],
+          'The finance review: approves claims and advances for payment, runs reimbursements and disbursements, approves budgets and verifies funding.'],
+        ['Manager',['Expense Management Administrator','Budget Owner','Card Administrator'],'Runs expense management for the company: policies and limits, wallets and cards, approval routes and reports.'],
+        ['Reviewer',['Expense Compliance Review','Advance Compliance Review','Budget Compliance Review','Card Compliance Review'],'Reads and reviews claims, advances, budgets and card activity for compliance; changes nothing.'],
+        ['Verifier',['Card Load Verifier','Funding Verifier'],'Verifies card loads and funding entries before money moves.'],
+        ['Member',['Expense Claimant','Advance Requester','Cardholder Self-Service','Benefits Self Service','Budget Self Service'],'Raises their own claims, advances and card requests, and sees their own wallets and benefits.']];
+      DES.forEach(function(x){
+        if(rbacTemplatesData.some(function(t){return t.emsDesig===x[0];}))return;
+        const id=rbacTemplatesData.reduce(function(m,t){return Math.max(m,t.id);},0)+1;
+        const EMSM=['Expenses','Advances','Budgets','Cards','Benefits','Finance'];   // the expense system's modules only, no imprest
+        const perms=uniq(fromTpl(x[1])).filter(function(c){const m=RB_PERM[c];return m&&EMSM.indexOf(m.module)>=0&&!/imprest/i.test(c+' '+m.area);});
+        const t=rbSeed(id,x[0],'Expenses',perms,[],'Active','Karan Shah',at,x[2]+' Designation in the Expense Management Team.');
+        t.emsDesig=x[0];t.emsTeam='Expense Management Team';rbacTemplatesData.push(t);codes[x[0]]=t.perms.length;
       });
       if(typeof emsClearCache==='function')emsClearCache();
       return w.teams.map(function(t){return t.name+' '+t.members.length;}).join(', ')+' · templates '+JSON.stringify(codes);});

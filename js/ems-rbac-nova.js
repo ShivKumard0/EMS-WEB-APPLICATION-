@@ -10,10 +10,22 @@
 (function(){
   const EMS_FIRST=['Expenses','Advances','Budgets','Cards','Benefits'];
   const client=function(){return typeof emsClientOnly==='function'&&emsClientOnly();};
-  const rank=function(t){const i=EMS_FIRST.indexOf(t.module);return i<0?EMS_FIRST.length:i;};
+  /* The Expense Management Team's designation templates come first of all (product owner, 12 Nov 2026). */
+  const rank=function(t){if(t.emsDesig)return -1;const i=EMS_FIRST.indexOf(t.module);return i<0?EMS_FIRST.length:i;};
   /* Who in this company the template reaches: its teams, then the company's roles that carry it. */
   function rbAppliedHere(t){
     const ent=idEntity(),out=[];
+    /* A designation template: the Expense Management Team's members who hold that designation. */
+    if(t.emsDesig){
+      (typeof rbacWorkspacesData!=='undefined'?rbacWorkspacesData:[]).forEach(function(w){
+        if(w.status==='Deleted'||w.entityId!==ent)return;
+        (w.teams||[]).forEach(function(x){
+          if(x.name!==(t.emsTeam||'Expense Management Team'))return;
+          const who=x.members.filter(function(u){return (x.desig||{})[u]===t.emsDesig;}).map(idName);
+          out.push(x.name+(who.length?': '+who.join(', '):''));
+        });
+      });
+    }
     (typeof rbacWorkspacesData!=='undefined'?rbacWorkspacesData:[]).forEach(function(w){
       if(w.status==='Deleted'||w.entityId!==ent)return;
       (w.teams||[]).forEach(function(x){if(x.tpl===t.id&&out.indexOf(x.name)<0)out.push(x.name);});
