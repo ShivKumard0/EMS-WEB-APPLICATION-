@@ -43,11 +43,12 @@
         +'<td class="csag-td">'+esc((l.category||r.category||'')+(l.subCat?' / '+l.subCat:''))+'</td>'
         +'<td class="csag-td">'+esc(l.start?(typeof cdLabel==='function'?cdLabel(l.start):l.start):'')+'</td>'
         +'<td class="csag-td" style="text-align:right;white-space:nowrap">'+(typeof expMoney==='function'?expMoney(l.amount,r.currency):esc(l.amount))+'</td>'
+        +'<td class="csag-td">'+(typeof expAttChip==='function'?expAttChip(r,l):esc(l.proof||''))+'</td>'   // the line's attachment (js/exp-attachments.js)
         +'<td class="csag-td">'+(x.open?axBadge('wait','Pending'):axBadge(typeof statusTone==='function'?statusTone(l.status||''):'idle',l.status||'Decided'))+'</td>'
         +'</tr>';
     }).join('');
     return '<div class="ct-modal-overlay" onclick="eaApClose()">'
-      +'<div class="ct-modal" style="width:min(820px,94vw)" role="dialog" aria-modal="true" aria-label="Approve line items" onclick="event.stopPropagation()">'
+      +'<div class="ct-modal" style="width:min(960px,95vw)" role="dialog" aria-modal="true" aria-label="Approve line items" onclick="event.stopPropagation()">'
       +'<div class="ct-modal-hdr"><span class="ct-modal-title">Review Line Items</span><button class="ct-modal-close" onclick="eaApClose()" aria-label="Close">'+X+'</button></div>'
       +'<p class="ct-modal-sub">'+esc(expKey(r)+' · '+r.name+(st?' · Stage '+st.n+' · '+st.name:''))+'</p>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 12px">'
@@ -56,7 +57,7 @@
         +'<div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" style="color:var(--st-bad-fg,#b42318)"'+(n?'':' disabled')+' onclick="eaApGo(\'Reject\')">Reject</button>'
           +'<button class="ep-save-btn"'+(n?'':' disabled')+' onclick="eaApGo(\'Approve\')">Approve</button></div>'
       +'</div>'
-      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th></th><th>Expense Title</th><th>Category / Sub Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th></th><th>Expense Title</th><th>Category / Sub Category</th><th>Date</th><th style="text-align:right">Amount</th><th>Attachment</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
       /* Deciding someone else's stage (an admin stepping in) always takes a reason - the engine asks for it. */
       +'<div class="ep-form-group ep-form-full" style="margin-top:12px"><label class="ep-form-label">Comment'+(inter?' <span class="req">*</span>':'')+'</label>'
         +'<textarea id="eaap-comment" class="ep-form-input" rows="3" placeholder="'+(inter?'Required: you are deciding for '+esc(caNs(st.approvers)||'the approver'):'Required to reject')+'" style="resize:vertical;min-height:70px;height:auto;line-height:1.5"></textarea></div>'
