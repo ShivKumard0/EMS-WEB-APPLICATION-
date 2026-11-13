@@ -505,10 +505,12 @@ function ccReviewInfoHTML(r){
 }
 /* The + on Corporate Cards: a card request on the Requests tab. */
 function ccCanAddHere(){
+  /* Transactions: + is Record Transaction (product owner, 13 Nov 2026; it was a link above the filters). */
+  if(ccTxnPageOn())return ccCan('card.transaction.record')&&(typeof mcOn!=='function'||mcOn('cards'));
   if(ccPageTab==='loads')return typeof ccLoadSub!=='undefined'&&ccLoadSub==='loads'&&ccCan('card.load.create');
   return ccPageTab==='requests'&&(typeof ccReqSub==='undefined'||ccReqSub==='requests')&&(ccCan('card.request.create')||ccCan('card.request.others'))&&ccProgs().some(function(p){return ccProgActive(p);});
 }
-function ccStartAddHere(){if(ccPageTab==='requests')ccReqStart();else if(ccPageTab==='loads')ccLoadStart();}
+function ccStartAddHere(){if(ccTxnPageOn()){ccTxnFormOpen('record');return;}if(ccPageTab==='requests')ccReqStart();else if(ccPageTab==='loads')ccLoadStart();}
 /* Request Card / Request Card on Behalf on the employee's ONC Card tab (FR-CC-04 entry points). */
 function ccEmpCardActionsHTML(emp){
   if(!emp||(typeof mcOn==='function'&&!mcOn('cards')))return '';
@@ -2616,7 +2618,7 @@ function ccTxnPageHTML(){
   const all=ccTxns.filter(ccTxnVisible),rows=ccTxnShown();
   if(ccTxnSel!=null&&!rows.some(function(t){return t.id===ccTxnSel;}))ccTxnSel=null;
   let act='';
-  if(ccCan('card.transaction.record')&&(typeof mcOn!=='function'||mcOn('cards')))act+='<button class="att-link" onclick="ccTxnFormOpen(\'record\')">'+CC_ICO.plus+'Record Transaction</button>';
+  /* Record Transaction is the + in the top bar (ccCanAddHere / ccStartAddHere), product owner, 13 Nov 2026. */
   if(ccCan('card.demo.simulate')&&ccDemoOn()&&ccCards.some(function(c){return c.entity===ccEnt()&&ccCardEvidence(c)===CC_DEMO&&ccCardVisible(c);}))act+='<button class="att-link" onclick="ccTxnFormOpen(\'simulate\')">'+CC_ICO.plus+'Add Illustrative Transaction</button>';
   const pgn=listPage('cards-txns',[ccTxnQ,ccTxnStatusF,ccTxnVerF,ccTxnClassF].join('|'),rows.map(function(t,i){
     return '<tr class="ctx-row'+(ccTxnSel===t.id?' lp-row-selected':'')+'" id="ctx-row-'+t.id+'" style="cursor:pointer" onclick="ccTxnOpen('+t.id+')">'
@@ -2635,9 +2637,8 @@ function ccTxnPageHTML(){
   const tiles=caStat('Pending Authorization',cnt(function(t){return t.status==='Pending Authorization';}),ccTxnStatusF==='Pending Authorization','ccTxnStat(\'Pending Authorization\')','wait')
     +caStat('Awaiting Verification',cnt(function(t){return t.verify.status===CCT_UNDER||!!t.pendingPost;}),ccTxnStatusF==='__review__','ccTxnStat(\'__review__\')','wait')
     +caStat('Verified',cnt(function(t){return t.verify.status===CCT_VERIFIED;}),ccTxnStatusF===CCT_VERIFIED,'ccTxnStat(\''+CCT_VERIFIED+'\')','ok')
-    /* The Illustrative box is left out in the client presentation, where that word is never shown (a bare number would remain). */
-    +(typeof presClientHere==='function'&&presClientHere()?'':caStat(CC_DEMO,cnt(function(t){return t.demo;}),ccTxnStatusF===CC_DEMO,'ccTxnStat(\''+CC_DEMO+'\')','info'))
-    +caStat('Eligibility Exceptions',cnt(function(t){return t.eligibility&&t.eligibility.exception;}),ccTxnStatusF==='__exception__','ccTxnStat(\'__exception__\')','bad')
+    /* Four boxes beside the filters, as on every listing (product owner, 13 Nov 2026): the Illustrative box (shown with no
+       label in the presentation) and Eligibility Exceptions are left out; an exception still shows on its transaction. */
     +ccTxnKpi8H(all);   // Expense Matching is not on the Transactions screens (product owner, 11 Nov 2026): no Matching Exceptions box
   return '<div class="lp-page">'+dashboardBackHTML()+ccSubStrip([],ccCardsSub,'ccCardsSubPick',act)   // its own page: no sub-tabs; disputes are on their payments
     +ccFilterBar(lpSearchField('ctx-f-q',ccTxnQ,'Search transaction, merchant, cardholder or reference','ccTxnApply()')

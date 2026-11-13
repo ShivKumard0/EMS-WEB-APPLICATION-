@@ -152,10 +152,9 @@ buildExpensesHTML=function(){
     return '<div class="mod-page">'+eaSubHead('Reimbursement Queue')+caReimbListHTML()+'</div>'+eaModalsHTML();
   const tabs=expPageTabs();
   if(!tabs.some(function(t){return t.id===expPageTab;}))expPageTab='all';
-  const acts=eaActions();
-  const head='<div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">'+buildModuleTabsHTML(tabs,expPageTab,'expSetPageTab',true)+'</div>'
-    +(acts.length===1?'<div class="adv-set-actions">'+advBtn(acts[0][0],acts[0][1])+'</div>'
-      :acts.length?'<div class="adv-set-actions"><button class="btn btn-outline btn-sm" id="ea-manage-btn" onclick="eaManageClick()">Manage '+EA_ICO.chev+'</button></div>':'')+'</div>';
+  /* No Manage button "for now" (product owner, 13 Nov 2026): nothing in its place. The views it opened (My Approvals,
+     Imprest Funds, Reimbursement Queue, Reports, Settings) are kept and still open from their own links. */
+  const head='<div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">'+buildModuleTabsHTML(tabs,expPageTab,'expSetPageTab',true)+'</div></div>';
   return '<div class="mod-page">'+head+(expPageTab==='queue'?caQueueHTML():eaListHTML())+'</div>'+eaModalsHTML();
 };
 buildAdvancesHTML=function(){
