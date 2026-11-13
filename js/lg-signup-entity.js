@@ -34,12 +34,66 @@
   const val=function(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';};
   const bad=function(id,msg){const el=document.getElementById(id);showToast(msg,'error');
     if(el&&el.classList){el.classList.add('is-bad');if(el.focus)el.focus();setTimeout(function(){el.classList.remove('is-bad');},1600);}};
+  /* Get OTP (product owner, 13 Nov 2026): the message as before, then four boxes under the mobile number; any four
+     digits verify it. Changing the number asks again. Sign up needs the number verified. */
+  const otpOk=function(){const b=document.getElementById('su-otp');return !!(b&&b.dataset.ok==='1');};
+  const otpReset=function(){const b=document.getElementById('su-otp');if(b)b.remove();const g=document.getElementById('su-otp-get');if(g){g.disabled=false;g.style.opacity='';}};
+  const otpCheck=function(){
+    const box=document.getElementById('su-otp');if(!box)return;
+    const ds=box.querySelectorAll('.su-otp-d'),code=Array.prototype.map.call(ds,function(x){return x.value;}).join('');
+    if(!/^\d{4}$/.test(code))return;
+    box.dataset.ok='1';
+    ds.forEach(function(x){x.readOnly=true;x.style.background='var(--bg,#f9fafb)';});
+    const ok=document.getElementById('su-otp-ok');if(ok)ok.style.display='';
+    const h=document.getElementById('su-otp-hint');if(h)h.textContent='Mobile number verified.';
+    const g=document.getElementById('su-otp-get');if(g){g.disabled=true;g.style.opacity='.55';}
+    const n=document.getElementById('su-fname');if(n&&!n.value)n.focus();
+  };
+  window.suOtpKey=function(e,i){
+    const ds=document.querySelectorAll('#su-otp .su-otp-d');
+    if(e.key==='Backspace'&&!ds[i].value&&i>0){ds[i-1].value='';ds[i-1].focus();e.preventDefault();}
+  };
+  window.suOtpIn=function(el,i){
+    const ds=document.querySelectorAll('#su-otp .su-otp-d');
+    const v=String(el.value||'').replace(/\D/g,'');
+    if(v.length>1){v.slice(0,4-i).split('').forEach(function(c,k){ds[i+k].value=c;});const nx=ds[Math.min(i+v.length,3)];if(nx)nx.focus();}   // a pasted code fills the boxes
+    else{el.value=v;if(v&&i<3)ds[i+1].focus();}
+    otpCheck();
+  };
+  if(typeof window.lgSuOtp==='function'){
+    const o0=window.lgSuOtp;
+    window.lgSuOtp=function(){
+      const m=val('su-mobile').replace(/[\s-]/g,'');
+      if(!m)return bad('su-mobile','Enter your mobile number');
+      if(!/^\d{7,15}$/.test(m))return bad('su-mobile','Enter a valid mobile number');
+      if(otpOk())return;
+      o0.apply(this,arguments);
+      let box=document.getElementById('su-otp');
+      const dial=val('su-dial').replace(/^\w+\(|\)$/g,'');
+      if(!box){
+        const row=document.getElementById('su-mobile').parentElement;
+        box=document.createElement('div');box.id='su-otp';box.style.margin='2px 0 14px';
+        let d='';for(let i=0;i<4;i++)d+='<input class="lg-input su-otp-d" type="text" inputmode="numeric" maxlength="4" autocomplete="one-time-code" aria-label="OTP digit '+(i+1)+'"'
+          +' style="width:48px;height:46px;flex:none;margin:0;padding:0;text-align:center;font-size:18px;font-weight:600" oninput="suOtpIn(this,'+i+')" onkeydown="suOtpKey(event,'+i+')">';
+        box.innerHTML='<label class="lg-label">Enter OTP <span class="req">*</span></label>'
+          +'<div style="display:flex;align-items:center;gap:10px">'+d+'<span id="su-otp-ok" style="display:none">'+(typeof axBadge==='function'?axBadge('ok','Verified'):'<span class="lp-status-badge tone-ok">Verified</span>')+'</span></div>'
+          +'<p class="lg-sub" id="su-otp-hint" style="text-align:left;margin:8px 0 0;font-size:12.5px"></p>';
+        row.parentNode.insertBefore(box,row.nextSibling);
+        const g=row.querySelector('button');if(g)g.id='su-otp-get';
+        /* A different number is verified again. */
+        ['su-mobile','su-dial'].forEach(function(id){const el=document.getElementById(id);if(el&&!el.dataset.otpWatch){el.dataset.otpWatch='1';el.addEventListener(id==='su-dial'?'change':'input',otpReset);}});
+      }else box.querySelectorAll('.su-otp-d').forEach(function(x){x.value='';});
+      const h=document.getElementById('su-otp-hint');if(h)h.textContent='Enter the 4-digit code sent to '+(dial?dial+' ':'')+m+'.';
+      const f=box.querySelector('.su-otp-d');if(f)f.focus();
+    };
+  }
   window.lgSuGo=function(){
     const d={dial:val('su-dial'),mobile:val('su-mobile').replace(/[\s-]/g,''),first:val('su-fname'),last:val('su-lname'),email:val('su-email'),
       store:val('su-store'),cat:val('su-cat'),country:val('su-country')};
     const p1=(document.getElementById('su-pass')||{}).value||'',p2=(document.getElementById('su-pass2')||{}).value||'';
     if(!d.mobile)return bad('su-mobile','Enter your mobile number');
     if(!/^\d{7,15}$/.test(d.mobile))return bad('su-mobile','Enter a valid mobile number');
+    if(!otpOk()){const b=document.querySelector('#su-otp .su-otp-d');if(b){showToast('Verify your mobile number','error','Enter the 4-digit OTP.');b.focus();return;}return bad('su-mobile','Verify your mobile number: click Get OTP');}
     if(!d.first)return bad('su-fname','Enter your first name');
     if(!d.last)return bad('su-lname','Enter your last name');
     if(!d.email)return bad('su-email','Enter your email address');
