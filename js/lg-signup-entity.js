@@ -463,10 +463,11 @@
   const ccsDirty=function(k){return !!(ccsDraft&&ccsDraft.key===k&&!ccsSame(ccsDraft,ccsSaved(k)));};
   /* The row the panel is showing: a sign-up, or the company's own row. */
   const ccsKeyNow=function(){const r=recOfRow(csSelectedItem);return r?'SU-'+r.uid:(typeof idEntity==='function'?idEntity():'');};
-  function ccsHTML(k){
-    const c=ccsCur(k),bank=CCS_BANKS.find(function(b){return b[0]===c.bank;}),d=ccsDirty(k);
+  function ccsFormHTML(k){
+    const c=ccsCur(k),bank=CCS_BANKS.find(function(b){return b[0]===c.bank;}),d=ccsDirty(k),ed=!!ccsSaved(k).bank;
     const n=CCS_WALLETS.filter(function(w){return c.wallets[w[0]];}).length;
-    const cb=function(on,js){return '<input type="checkbox"'+(on?' checked':'')+' onchange="'+js+'" style="width:16px;height:16px;flex:none;cursor:pointer;accent-color:var(--navy,#0f172a)">';};
+    /* Wallets switch on and off with the same toggle as the banks (product owner, 13 Nov 2026). */
+    const cb=function(on,js,name){return '<label class="cs-toggle" title="'+(on?'Turn off ':'Turn on ')+attrSafe(name)+'"><input type="checkbox" aria-label="'+attrSafe(name)+'"'+(on?' checked':'')+' onchange="'+js+'"><span class="cs-toggle-slider"></span></label>';};
     return '<div id="ccs-root" class="mcs">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="lp-sb-section-title">Card Setup</span>'
         +(d?(typeof axBadge==='function'?axBadge('wait','Unsaved changes'):'Unsaved changes'):'')+'</div>'
@@ -482,20 +483,46 @@
       +(bank?'<div class="mcs-h" style="display:flex;justify-content:space-between;align-items:center"><span>Add Wallets · '+esc(bank[1])+'</span>'
           +'<span style="font-size:12px;font-weight:500;color:var(--gray,#6a7282)">'+n+' of '+CCS_WALLETS.length+' selected</span></div>'
         +CCS_WALLETS.map(function(w){
-          return '<label class="mcs-card" style="display:block;cursor:pointer"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(w[1])+'</div><div class="mcs-sub">'+esc(w[2])+'</div></div>'
-            +cb(!!c.wallets[w[0]],'ccsWallet(\''+w[0]+'\',this.checked)')+'</div></label>';}).join(''):'')
-      +(d?'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccsDiscard()">Discard</button><button class="ep-save-btn" onclick="ccsSave()">Save changes</button></div>':'')
+          return '<div class="mcs-card ccs-wallet"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(w[1])+'</div><div class="mcs-sub">'+esc(w[2])+'</div></div>'
+            +cb(!!c.wallets[w[0]],'ccsWallet(\''+w[0]+'\',this.checked)',w[1])+'</div></div>';}).join(''):'')
+      /* Editing a saved setup: Cancel and Save changes are always there; a first setup shows them once something changed. */
+      +(ed?'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccsCancel()">Cancel</button><button class="ep-save-btn" onclick="ccsSave()">Save changes</button></div>'
+        :(d?'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccsDiscard()">Discard</button><button class="ep-save-btn" onclick="ccsSave()">Save changes</button></div>':''))
       +'</div>';
   }
+  /* Once saved, Card Setup reads as what was selected - the bank and its wallets - with Edit to change it
+     (product owner, 13 Nov 2026). Nothing saved yet: the selection itself. */
+  let ccsEditing='';   // the row whose saved Card Setup is open for editing
+  const CCS_TICK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#16a34a;flex:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+  function ccsHTML(k){
+    const s=ccsSaved(k);
+    if(!s.bank||ccsEditing===k)return ccsFormHTML(k);
+    const bank=CCS_BANKS.find(function(b){return b[0]===s.bank;})||['',s.bank,''];
+    const ws=CCS_WALLETS.filter(function(w){return s.wallets[w[0]];});
+    return '<div id="ccs-root" class="mcs">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="lp-sb-section-title">Card Setup</span>'
+        +'<button class="lp-sb-view-edit-btn" onclick="ccsEditOn()">'+PEN+' Edit</button></div>'
+      +'<div style="font-size:11.5px;color:var(--gray,#6a7282);margin-top:6px">The bank that issues the company&#39;s cards, and the wallets on its card.</div>'
+      +'<div class="mcs-h">Bank</div>'
+      +'<div class="mcs-card"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(bank[1])+'</div><div class="mcs-sub">'+esc(bank[2])+'</div></div>'
+        +(typeof axBadge==='function'?axBadge('ok','Enabled'):'Enabled')+'</div></div>'
+      +'<div class="mcs-h" style="display:flex;justify-content:space-between;align-items:center"><span>Wallets</span>'
+        +'<span style="font-size:12px;font-weight:500;color:var(--gray,#6a7282)">'+ws.length+' of '+CCS_WALLETS.length+' selected</span></div>'
+      +(ws.length?ws.map(function(w){return '<div class="mcs-card"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(w[1])+'</div><div class="mcs-sub">'+esc(w[2])+'</div></div>'+CCS_TICK+'</div></div>';}).join('')
+        :'<div class="wb-empty-sm">No wallets selected. Click Edit to add them.</div>')
+      +'</div>';
+  }
+  window.ccsEditOn=function(){ccsEditing=ccsKeyNow();ccsDraft=null;ccsPaint();};
+  window.ccsCancel=function(){ccsDraft=null;ccsEditing='';ccsPaint();};
   const ccsPaint=function(){const el=document.getElementById('ccs-root');if(el)el.outerHTML=ccsHTML(ccsKeyNow());};
   window.ccsBank=function(b){const d=ccsEdit(ccsKeyNow());if(b&&d.bank&&d.bank!==b){ccsPaint();return;}d.bank=b;ccsPaint();};   // another bank waits until this one is off
   window.ccsWallet=function(w,on){const d=ccsEdit(ccsKeyNow());d.wallets=Object.assign({},d.wallets);if(on)d.wallets[w]=true;else delete d.wallets[w];ccsPaint();};
   window.ccsDiscard=function(){ccsDraft=null;ccsPaint();};
   window.ccsSave=function(){
-    const k=ccsKeyNow();if(!ccsDirty(k)){ccsDraft=null;ccsPaint();return;}
+    const k=ccsKeyNow();if(!ccsDirty(k)){ccsDraft=null;ccsEditing='';ccsPaint();return;}
     const d=ccsDraft,bank=CCS_BANKS.find(function(b){return b[0]===d.bank;});
     const ws=CCS_WALLETS.filter(function(w){return d.wallets[w[0]];}).map(function(w){return w[1];});
-    ccsBook[k]={bank:d.bank,wallets:Object.assign({},d.wallets)};ccsDraft=null;
+    ccsBook[k]={bank:d.bank,wallets:Object.assign({},d.wallets)};ccsDraft=null;ccsEditing='';
     try{localStorage.setItem(CCS_KEY,JSON.stringify(ccsBook));}catch(e){}
     const text=bank?bank[1]+' enabled; wallets: '+(ws.length?ws.join(', '):'none')+'.':'No bank enabled.';
     const r=recOfRow(csSelectedItem);if(r){logIt(r,'Card Setup updated: '+text);r.updated=new Date().toISOString();save();}
