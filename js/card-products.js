@@ -219,11 +219,15 @@ const ccpBook={};
       });
       body=tmp.innerHTML.trim()||'<div class="wb-empty-sm">No benefit wallet on this card.</div>';
     }
-    /* Transactions: no Dispute column here (product owner, 13 Nov 2026) - other card screens keep it. */
+    /* Transactions: no Dispute column, and the Wallet column shows the wallet name only - no sub-line such as
+       "Flexi Benefit" (product owner, 13 Nov 2026). Other card screens keep both. */
     else if(ltab==='transactions'){
       const tmp=document.createElement('div');tmp.innerHTML=typeof ccCardTxnsHTML==='function'?ccCardTxnsHTML(c):'';
       Array.prototype.forEach.call(tmp.querySelectorAll('table'),function(tb){
-        const hs=tb.querySelectorAll('thead th'),col=Array.prototype.findIndex.call(hs,function(h){return /^Dispute$/i.test(String(h.textContent||'').trim());});
+        const hs=tb.querySelectorAll('thead th'),colOf=function(re){return Array.prototype.findIndex.call(hs,function(h){return re.test(String(h.textContent||'').trim());});};
+        const wcol=colOf(/^Wallet$/i);
+        if(wcol>=0)Array.prototype.forEach.call(tb.querySelectorAll('tbody tr'),function(tr){const cell=tr.children[wcol];if(cell)cell.querySelectorAll('.ax-sub').forEach(function(s){s.remove();});});
+        const col=colOf(/^Dispute$/i);
         if(col<0)return;
         Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){const cell=tr.children[col];if(cell&&tr.children.length===hs.length)cell.remove();});
       });
