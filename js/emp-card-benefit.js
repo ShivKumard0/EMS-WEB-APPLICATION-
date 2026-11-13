@@ -11,7 +11,8 @@
 const ecbBook={};
 
 (function(){
-  /* The same ten wallet and benefit names as Company Settings → Card Setup. */
+  /* The same ten wallet and benefit names as Company Settings → Card Setup. Only the name is shown (product owner,
+     13 Nov 2026: no sub-line such as Flexi Benefit under it); the third value is kept for reference. */
   const WALLETS=[['MEAL','Meal','Flexi Benefit'],['FUEL','Fuel','Flexi Benefit'],['GIFT','Gift','Flexi Benefit'],['TEL','Telecom','Flexi Benefit'],
     ['BOOK','Books & Learning','Benefit'],['WELL','Wellness','Benefit'],['CORP','Corporate Expense','Company Expense'],['REIMB','Reimbursement','Reimbursement'],
     ['PERS','Personal','Personal'],['NCMC','Transit / NCMC','Transit']];
@@ -33,9 +34,13 @@ const ecbBook={};
       +'.ecb-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--navy,#0f172a);margin:16px 0 8px}'
       +'.ecb-h span+span{font-size:12px;font-weight:500;color:var(--gray,#6a7282)}'
       +'.ecb .cs-toggle input:checked+.cs-toggle-slider{background:#1a1a1a}'
-      +'.ecb-limit.ep-form-input{width:120px;flex:none;margin:0}'
-      +'.ecb-limit.ep-form-input:disabled{background:#f8fafc;color:#9ca3af;cursor:not-allowed}'
-      +'.ecb-limit.is-err{border-color:#dc2626}'
+      /* The Limit box: square and plain (product owner, 13 Nov 2026) - small corners, no up/down arrows. */
+      +'.ecb .ecb-limit.ep-form-input{width:110px;height:36px;flex:none;margin:0;padding:0 10px;border:1px solid var(--border,#e5e7eb);border-radius:4px;'
+        +'background:#fff;font-size:13px;color:var(--navy,#0f172a);box-shadow:none;-moz-appearance:textfield;appearance:textfield}'
+      +'.ecb .ecb-limit.ep-form-input::-webkit-outer-spin-button,.ecb .ecb-limit.ep-form-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}'
+      +'.ecb .ecb-limit.ep-form-input:focus{outline:none;border-color:#1a1a1a}'
+      +'.ecb .ecb-limit.ep-form-input:disabled{background:#f8fafc;color:#9ca3af;cursor:not-allowed}'
+      +'.ecb .ecb-limit.ep-form-input.is-err{border-color:#dc2626}'
       +'.ecb-amt{font-size:13px;font-weight:600;color:var(--navy,#0f172a);white-space:nowrap}'
       +'.ecb-amt small{display:block;font-size:11px;font-weight:500;color:var(--gray,#6a7282);text-align:right}';
     (document.head||document.documentElement).appendChild(st);
@@ -79,7 +84,7 @@ const ecbBook={};
       +(c.on?'<div class="ecb-h"><span>Benefits</span><span>'+n+' of '+WALLETS.length+' selected</span></div>'
         +WALLETS.map(function(w){
           const on=!!c.sel[w[0]],v=c.lim[w[0]]||'',bad=showErr&&on&&!(Number(v)>0);
-          return '<div class="ecb-card"><div class="ecb-row"><div class="ecb-txt"><div class="ecb-name">'+E(w[1])+'</div><div class="ecb-sub">'+E(w[2])+'</div></div>'
+          return '<div class="ecb-card"><div class="ecb-row"><div class="ecb-txt"><div class="ecb-name">'+E(w[1])+'</div></div>'
             +toggle(on,'ecbPick(\''+w[0]+'\',this.checked)',w[1])
             +'<input class="ep-form-input ecb-limit'+(bad?' is-err':'')+'" type="number" min="1" step="1" inputmode="numeric" placeholder="Limit" aria-label="'+E(w[1])+' limit" title="'+(on?'Limit (INR)':'Turn on '+E(w[1])+' to set its limit')+'"'
               +' value="'+E(v)+'"'+(on?'':' disabled')+' oninput="ecbLimit(\''+w[0]+'\',this.value)">'
@@ -95,7 +100,7 @@ const ecbBook={};
             +'<div class="ecb-card" style="margin-top:14px"><div class="ecb-row"><div class="ecb-txt"><div class="ecb-name">Wallets</div><div class="ecb-sub">Benefit wallets on '+E(emp.name)+'\'s card</div></div>'
         +(s.on?badge('ok','Enabled'):badge('idle','Off'))+'</div></div>'
       +(s.on?'<div class="ecb-h"><span>Enabled wallets</span><span>'+ws.length+' of '+WALLETS.length+'</span></div>'
-        +ws.map(function(w){return '<div class="ecb-card"><div class="ecb-row">'+TICK+'<div class="ecb-txt"><div class="ecb-name">'+E(w[1])+'</div><div class="ecb-sub">'+E(w[2])+'</div></div>'
+        +ws.map(function(w){return '<div class="ecb-card"><div class="ecb-row">'+TICK+'<div class="ecb-txt"><div class="ecb-name">'+E(w[1])+'</div></div>'
           +'<div class="ecb-amt"><small>Limit</small>'+E(money(s.lim[w[0]]))+'</div></div></div>';}).join(''):'')
       +'</div>';
   }
@@ -149,7 +154,8 @@ const ecbBook={};
     const x0=deExtraTabs;
     /* Not on another employee's record when the viewer may only see their own (as the KYC tab). */
     deExtraTabs=function(emp){
-      const t=x0.apply(this,arguments);
+      /* The Benefits tab is removed from every employee's panel (product owner, 13 Nov 2026); Card Benefit stays. */
+      const t=x0.apply(this,arguments).filter(function(x){return x.id!=='benefits';});
       if(typeof oncSelfOnly==='function'&&oncSelfOnly()&&!(typeof oncIsSelf==='function'&&oncIsSelf(emp)))return t;
       return t.concat([{id:TAB,label:'Card Benefit'}]);
     };
@@ -157,6 +163,7 @@ const ecbBook={};
   if(typeof renderDeSidebar==='function'){
     const r0=renderDeSidebar;
     renderDeSidebar=function(){
+      if(typeof deTab!=='undefined'&&deTab==='benefits')deTab='basic-details';   // a panel left on the removed Benefits tab
       const out=r0.apply(this,arguments);
       if(typeof deTab==='undefined'||deTab!==TAB||!out)return out;
       const emp=empNow();if(!emp)return out;
