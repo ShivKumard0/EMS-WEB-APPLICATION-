@@ -184,6 +184,16 @@ function emsLoadAdminOwn(r,who){
       return out;
     };
   }
+  /* Card Load under Claim For: Others - the Employee list holds only people with an Active card (product owner,
+     13 Nov 2026: "the employee dropdown should only have active cards people names"). */
+  if(typeof expPickPool==='function'){
+    const pp0=expPickPool;
+    expPickPool=function(){
+      const out=pp0.apply(this,arguments);
+      if(!(typeof expModalOpen!=='undefined'&&expModalOpen&&typeof expDraft!=='undefined'&&expDraft&&expDraft.cardLoad&&expDraft.claimFor==='Others'))return out;
+      return out.filter(function(eid){const e=typeof idEmp==='function'?idEmp(eid):null;return !!emsLoadCardOf(e);});
+    };
+  }
   /* The admin who raised a load (emsLoadAdminOwn) is not held back by having raised it: separation of duties, the
      actual-actor guard and the route's exclusions let him through for that load only. Everything else is unchanged. */
   if(typeof caSoD==='function'){
