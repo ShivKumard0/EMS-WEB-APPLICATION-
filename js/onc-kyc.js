@@ -87,18 +87,32 @@
       return tmp.innerHTML;
     };
   }
-  /* The employee's own KYC tab (product owner, 12 Nov 2026): no heading block, no "Enroll for ONC card" row and no
-     Corporate cards box - HR's view of the employee keeps them (HR enrolls from there). Submit reads "Submit for
+  /* KYC for every employee (product owner, 13 Nov 2026): "remove Enroll for ONC card and KYC · RBL Bank; for every
+     employee keep those fields, which can be filled or edited later". There is no enrollment switch any more: every
+     employee's KYC details are shown - in their own KYC tab and in the KYC tab of the Employees panel - and can be
+     filled in or edited later. A record counts as enrolled once it is read (not while the presentation prepares its
+     company, whose steps switch enrollment on themselves). A card still needs the details complete and the employee's
+     own declarations ("Ready for Card Enrollment"); "Not Enrolled" and "Draft" both block it, so nothing is loosened. */
+  const building=function(){return typeof presBuilding!=='undefined'&&presBuilding;};
+  if(typeof oncRec==='function'){
+    const r0=oncRec;
+    oncRec=function(){const r=r0.apply(this,arguments);if(r&&!r.enroll&&!building())r.enroll=true;return r;};
+  }
+  if(typeof oncToggle==='function'){
+    const g0=oncToggle;
+    oncToggle=function(eid,what){if(what==='enroll'&&!building())return;return g0.apply(this,arguments);};   // always on
+  }
+  /* The tab, for everyone: no heading block (KYC · provider, status) and no "Enroll for ONC card" row. The employee's
+     own tab also has no Corporate cards box (12 Nov 2026); HR's view of an employee keeps it. Submit reads "Submit for
      verification". */
   if(typeof oncTabHTML==='function'){
     const s0=oncTabHTML;
     oncTabHTML=function(emp){
       let out=s0.apply(this,arguments).replace('>Resubmit for HR review<','>Resubmit for verification<').replace('>Submit for HR review<','>Submit for verification<');
-      if(!(typeof oncIsSelf==='function'&&oncIsSelf(emp)))return out;
       const tmp=document.createElement('div');tmp.innerHTML=out;
       const head=tmp.querySelector('.onc-head');if(head&&/KYC ·/.test(head.textContent))head.remove();
       tmp.querySelectorAll('.onc-switch').forEach(function(x){if(/Enroll for ONC card/.test(x.textContent))x.remove();});
-      tmp.querySelectorAll('.cc-emp-cards').forEach(function(x){x.remove();});
+      if(typeof oncIsSelf==='function'&&oncIsSelf(emp))tmp.querySelectorAll('.cc-emp-cards').forEach(function(x){x.remove();});
       return tmp.innerHTML;
     };
   }
