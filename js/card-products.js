@@ -142,9 +142,8 @@ const ccpBook={};
   /* ── The page: tabs Cards (the card itself) · Card List (every card issued on it) - product owner, 13 Nov 2026 ── */
   let ptab='cards';
   function pageHTML(){
-    const tabs=[{id:'cards',label:'Cards'},{id:'card-list',label:'Card List'}];
-    const body=ptab==='card-list'?listHTML():productHTML();
-    return typeof buildModuleTabsHTML==='function'?'<div class="mod-page">'+buildModuleTabsHTML(tabs,ptab,'ccpPageTab',true)+body+'</div>':body;
+    /* No Cards | Card List switch on the page (product owner, 13 Nov 2026): Card List is its own menu item. */
+    return productHTML();
   }
   window.ccpPageTab=function(t){if(ptab===t)return;ptab=t;sel=null;lsel=null;editing=false;draft=null;renderADTPage();};
 
