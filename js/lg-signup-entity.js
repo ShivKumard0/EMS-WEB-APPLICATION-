@@ -110,7 +110,7 @@
     let r=find(d.email);
     const log={date:t.date,time:t.time,user:who,status:'Pending',action:'Signed up. '+d.store+' · '+d.cat+' · '+d.country+'.'};
     if(r){Object.assign(r,d,{pass:hash(d.email,p1),status:'Pending',entityId:'',updated:now.toISOString()});r.logs.unshift(Object.assign(log,{action:'Signed up again. '+d.store+' · '+d.cat+' · '+d.country+'.'}));}
-    else{r=Object.assign({},d,{pass:hash(d.email,p1),status:'Pending',entityId:'',created:now.toISOString(),updated:now.toISOString(),logs:[log]});recs.push(r);}
+    else{r=Object.assign({},d,{pass:hash(d.email,p1),status:'Pending',entityId:'',created:now.toISOString(),updated:now.toISOString(),logs:[log]});recs.push(r);norm(r);}
     save();
     if(typeof lgSuBack==='function')lgSuBack();
     const em=document.getElementById('lg-email'),pw=document.getElementById('lg-pass');
@@ -145,10 +145,18 @@
     };
   });
 
-  /* ── 3 · Company Settings: Dhi Hyperlocal's row reads Nova Retail Pvt Ltd; each sign-up follows it. ── */
+  /* ── 3 · Company Settings: the newest sign-up at the top, then Dhi Hyperlocal's own row (shown as Nova Retail Pvt
+     Ltd). Row numbers stay with the record (Dhi Hyperlocal 1, the sign-ups 2, 3 …); the S. No column counts down
+     the list as shown. ── */
   const rowNo=function(i){return 2+i;};
-  const recOfRow=function(n){if(!inDhi())return null;const i=Number(n)-2;return i>=0&&i<recs.length?recs[i]:null;};
+  function norm(r){
+    if(!r.uid){let u=Date.parse(r.created)||Date.now();while(recs.some(function(x){return x!==r&&x.uid===u;}))u++;r.uid=u;}
+    r.tabs=r.tabs||{};r.roles=r.roles||[];r.attachments=r.attachments||[];return r;
+  }
+  const recOfRow=function(n){if(!inDhi())return null;const i=Number(n)-2;return i>=0&&i<recs.length?norm(recs[i]):null;};
   const updatedCell=function(iso){const d=new Date(iso),n=new Date();return d.toDateString()===n.toDateString()?'Today':d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();};
+  const ownerOf=function(r){return (r.tabs&&r.tabs['basic-details']&&r.tabs['basic-details'].owner)||(r.first+' '+r.last);};
+  let listing=false;   // true while the list itself is drawn: the sign-ups go first
   if(typeof csEntityRows==='function'){
     const e0=csEntityRows;
     csEntityRows=function(){
@@ -156,36 +164,178 @@
       if(!d)return rows;
       const out=rows.map(function(r){if(r[2]!==d.entityId)return r;const c=r.slice();c[1]=SHOWN_AS;return c;});
       if(!inDhi())return out;
-      return out.concat(recs.map(function(r,i){return [rowNo(i),r.store,r.entityId||'',r.cat,r.country,r.first+' '+r.last,updatedCell(r.updated),r.status];}));
+      const su=recs.map(function(r,i){return [rowNo(i),r.store,r.entityId||'',r.cat,r.country,ownerOf(r),updatedCell(r.updated),r.status];});
+      return listing?su.reverse().concat(out):out.concat(su);
     };
   }
-  /* The sign-up's own panel: Basic Details and Logs. */
-  let suTab='basic-details';
-  window.suEntTab=function(t){suTab=t;if(typeof isbTab==='function')isbTab('cs',renderCsSidebar);};
+  if(typeof buildCompanySettingsHTML==='function'){
+    const b0=buildCompanySettingsHTML;
+    buildCompanySettingsHTML=function(){
+      if(!inDhi()||!recs.length)return b0.apply(this,arguments);
+      listing=true;let out,order;
+      try{out=b0.apply(this,arguments);order=csEntityRows().map(function(r){return String(r[0]);});}finally{listing=false;}
+      const tmp=document.createElement('div');tmp.innerHTML=out;
+      tmp.querySelectorAll('tr.lp-row[data-row-id]').forEach(function(tr){
+        const pos=order.indexOf(tr.getAttribute('data-row-id'));if(pos<0||!tr.firstElementChild)return;
+        const w=document.createTreeWalker(tr.firstElementChild,NodeFilter.SHOW_TEXT,null);let n;
+        while((n=w.nextNode()))if(/^\s*\d+\s*$/.test(n.nodeValue)){n.nodeValue=String(pos+1);break;}
+      });
+      return tmp.innerHTML;
+    };
+  }
+
+  /* ── 4 · The sign-up's panel: the company tabs (Basic Details, Banking Details, Attachments, Roles & Access,
+     Payroll, Leaves, Attendance, Module Control, E-Sign) and Logs. Every value is the sign-up's own: blank until
+     entered with Edit, saved with the row, written to its Logs. Dhi Hyperlocal's settings are never read or changed. ── */
+  const TABS=[['basic-details','Basic Details'],['banking-details','Banking Details'],['attachments','Attachments'],['roles-access','Roles & Access'],
+    ['payroll','Payroll'],['leaves','Leaves'],['attendance','Attendance'],['module-control','Module Control'],['esign','E-Sign'],['logs','Logs']];
+  const COUNTRIES=['India','United Arab Emirates','Singapore','United Kingdom','United States'];
+  const CUR=['INR','AED','SGD','GBP','USD'],TZ=['Asia/Kolkata','Asia/Dubai','Asia/Singapore','Europe/London','America/New_York'];
+  const YN=['Yes','No'],ED=['Enabled','Disabled'];
+  const ROLES=['Company Admin','Finance Admin','HR Admin','Reporting Manager','Approver','Finance Approver','Expense Manager','Reviewer','Verifier','Member'];
+  const SCOPES=['Whole company','Own branch','Own department','Own team'];
+  const F=function(k,l,o){return Object.assign({k:k,l:l},o||{});};
+  const SECTIONS={
+    'basic-details':[{fields:[F('entityId','Entity ID',{ro:1,ic:'ent'}),F('store','Entity Name',{top:1,req:1,ic:'city'}),F('cat','Entity Type',{top:1,opts:['Expense Management'],ic:'flash'}),
+      F('country','Country',{top:1,opts:COUNTRIES,ic:'globe'}),F('baseCurrency','Base Currency',{opts:CUR,ic:'dollar'}),F('timeZone','Time Zone',{opts:TZ,ic:'globe'}),
+      F('address','Address',{wide:1,area:1,ic:'map'}),F('city','City',{ic:'city'}),F('owner','Owner',{ic:'person'}),F('email','Email',{top:1,req:1,ic:'mail'}),
+      F('mobile','Mobile Number',{top:1,req:1,ic:'phone'}),F('created','Created Time',{ro:1,ic:'cal'}),F('createdBy','Created By',{ro:1,ic:'person'}),
+      F('updated','Last Updated',{ro:1,ic:'cal'}),F('empPrefix','Employee ID Prefix',{ic:'id'}),F('logo','Entity Logo',{file:1,ic:'img'}),
+      F('header','Header',{file:1,ic:'doc'}),F('footer','Footer',{file:1,ic:'doc'})]}],
+    'banking-details':[{title:'Banking Details',fields:[F('bkCountry','Country / Location',{opts:COUNTRIES,ic:'globe'}),F('payName','Pay Name',{ic:'person'}),F('payBank','Pay Bank',{ic:'bank'}),
+      F('account','Account Number',{ic:'hash'}),F('ifsc','IFSC Code',{ic:'key'}),F('swift','Swift Code',{ic:'flash'}),F('bkCurrency','Currency',{opts:CUR,ic:'dollar'}),
+      F('bkEmail','Email',{ic:'mail'}),F('bkPhone','Phone Number',{ic:'phone'}),F('vat','VAT Number',{ic:'pct'}),F('bkAttachment','Attachment',{file:1,ic:'clip'}),
+      F('bkComments','Comments',{wide:1,area:1,ic:'comment'})]}],
+    'payroll':[{title:'Payroll Settings',fields:[F('payCycle','Pay Cycle',{opts:['Monthly','Semi-monthly','Bi-weekly','Weekly'],ic:'person'}),F('cutoff','Payroll cut-off Date',{ic:'cal'}),
+      F('calendar','Payroll Calendar',{ic:'cal'}),F('prCurrency','Currency',{opts:CUR,ic:'dollar'}),F('payslip','Payslip Publish Date',{wide:1,ic:'cal'})]},
+      {title:'Payroll Input Rules',fields:[F('inclExp','Include Approved Expenses in Payroll',{opts:YN,ic:'check'}),F('deductLop','Deduct Unpaid Leave Automatically',{opts:YN,ic:'check'})]}],
+    'leaves':[{title:'Leave Settings',fields:[F('period','Leave Period',{wide:1,ic:'cal'}),F('allocation','Allocation Frequency',{opts:['Monthly','Quarterly','Half-yearly','Yearly'],ic:'doc'}),
+      F('probation','Probation Period',{ic:'clock'}),F('lop','LOP Allowed',{opts:YN,ic:'doc'}),F('optional','Optional Holidays',{ic:'cal'})]},
+      {title:'Leave Restrictions',fields:[F('maxConsec','Maximum Consecutive Leaves',{wide:1,ic:'doc'})]},
+      {title:'Sandwich Rule',fields:[F('sandwich','Sandwich Rule',{opts:ED,ic:'doc'}),F('cntWeekOff','Count Weekly Off as Leave',{opts:YN,ic:'cal'}),F('cntHoliday','Count Holiday as Leave',{opts:YN,wide:1,ic:'cal'})]},
+      {title:'Approval Workflow',fields:[F('lvLevel','Leave Approval Level',{opts:['Level 1','Level 2'],wide:1,ic:'check'}),F('lvAppr1','Level 1 Approver',{ic:'person'}),F('lvAppr2','Level 2 Approver',{ic:'person'})]}],
+    'attendance':[{title:'Attendance Settings',fields:[F('attMode','Attendance Mode',{ic:'clock'}),F('shift','Shift Type',{ic:'clock'}),F('dailyHours','Daily Work Hours',{ic:'clock'}),
+      F('start','Start Time',{time:1,ic:'clock'}),F('end','End Time',{time:1,ic:'clock'}),F('workDays','Working Days',{ic:'cal'}),F('weekOff','Week Off Days',{ic:'cal'}),
+      F('overtime','Overtime Allowed',{opts:YN,ic:'clock'}),F('capRule','Work Hours Capping Rule',{ic:'doc'}),F('late','Late Policy',{ic:'doc'}),F('geo','Geolocation',{opts:ED,ic:'map'}),
+      F('graceIn','Clock In Grace Time',{ic:'clock'}),F('graceOut','Clock Out Grace Time',{ic:'clock'})]},
+      {title:'Rules',fields:[F('freeze','Attendance Freeze',{opts:ED,ic:'doc'}),F('woReq','Request on Week Off / Holiday',{opts:['Allowed','Not allowed'],ic:'cal'}),
+      F('woAppr','Approver',{ic:'person'}),F('abscond','Absconding Flow',{opts:ED,ic:'doc'}),F('absAction','Absence Action',{ic:'doc'})]}],
+    'esign':[{title:'E-Sign',fields:[F('provider','Provider',{opts:['DocuSeal'],ic:'flash'}),F('env','Environment',{opts:['Sandbox','Production'],ic:'globe'}),
+      F('baseUrl','API Base URL',{wide:1,ic:'globe'}),F('apiKey','API Key',{secret:1,ic:'key'}),F('esOn','Integration',{opts:ED,ic:'check'})]}]
+  };
+  const SV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">';
   const I={
-    ent:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
-    city:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
-    flash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-    globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-    map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 6l7-3 8 4 7-3v15l-7 3-8-4-7 3z"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="16" y1="7" x2="16" y2="21"/></svg>',
-    person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
-    phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.07 6.07l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.76 16.92z"/></svg>',
-    cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-    id:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="7" y1="11" x2="10" y2="11"/><line x1="7" y1="15" x2="10" y2="15"/><path d="M14 11h3m-3 4h3"/></svg>',
-    img:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'};
+    ent:SV+'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+    city:SV+'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+    flash:SV+'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    globe:SV+'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    map:SV+'<path d="M1 6l7-3 8 4 7-3v15l-7 3-8-4-7 3z"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="16" y1="7" x2="16" y2="21"/></svg>',
+    person:SV+'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    mail:SV+'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+    phone:SV+'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.07 6.07l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.76 16.92z"/></svg>',
+    cal:SV+'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    id:SV+'<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="7" y1="11" x2="10" y2="11"/><line x1="7" y1="15" x2="10" y2="15"/><path d="M14 11h3m-3 4h3"/></svg>',
+    img:SV+'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    doc:SV+'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    bank:SV+'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+    hash:SV+'<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>',
+    key:SV+'<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+    dollar:SV+'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    pct:SV+'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+    clip:SV+'<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+    comment:SV+'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    clock:SV+'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    check:SV+'<polyline points="20 6 9 17 4 12"/></svg>'};
+  const PEN='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const dash='<span style="color:#9ca3af">-</span>';
-  const fc=function(icon,label,value,wide){return '<div class="lp-sb-field-card'+(wide?' is-wide':'')+'"><div class="lp-sb-field-icon">'+icon+'</div><div class="lp-sb-field-content"><div class="lp-sb-field-label">'+label+'</div><div class="lp-sb-field-value">'+(value?esc(value):dash)+'</div></div></div>';};
+  const fc=function(icon,label,value,wide){return '<div class="lp-sb-field-card'+(wide?' is-wide':'')+'"><div class="lp-sb-field-icon">'+icon+'</div><div class="lp-sb-field-content"><div class="lp-sb-field-label">'+esc(label)+'</div><div class="lp-sb-field-value">'+(value?esc(value):dash)+'</div></div></div>';};
+  const dialOf=function(r){return String(r.dial||'').replace(/^\w+\(|\)$/g,'');};
+  /* A field's value: the sign-up's own details, or what was entered on the tab. */
+  function valOf(r,tab,f,forForm){
+    if(f.k==='entityId')return r.entityId||'';
+    if(f.k==='created')return when(r.created);
+    if(f.k==='createdBy')return r.first+' '+r.last;
+    if(f.k==='updated')return when(r.updated);
+    if(f.k==='owner')return ownerOf(r);
+    if(f.k==='mobile')return forForm?r.mobile:(dialOf(r)+' '+r.mobile).trim();
+    if(f.top)return r[f.k]||'';
+    const v=(r.tabs[tab]||{})[f.k]||'';
+    if(f.secret&&v&&!forForm)return '•••• '+String(v).slice(-4);
+    return v;
+  }
+  let suTab='basic-details',suEdit=null,suAdd=null;   // the open tab; the tab being edited {uid, tab}; the Add Member form
+  const editing=function(r,tab){return !!(suEdit&&suEdit.uid===r.uid&&suEdit.tab===tab);};
+  const editBtn=function(tab){return '<button class="lp-sb-view-edit-btn" onclick="suEditStart(\''+tab+'\')">'+PEN+' Edit</button>';};
+  const heroOf=function(r,o){o=o||{};return sbHero({icon:typeof sbIco!=='undefined'?sbIco.building:'',name:esc(r.store),meta:[esc(r.entityId),esc(r.cat),esc(r.country)],
+    status:sbHeroBadge(r.status),edit:o.edit,editing:o.editing});};
+  const sectionTitle=function(t,right){return '<div class="lp-sb-view-header"'+(right===false?' style="margin-top:18px"':'')+'><span class="lp-sb-section-title">'+esc(t)+'</span>'+(right||'')+'</div>';};
+  function fieldInput(f,v,i){
+    const id='sue-'+i,lab='<label class="ep-form-label">'+esc(f.l)+(f.req?' <span class="req">*</span>':'')+'</label>';
+    let inp;
+    if(f.opts)inp=apCS(id,f.opts,v||'','Select');
+    else if(f.area)inp='<textarea class="ep-form-input" id="'+id+'" rows="2">'+esc(v)+'</textarea>';
+    else if(f.file)inp='<input type="hidden" id="'+id+'" value="'+attrSafe(v||'')+'"><div style="display:flex;align-items:center;gap:10px;min-height:38px">'
+      +'<button type="button" class="btn btn-outline btn-sm" onclick="suFilePick(\''+id+'\')">'+(v?'Replace':'Upload')+'</button>'
+      +'<span id="'+id+'-name" class="wb-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(v?esc(v):'No file attached')+'</span></div>';
+    else inp='<input class="ep-form-input" id="'+id+'" type="'+(f.time?'time':f.secret?'password':'text')+'" value="'+attrSafe(v||'')+'" placeholder="'+attrSafe(f.l)+'" autocomplete="off">';
+    return '<div class="ep-form-group'+(f.wide?' ep-form-full':'')+'">'+lab+inp+'</div>';
+  }
+  function sectionHTML(r,tab){
+    const groups=SECTIONS[tab],ed=editing(r,tab);
+    if(ed){
+      let i=0;
+      const parts=groups.map(function(g,gi){
+        const fs=g.fields.filter(function(f){return !f.ro;}).map(function(f){return fieldInput(f,valOf(r,tab,f,true),i++);}).join('');
+        return (g.title?sectionTitle(g.title,gi?false:''):'')+'<div class="ep-form-grid">'+fs+'</div>';
+      }).join('');
+      return heroOf(r,{editing:true})+'<div class="lp-sb-edit-form ax-sb-edit"><div class="lp-sb-edit-section">'+parts
+        +'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="suEditCancel()">Cancel</button><button class="ep-save-btn" onclick="suEditSave()">Save changes</button></div></div></div>';
+    }
+    const first=tab==='basic-details';
+    return heroOf(r,{edit:first?editBtn(tab):''})+groups.map(function(g,gi){
+      return (g.title?sectionTitle(g.title,gi?false:editBtn(tab)):'')
+        +'<div class="lp-sb-detail-grid">'+g.fields.map(function(f){return fc(I[f.ic]||I.doc,f.l,valOf(r,tab,f),f.wide);}).join('')+'</div>';
+    }).join('');
+  }
+  function rolesHTML(r){
+    const rows=[{name:r.first+' '+r.last,email:r.email,role:'Company Admin',scope:'Whole company',added:when(r.created).split(' | ')[0],owner:true}].concat(r.roles);
+    const add=suAdd&&suAdd===r.uid;
+    const head=sectionTitle('Roles & Access',add?'':'<button class="lp-sb-view-edit-btn" onclick="suRoleAdd()">+ Add Member</button>');
+    const form=add?'<div class="lp-sb-edit-form ax-sb-edit" style="margin-bottom:14px"><div class="lp-sb-edit-section"><div class="ep-form-grid">'
+      +'<div class="ep-form-group"><label class="ep-form-label">Member Name <span class="req">*</span></label><input class="ep-form-input" id="sur-name" placeholder="Member Name" autocomplete="off"></div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Email <span class="req">*</span></label><input class="ep-form-input" id="sur-email" placeholder="Email" autocomplete="off"></div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Role <span class="req">*</span></label>'+apCS('sur-role',ROLES,'','Select Role')+'</div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Access Scope <span class="req">*</span></label>'+apCS('sur-scope',SCOPES,'Whole company','Select')+'</div>'
+      +'</div><div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="suRoleCancel()">Cancel</button><button class="ep-save-btn" onclick="suRoleSave()">Save changes</button></div></div></div>':'';
+    const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+    const table='<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Sr. No</th><th>Member Name</th><th>Role</th><th>Access Scope</th><th>Added On</th><th></th></tr></thead><tbody>'
+      +rows.map(function(m,i){return '<tr><td class="csag-td csag-num">'+(i+1)+'</td><td class="csag-td"><div class="lp-c-main">'+esc(m.name)+'</div><div class="lp-c-sub">'+esc(m.email)+'</div></td>'
+        +'<td class="csag-td">'+esc(m.role)+'</td><td class="csag-td">'+esc(m.scope)+'</td><td class="csag-td">'+esc(m.added)+'</td>'
+        +'<td class="csag-td csag-act">'+(m.owner?'':'<button type="button" class="att-link" title="Remove" aria-label="Remove" onclick="suRoleRemove('+(i-1)+')">'+X+'</button>')+'</td></tr>';}).join('')
+      +'</tbody></table></div>';
+    return heroOf(r)+head+form+table;
+  }
+  /* Module Control: the same screen, kept for this sign-up alone (its own key, never Dhi Hyperlocal's). */
+  const withEnt=function(r,fn){const e0=window.idEntity;window.idEntity=function(){return 'SU-'+r.uid;};try{return fn();}finally{window.idEntity=e0;}};
+  const suOn=function(){const r=typeof page!=='undefined'&&page==='settings'?recOfRow(csSelectedItem):null;return r&&suTab==='module-control'?r:null;};
+  ['mcsToggle','mcsSub','mcsSave','mcsDiscard'].forEach(function(n){
+    const f0=window[n];if(typeof f0!=='function')return;
+    window[n]=function(){const r=suOn(),self=this,args=arguments;return r?withEnt(r,function(){return f0.apply(self,args);}):f0.apply(this,arguments);};
+  });
   function panelHTML(r){
-    const tabs=[{id:'basic-details',label:'Basic Details'},{id:'logs',label:'Logs'}];
-    if(!tabs.some(function(t){return t.id===suTab;}))suTab='basic-details';
-    const bar='<div class="lp-isb-tabbar"><div class="lp-isb-tabs" id="cs-isb-tabs">'
-      +tabs.map(function(t){return '<button class="lp-isb-tab'+(suTab===t.id?' active':'')+'" onclick="suEntTab(\''+t.id+'\')">'+t.label+'</button>';}).join('')+'</div>'
+    if(!TABS.some(function(t){return t[0]===suTab;}))suTab='basic-details';
+    const chev=function(d){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="'+(d==='left'?'15 18 9 12 15 6':'9 18 15 12 9 6')+'"/></svg>';};
+    const bar='<div class="lp-isb-tabbar">'
+      +'<button class="lp-isb-nav-btn" onclick="scrollTabRow(\'left\',\'cs-isb-tabs\')" title="Scroll left">'+chev('left')+'</button>'
+      +'<div class="lp-isb-tabs" id="cs-isb-tabs">'+TABS.map(function(t){return '<button class="lp-isb-tab'+(suTab===t[0]?' active':'')+'" onclick="suEntTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>'
+      +'<button class="lp-isb-nav-btn nav-right" onclick="scrollTabRow(\'right\',\'cs-isb-tabs\')" title="Scroll right">'+chev('right')+'</button>'
       +'<div class="lp-isb-right"><button class="lp-isb-close" onclick="closeCsSidebar()" title="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>';
-    /* The record's header card on both tabs, so the status in it is always the current one. */
-    const hero=sbHero({icon:typeof sbIco!=='undefined'?sbIco.building:'',name:esc(r.store),meta:[esc(r.entityId),esc(r.cat),esc(r.country)],status:sbHeroBadge(r.status)});
     let body='';
-    if(suTab==='logs'){
+    if(SECTIONS[suTab])body=sectionHTML(r,suTab);
+    else if(suTab==='attachments')body=heroOf(r)+sectionTitle('Attachments','')+(typeof attachTabHTML==='function'?attachTabHTML('su',r.uid):'');
+    else if(suTab==='roles-access')body=rolesHTML(r);
+    else if(suTab==='module-control')body=heroOf(r)+(typeof mcTabHTML==='function'?withEnt(r,function(){return mcTabHTML();}):'');
+    else{
       const form='<div class="lp-logs-form">'
         +'<div class="lp-logs-form-header"><span class="lp-log-dot lp-log-dot--active"></span>'+esc(r.status)+'</div>'
         +'<p class="lp-logs-form-sub">Update entity status and add a comment</p>'
@@ -195,23 +345,86 @@
         +'<textarea class="lp-logs-form-textarea" id="su-log-comment-inp" placeholder="Enter comment"></textarea>'
         +'<button class="lp-logs-save-btn" onclick="suEntSaveLog()">Save</button>'
         +'</div>';
-      body=hero+lpLogsView(r.logs,form,{current:r.status});
-    }else{
-      const who=r.first+' '+r.last;
-      body=hero
-        +'<div class="lp-sb-detail-grid">'
-        +fc(I.ent,'Entity ID',r.entityId)+fc(I.city,'Entity Name',r.store)+fc(I.flash,'Entity Type',r.cat)+fc(I.globe,'Country',r.country)
-        +fc(I.map,'Address','',true)+fc(I.city,'City','')+fc(I.person,'Owner',who)
-        +fc(I.mail,'Email',r.email)+fc(I.phone,'Mobile Number',(String(r.dial||'').replace(/^\w+\(|\)$/g,'')+' '+r.mobile).trim())
-        +fc(I.cal,'Created Time',when(r.created))+fc(I.person,'Created By',who)+fc(I.cal,'Last Updated',when(r.updated))
-        +fc(I.id,'Employee ID Pre fix','')+fc(I.img,'Entity Logo','')
-        +'</div>';
+      body=heroOf(r)+lpLogsView(r.logs,form,{current:r.status});
     }
     return bar+'<div class="lp-isb-body">'+body+'</div>';
   }
   if(typeof renderCsSidebar==='function'){
     const p0=renderCsSidebar;
     renderCsSidebar=function(){const r=recOfRow(csSelectedItem);return r?panelHTML(r):p0.apply(this,arguments);};
+  }
+  const actor=function(){return typeof caN==='function'&&typeof idMe==='function'&&idMe()?caN(idMe()):'OpenDhi Super Admin';};
+  const logIt=function(r,text){const t=stamp();r.logs.unshift({date:t.date,time:t.time,user:actor(),status:r.status,action:text});};
+  const repaint=function(){if(typeof isbTab==='function')isbTab('cs',renderCsSidebar);};
+  window.suEntTab=function(t){suTab=t;suEdit=null;suAdd=null;repaint();};
+  window.suEditStart=function(tab){const r=recOfRow(csSelectedItem);if(!r)return;suEdit={uid:r.uid,tab:tab};repaint();};
+  window.suEditCancel=function(){suEdit=null;repaint();};
+  window.suFilePick=function(id){
+    const inp=document.createElement('input');inp.type='file';
+    inp.addEventListener('change',function(){const f=inp.files&&inp.files[0];if(!f)return;
+      if(f.size>10*1024*1024){showToast('File too large','error','"'+f.name+'" is over 10 MB.');return;}
+      const h=document.getElementById(id);if(h)h.value=f.name;const n=document.getElementById(id+'-name');if(n)n.textContent=f.name;
+      const b=n&&n.previousElementSibling;if(b)b.textContent='Replace';});
+    inp.click();
+  };
+  window.suEditSave=function(){
+    const r=recOfRow(csSelectedItem);if(!r||!suEdit||suEdit.uid!==r.uid)return;
+    const tab=suEdit.tab,changed=[],vals={};let i=0;
+    SECTIONS[tab].forEach(function(g){g.fields.forEach(function(f){if(f.ro)return;const id='sue-'+(i++);
+      const v=f.opts?(typeof getCSValue==='function'?getCSValue(id):''):((document.getElementById(id)||{}).value||'');vals[f.k]=String(v||'').trim();});});
+    const fieldOf=function(k){let x=null;SECTIONS[tab].forEach(function(g){g.fields.forEach(function(f){if(f.k===k)x=f;});});return x;};
+    for(const k in vals){const f=fieldOf(k);if(f.req&&!vals[k]){showToast(f.l+' is required','error');return;}}
+    if(vals.email!=null&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email)){showToast('Check the email','error','"'+vals.email+'" is not an email address.');return;}
+    if(vals.bkEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.bkEmail)){showToast('Check the email','error','"'+vals.bkEmail+'" is not an email address.');return;}
+    if(vals.mobile!=null){vals.mobile=vals.mobile.replace(/[\s-]/g,'');if(!/^\d{7,15}$/.test(vals.mobile)){showToast('Enter a valid mobile number','error');return;}}
+    if(vals.email&&vals.email.toLowerCase()!==r.email.toLowerCase()&&find(vals.email)){showToast('Email already used','error','Another sign-up uses '+vals.email+'.');return;}
+    const st=r.tabs[tab]=r.tabs[tab]||{};
+    Object.keys(vals).forEach(function(k){const f=fieldOf(k),old=f.top?(r[k]||''):(k==='owner'?ownerOf(r):(st[k]||''));
+      if(old===vals[k])return;changed.push(f.l);if(f.top)r[k]=vals[k];else st[k]=vals[k];});
+    suEdit=null;
+    const label=(TABS.find(function(t){return t[0]===tab;})||[0,''])[1];
+    if(changed.length){r.updated=new Date().toISOString();logIt(r,label+' updated: '+changed.join(', ')+'.');save();}
+    if(typeof renderADTPage==='function')renderADTPage();
+    showToast('Saved','success',label+(changed.length?' updated: '+changed.join(', ')+'.':': nothing changed.'));
+  };
+  window.suRoleAdd=function(){const r=recOfRow(csSelectedItem);if(!r)return;suAdd=r.uid;repaint();const n=document.getElementById('sur-name');if(n)n.focus();};
+  window.suRoleCancel=function(){suAdd=null;repaint();};
+  window.suRoleSave=function(){
+    const r=recOfRow(csSelectedItem);if(!r)return;
+    const name=((document.getElementById('sur-name')||{}).value||'').trim(),email=((document.getElementById('sur-email')||{}).value||'').trim();
+    const role=getCSValue('sur-role'),scope=getCSValue('sur-scope');
+    if(!name){showToast('Enter the member name','error');return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Enter a valid email address','error');return;}
+    if(!role){showToast('Pick the role','error');return;}
+    if(email.toLowerCase()===r.email.toLowerCase()||r.roles.some(function(m){return m.email.toLowerCase()===email.toLowerCase();})){showToast('Already a member','error',email+' is already listed.');return;}
+    const t=stamp();r.roles.push({name:name,email:email,role:role,scope:scope||'Whole company',added:t.date});
+    suAdd=null;logIt(r,'Member added: '+name+' ('+role+').');save();repaint();
+    showToast('Member added','success',name+' · '+role+'.');
+  };
+  window.suRoleRemove=function(i){
+    const r=recOfRow(csSelectedItem);if(!r||!r.roles[i])return;
+    const m=r.roles.splice(i,1)[0];logIt(r,'Member removed: '+m.name+' ('+m.role+').');save();repaint();
+    showToast('Member removed','success',m.name+' was removed.');
+  };
+  /* Attachments: the application's own drop zone, on the sign-up's own list. */
+  if(typeof ATTACH_SCOPES!=='undefined'&&!ATTACH_SCOPES.su)ATTACH_SCOPES.su={find:function(id){const r=recs.find(function(x){return x.uid===Number(id);});return r?norm(r):null;}};
+  if(typeof attachCommit==='function'){
+    const c0=attachCommit;
+    attachCommit=function(scope,id){
+      if(scope!=='su')return c0.apply(this,arguments);
+      const rec=attachRec('su',id),n0=rec?rec.attachments.length:0,out=c0.apply(this,arguments),now=attachRec('su',id);
+      if(now&&now.attachments.length>n0){logIt(now,'Attachment added: '+now.attachments.slice(n0).map(function(a){return a.name;}).join(', ')+'.');save();}
+      return out;
+    };
+  }
+  if(typeof attachRemove==='function'){
+    const x0=attachRemove;
+    attachRemove=function(scope,id,i){
+      if(scope!=='su')return x0.apply(this,arguments);
+      const rec=attachRec('su',id),gone=rec&&rec.attachments[i]?rec.attachments[i].name:'',n0=rec?rec.attachments.length:0,out=x0.apply(this,arguments),now=attachRec('su',id);
+      if(gone&&now&&now.attachments.length<n0){logIt(now,'Attachment removed: '+gone+'.');save();}
+      return out;
+    };
   }
   /* The next Entity ID after every company's and every activated sign-up's. */
   const nextId=function(){let n=0;
