@@ -107,20 +107,20 @@ const ccpBook={};
     if(sel!=null&&!rows.some(function(x){return x.id===sel;}))sel=null;
     const dots=function(x){return typeof csuDots==='function'?csuDots('ccpOpen('+x.id+')',x.name):'<td><button class="ct-dots-btn" onclick="ccpOpen('+x.id+')">&#9776;</button></td>';};
     const trs=rows.map(function(x,i){
-      const on=onList(x).length,all=walletsOf(x.entity).length;
       return '<tr class="nxc-row'+(sel===x.id?' lp-row-selected':'')+'" id="nxc-row-'+x.id+'" style="cursor:pointer" onclick="ccpOpen('+x.id+')">'
         +'<td class="lp-c-n">'+(i+1)+'</td>'
         +'<td><div class="lp-c-main ax-c-link">'+E(x.name)+'</div><div class="lp-c-sub">'+E(x.code)+'</div></td>'
-        +'<td><div class="lp-c-plain">'+E(x.bank)+'</div><div class="lp-c-sub">'+E(x.network)+' · '+E(x.type)+'</div></td>'
-        +'<td><div class="lp-c-plain">'+on+' of '+all+' on</div></td>'
-        +'<td><div class="lp-c-plain">'+issued(x.entity)+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(x.bank)+'</div><div class="lp-c-sub">'+E(x.network)+'</div></td>'
+        /* Card Type and Launched On (product owner, 13 Nov 2026: in place of Wallets and Cards Issued). */
+        +'<td><div class="lp-c-plain">'+E(x.type)+'</div><div class="lp-c-sub">'+E(x.form)+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(x.launched)+'</div><div class="lp-c-sub">Valid '+E(String(x.validity||'').replace(/ from issue$/,''))+'</div></td>'
         +'<td>'+badge(x.status==='Active'?'ok':'idle',x.status)+'</td>'
         +dots(x)+'</tr>';
     });
     const body=trs.length?trs.join(''):(typeof ccEmpty==='function'?ccEmpty(7,r?'No card matches this filter.':'No card is set up for this company yet.'):'');
     const act=r&&r.status==='Active'?1:0,ina=r&&r.status!=='Active'?1:0;
     const tiles=typeof caStat==='function'?caStat('Active',act,statusF==='Active','ccpStat(\'Active\')','ok')+caStat('Inactive',ina,statusF==='Inactive','ccpStat(\'Inactive\')','idle'):'';
-    const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card</th><th>Bank · Network</th><th>Wallets</th><th>Cards Issued</th><th>Status</th><th>Action</th></tr></thead><tbody>'+body+'</tbody></table>';
+    const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card</th><th>Bank · Network</th><th>Card Type</th><th>Launched On</th><th>Status</th><th>Action</th></tr></thead><tbody>'+body+'</tbody></table>';
     return '<div class="lp-page">'
       +(typeof ccFilterBar==='function'?ccFilterBar((typeof lpSearchField==='function'?lpSearchField('nxc-q',q,'Search card, code or bank','ccpApply()'):'')
           +(typeof apCS==='function'?apCS('nxc-status',['Active','Inactive'],statusF,'All Statuses'):'')
