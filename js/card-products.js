@@ -112,7 +112,7 @@ const ccpBook={};
     if(s&&![r.name,r.code,r.bank,r.network].some(function(v){return String(v).toLowerCase().indexOf(s)>=0;}))return [];
     return [r];
   }
-  function pageHTML(){
+  function productHTML(){
     const rows=shown(),r=rec();
     if(sel!=null&&!rows.some(function(x){return x.id===sel;}))sel=null;
     const dots=function(x){return typeof csuDots==='function'?csuDots('ccpOpen('+x.id+')',x.name):'<td><button class="ct-dots-btn" onclick="ccpOpen('+x.id+')">&#9776;</button></td>';};
@@ -138,6 +138,107 @@ const ccpBook={};
       +(typeof ccSplit==='function'?ccSplit('nxc',table,sel!=null,panelHTML):table)
       +'</div>';
   }
+
+  /* ── The page: tabs Cards (the card itself) · Card List (every card issued on it) - product owner, 13 Nov 2026 ── */
+  let ptab='cards';
+  function pageHTML(){
+    const tabs=[{id:'cards',label:'Cards'},{id:'card-list',label:'Card List'}];
+    const body=ptab==='card-list'?listHTML():productHTML();
+    return typeof buildModuleTabsHTML==='function'?'<div class="mod-page">'+buildModuleTabsHTML(tabs,ptab,'ccpPageTab',true)+body+'</div>':body;
+  }
+  window.ccpPageTab=function(t){if(ptab===t)return;ptab=t;sel=null;lsel=null;editing=false;draft=null;renderADTPage();};
+
+  /* ── Card List: S. No, Card Number (in full for the company admin), User Name, Activation Date, Expiry Date, Status ── */
+  let lq='',lstatus='',lsel=null,ltab='details';
+  const fullNo=function(){return can();};   // Super Admin and Company Admin see the number in full
+  const cardNo=function(c){
+    const x=typeof emsCardSecret==='function'?emsCardSecret(c):{num:'•••• '+(c.last4||'')};
+    return fullNo()?x.num:'•••• •••• •••• '+(c.last4||'');
+  };
+  const holder=function(c){const e=typeof idEmp==='function'?idEmp(c.employeeEid):null;return e?e.name:(typeof ccHolderName==='function'?ccHolderName(c):'');};
+  const actOn=function(c){return /^\d{4}-\d{2}-\d{2}/.test(c.issueDate||'')?c.issueDate:'';};
+  /* Expiry: five years from activation, the day before (as the card's VALID THRU). */
+  const expOn=function(c){
+    const a=actOn(c);if(!a)return '';
+    const d=new Date(Number(a.slice(0,4))+5,Number(a.slice(5,7))-1,Number(a.slice(8,10))-1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  };
+  const stOf=function(c){return c.status==='Active'?'Active':'Inactive';};
+  const cardsHere=function(){
+    const e=ent();
+    return (typeof ccCards!=='undefined'?ccCards:[]).filter(function(c){return c.entity===e&&c.status!=='Not Issued';})
+      .sort(function(a,b){return String(actOn(b)).localeCompare(String(actOn(a)))||b.id-a.id;});
+  };
+  function listShown(){
+    const t=String(lq||'').trim().toLowerCase(),digits=t.replace(/\s+/g,'');
+    return cardsHere().filter(function(c){
+      if(lstatus&&stOf(c)!==lstatus)return false;
+      if(!t)return true;
+      return holder(c).toLowerCase().indexOf(t)>=0||(digits&&cardNo(c).replace(/\s+/g,'').indexOf(digits)>=0)||String(typeof expKey==='function'?expKey(c):'').toLowerCase().indexOf(t)>=0;
+    });
+  }
+  function listHTML(){
+    const rows=listShown(),all=cardsHere();
+    if(lsel!=null&&!rows.some(function(c){return c.id===lsel;}))lsel=null;
+    const trs=rows.map(function(c,i){
+      return '<tr class="nxl-row'+(lsel===c.id?' lp-row-selected':'')+'" id="nxl-row-'+c.id+'" style="cursor:pointer" onclick="ccpLOpen('+c.id+')">'
+        +'<td class="lp-c-n">'+(i+1)+'</td>'
+        +'<td><div class="lp-c-main" style="font-variant-numeric:tabular-nums;letter-spacing:.02em">'+E(cardNo(c))+'</div><div class="lp-c-sub">'+E(typeof expKey==='function'?expKey(c):'')+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(holder(c))+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(dLabel(actOn(c))||'-')+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(dLabel(expOn(c))||'-')+'</div></td>'
+        +'<td>'+badge(stOf(c)==='Active'?'ok':'idle',stOf(c))+'</td>'
+        +(typeof csuDots==='function'?csuDots('ccpLOpen('+c.id+')',holder(c)):'<td></td>')+'</tr>';
+    });
+    const act=all.filter(function(c){return stOf(c)==='Active';}).length;
+    const tiles=typeof caStat==='function'?caStat('Active',act,lstatus==='Active','ccpLStat(\'Active\')','ok')+caStat('Inactive',all.length-act,lstatus==='Inactive','ccpLStat(\'Inactive\')','idle'):'';
+    const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card Number</th><th>User Name</th><th>Activation Date</th><th>Expiry Date</th><th>Status</th><th>Action</th></tr></thead><tbody>'
+      +(trs.length?trs.join(''):(typeof ccEmpty==='function'?ccEmpty(7,all.length?'No card matches this filter.':'No card has been issued yet.'):''))+'</tbody></table>';
+    return '<div class="lp-page">'
+      +(typeof ccFilterBar==='function'?ccFilterBar((typeof lpSearchField==='function'?lpSearchField('nxl-q',lq,'Search name or card number','ccpLApply()'):'')
+          +(typeof apCS==='function'?apCS('nxl-status',['Active','Inactive'],lstatus,'All Statuses'):'')
+          +(typeof clearFiltersBtn==='function'?clearFiltersBtn([lq,lstatus],'ccpLReset()'):'')+'<button class="lp-pill-search" onclick="ccpLApply()">Search</button>',tiles):'')
+      +(typeof ccSplit==='function'?ccSplit('nxl',table,lsel!=null,listPanelHTML):table)
+      +'</div>';
+  }
+  /* A card's ☰: Details (the employee's card, name and number shown) · Wallets (what is in each wallet) · Logs · Workflow. */
+  function listPanelHTML(){
+    const c=typeof ccCard==='function'?ccCard(lsel):null;if(!c)return '';
+    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'workflow',label:'Workflow'}];
+    if(!tabs.some(function(t){return t.id===ltab;}))ltab='details';
+    const e=typeof idEmp==='function'?idEmp(c.employeeEid):null,p=typeof ccProg==='function'?ccProg(c.programmeId):null;
+    let body='';
+    if(ltab==='wallets')body=typeof ccCardWalletTabHTML==='function'?ccCardWalletTabHTML(c):'';
+    else if(ltab==='logs')body=typeof lpLogsView==='function'?lpLogsView(c.logs||[],'',{current:c.status,noAction:{title:'Card history',sub:'Card actions are taken from Corporate Cards → Cards.'}}):'';
+    else if(ltab==='workflow')body=typeof wfTimelineHTML==='function'&&typeof wfDoneFromLogs==='function'?wfTimelineHTML(wfDoneFromLogs(c.logs||[])):'';
+    else{
+      let vis=typeof emsCardVisual==='function'?emsCardVisual(c):'';
+      if(fullNo())vis=vis.replace('class="emsvc-card','class="emsvc-card is-shown');   // name and number in full
+      const ws=typeof ccCardWallets==='function'?ccCardWallets(c):[];
+      body='<div class="emsvc-modal" style="margin:4px 0 16px;display:flex;justify-content:center">'+vis+'</div>'
+        +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Details</span>'+badge(stOf(c)==='Active'?'ok':'idle',stOf(c))+'</div>'
+        +'<div class="lp-sb-detail-grid">'
+        +fcI('tag','Card ID',E(typeof expKey==='function'?expKey(c):c.id))+fc('Card Number',E(cardNo(c)))
+        +fcI('users','User Name',E(holder(c)))+fcI('users','Employee ID',E(e&&e.empId?e.empId:'-'))
+        +fcI('users','Mobile Number',E(e&&e.contact?e.contact:'-'))+fc('Card Type',E(c.type||'-'))
+        +fcI('flow','Programme',E(p?p.name:'-'))+fcI('bank','Issuing Bank',E(rec()?rec().bank:'RBL Bank'))
+        +fcI('cal','Activation Date',E(dLabel(actOn(c))||'-'))+fcI('cal','Expiry Date',E(dLabel(expOn(c))||'-'))
+        +fc('Wallets',E(ws.map(function(w){return typeof wbTypeName==='function'?wbTypeName(w):w;}).join(', ')||'-'),true)
+        +'</div>';
+    }
+    return (typeof axTabBar==='function'?axTabBar('nxl',tabs,ltab,'ccpLNav','ccpLClose'):'')+'<div class="lp-isb-body">'+body+'</div>';
+  }
+  window.ccpLApply=function(){lq=typeof lpSearchValue==='function'?lpSearchValue('nxl-q'):'';const v=typeof getCSValue==='function'?getCSValue('nxl-status'):'';lstatus=v==='All Statuses'?'':v||'';lsel=null;renderADTPage();};
+  window.ccpLReset=function(){lq='';lstatus='';lsel=null;renderADTPage();};
+  window.ccpLStat=function(v){lstatus=lstatus===v?'':v;lsel=null;renderADTPage();};
+  window.ccpLOpen=function(id){
+    ltab=typeof sbKeepTab==='function'?sbKeepTab(lsel,ltab):ltab;lsel=id;
+    const sb=document.getElementById('nxl-split-sb');if(!sb){renderADTPage();return;}
+    sb.classList.add('open');isbTab('nxl',listPanelHTML);
+    document.querySelectorAll('.nxl-row').forEach(function(x){x.classList.toggle('lp-row-selected',x.id==='nxl-row-'+id);});
+  };
+  window.ccpLClose=function(){lsel=null;const sb=document.getElementById('nxl-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.nxl-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
+  window.ccpLNav=function(t){ltab=t;isbTab('nxl',listPanelHTML);};
 
   /* ── The ☰ panel: Details · Wallets · Logs · Workflow ── */
   function panelHTML(){
