@@ -46,11 +46,20 @@
     };
   }
 
-  /* ── 3 · The wallet's tabs: Employees right after Basic Details ── */
+  /* ── 3 · The wallet's tabs: Basic Details · Employees · Logs · History. Employees right after Basic Details; no
+     Funding and no Balances tab (product owner, 13 Nov 2026: "remove Funding and Balances from the action button"). ── */
+  const GONE=['funding','balances'];
+  if(typeof wbRenderPanel==='function'){
+    const rp0=wbRenderPanel;
+    wbRenderPanel=function(kind){
+      if(kind==='w'&&typeof wbPTab!=='undefined'&&GONE.indexOf(wbPTab.w)>=0)wbPTab.w='basic-details';   // a panel left on a removed tab
+      return rp0.apply(this,arguments);
+    };
+  }
   if(typeof wbTabsFor==='function'){
     const t0=wbTabsFor;
     wbTabsFor=function(kind){
-      const t=t0.apply(this,arguments);if(kind!=='w')return t;
+      const t=t0.apply(this,arguments).filter(function(x){return kind!=='w'||GONE.indexOf(x.id)<0;});if(kind!=='w')return t;
       const emp=t.find(function(x){return x.id==='employees';})||{id:'employees',label:'Employees'};
       const rest=t.filter(function(x){return x.id!=='employees';}),at=rest.findIndex(function(x){return x.id==='basic-details';});
       return rest.slice(0,at+1).concat([emp],rest.slice(at+1));
