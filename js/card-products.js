@@ -203,11 +203,23 @@ const ccpBook={};
   /* A card's ☰: Details (the employee's card, name and number shown) · Wallets (what is in each wallet) · Logs · Workflow. */
   function listPanelHTML(){
     const c=typeof ccCard==='function'?ccCard(lsel):null;if(!c)return '';
-    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'workflow',label:'Workflow'}];
+    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'transactions',label:'Transactions'},{id:'logs',label:'Logs'},{id:'workflow',label:'Workflow'}];
     if(!tabs.some(function(t){return t.id===ltab;}))ltab='details';
     const e=typeof idEmp==='function'?idEmp(c.employeeEid):null,p=typeof ccProg==='function'?ccProg(c.programmeId):null;
     let body='';
-    if(ltab==='wallets')body=typeof ccCardWalletTabHTML==='function'?ccCardWalletTabHTML(c):'';
+    /* Wallets: the benefit wallets only - no Company Wallets section (Corporate Expense, Reimbursement) - product
+       owner, 13 Nov 2026. Transactions: every transaction on the card, as in Corporate Cards → Cards. */
+    if(ltab==='wallets'){
+      const tmp=document.createElement('div');tmp.innerHTML=typeof ccCardWalletTabHTML==='function'?ccCardWalletTabHTML(c):'';
+      Array.prototype.forEach.call(tmp.querySelectorAll('.lp-sb-section-title'),function(t){
+        if(!/^Company Wallets/.test(String(t.textContent||'').trim()))return;
+        const h=t.closest('.lp-sb-view-header');if(!h)return;
+        const next=h.nextElementSibling;if(next&&next.classList.contains('sb-hist-wrap'))next.remove();
+        h.remove();
+      });
+      body=tmp.innerHTML.trim()||'<div class="wb-empty-sm">No benefit wallet on this card.</div>';
+    }
+    else if(ltab==='transactions')body=typeof ccCardTxnsHTML==='function'?ccCardTxnsHTML(c):'';
     else if(ltab==='logs')body=typeof lpLogsView==='function'?lpLogsView(c.logs||[],'',{current:c.status,noAction:{title:'Card history',sub:'Card actions are taken from Corporate Cards → Cards.'}}):'';
     else if(ltab==='workflow')body=typeof wfTimelineHTML==='function'&&typeof wfDoneFromLogs==='function'?wfTimelineHTML(wfDoneFromLogs(c.logs||[])):'';
     else{
