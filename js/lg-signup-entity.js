@@ -193,8 +193,7 @@
   const COUNTRIES=['India','United Arab Emirates','Singapore','United Kingdom','United States'];
   const CUR=['INR','AED','SGD','GBP','USD'],TZ=['Asia/Kolkata','Asia/Dubai','Asia/Singapore','Europe/London','America/New_York'];
   const YN=['Yes','No'],ED=['Enabled','Disabled'];
-  const ROLES=['Company Admin','Finance Admin','HR Admin','Reporting Manager','Approver','Finance Approver','Expense Manager','Reviewer','Verifier','Member'];
-  const SCOPES=['Whole company','Own branch','Own department','Own team'];
+  const ROLES=['HR Admin','HR','Finance Admin','Admin','IT Lead','Finance Approver'];   // the product owner's list (13 Nov 2026)
   const F=function(k,l,o){return Object.assign({k:k,l:l},o||{});};
   const SECTIONS={
     'basic-details':[{fields:[F('entityId','Entity ID',{ro:1,ic:'ent'}),F('store','Entity Name',{top:1,req:1,ic:'city'}),F('cat','Entity Type',{top:1,opts:['Expense Management'],ic:'flash'}),
@@ -299,19 +298,18 @@
     }).join('');
   }
   function rolesHTML(r){
-    const rows=[{name:r.first+' '+r.last,email:r.email,role:'Company Admin',scope:'Whole company',added:when(r.created).split(' | ')[0],owner:true}].concat(r.roles);
+    const rows=[{name:r.first+' '+r.last,email:r.email,role:'Company Admin',added:when(r.created).split(' | ')[0],owner:true}].concat(r.roles);
     const add=suAdd&&suAdd===r.uid;
     const head=sectionTitle('Roles & Access',add?'':'<button class="lp-sb-view-edit-btn" onclick="suRoleAdd()">+ Add Member</button>');
     const form=add?'<div class="lp-sb-edit-form ax-sb-edit" style="margin-bottom:14px"><div class="lp-sb-edit-section"><div class="ep-form-grid">'
       +'<div class="ep-form-group"><label class="ep-form-label">Member Name <span class="req">*</span></label><input class="ep-form-input" id="sur-name" placeholder="Member Name" autocomplete="off"></div>'
       +'<div class="ep-form-group"><label class="ep-form-label">Email <span class="req">*</span></label><input class="ep-form-input" id="sur-email" placeholder="Email" autocomplete="off"></div>'
       +'<div class="ep-form-group"><label class="ep-form-label">Role <span class="req">*</span></label>'+apCS('sur-role',ROLES,'','Select Role')+'</div>'
-      +'<div class="ep-form-group"><label class="ep-form-label">Access Scope <span class="req">*</span></label>'+apCS('sur-scope',SCOPES,'Whole company','Select')+'</div>'
       +'</div><div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="suRoleCancel()">Cancel</button><button class="ep-save-btn" onclick="suRoleSave()">Save changes</button></div></div></div>':'';
     const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
-    const table='<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Sr. No</th><th>Member Name</th><th>Role</th><th>Access Scope</th><th>Added On</th><th></th></tr></thead><tbody>'
+    const table='<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Sr. No</th><th>Member Name</th><th>Role</th><th>Added On</th><th></th></tr></thead><tbody>'
       +rows.map(function(m,i){return '<tr><td class="csag-td csag-num">'+(i+1)+'</td><td class="csag-td"><div class="lp-c-main">'+esc(m.name)+'</div><div class="lp-c-sub">'+esc(m.email)+'</div></td>'
-        +'<td class="csag-td">'+esc(m.role)+'</td><td class="csag-td">'+esc(m.scope)+'</td><td class="csag-td">'+esc(m.added)+'</td>'
+        +'<td class="csag-td">'+esc(m.role)+'</td><td class="csag-td">'+esc(m.added)+'</td>'
         +'<td class="csag-td csag-act">'+(m.owner?'':'<button type="button" class="att-link" title="Remove" aria-label="Remove" onclick="suRoleRemove('+(i-1)+')">'+X+'</button>')+'</td></tr>';}).join('')
       +'</tbody></table></div>';
     return heroOf(r)+head+form+table;
@@ -409,14 +407,14 @@
   window.suRoleSave=function(){
     const r=recOfRow(csSelectedItem);if(!r)return;
     const name=((document.getElementById('sur-name')||{}).value||'').trim(),email=((document.getElementById('sur-email')||{}).value||'').trim();
-    const role=getCSValue('sur-role'),scope=getCSValue('sur-scope');
+    const role=getCSValue('sur-role');
     if(!name){showToast('Enter the member name','error');return;}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Enter a valid email address','error');return;}
     if(!role){showToast('Pick the role','error');return;}
     if(email.toLowerCase()===r.email.toLowerCase()||r.roles.some(function(m){return m.email.toLowerCase()===email.toLowerCase();})){showToast('Already a member','error',email+' is already listed.');return;}
-    const t=stamp();r.roles.push({name:name,email:email,role:role,scope:scope||'Whole company',added:t.date});
-    suAdd=null;logIt(r,'Member added: '+name+' ('+role+').');save();repaint();
-    showToast('Member added','success',name+' · '+role+'.');
+    const t=stamp();r.roles.push({name:name,email:email,role:role,added:t.date});
+    suAdd=null;logIt(r,'Invitation sent to '+name+' ('+email+') as '+role+'.');save();repaint();
+    showToast('Invitation sent','success','An invitation to join '+r.store+' as '+role+' was sent to '+name+' at '+email+'.');
   };
   window.suRoleRemove=function(i){
     const r=recOfRow(csSelectedItem);if(!r||!r.roles[i])return;
