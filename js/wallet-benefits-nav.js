@@ -91,9 +91,9 @@ buildWalletBenefitsHTML=function(){
       +'<span class="lp-sb-section-title">'+(WB_MANAGE_VIEWS.find(function(x){return x.id===wbTab;})||{}).label+'</span></div>';
   }else{
     wbLastPrimary=wbPrimaryOf(wbTab);
-    const man=wbManageItems();
-    head='<div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">'+buildModuleTabsHTML(prim,wbPrimaryOf(wbTab),'wbPrimary',true)+'</div>'
-      +(man.length?'<div class="adv-set-actions"><button class="btn btn-outline btn-sm" id="wb-manage-btn" onclick="wbManageClick()">Manage <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px"><polyline points="6 9 12 15 18 9"/></svg></button></div>':'')+'</div>';
+    /* No Manage button "for now" (product owner, 13 Nov 2026): Categories, Overrides, Tax Thresholds and Wallet Funding
+       are kept and still open from their own links. */
+    head='<div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0">'+buildModuleTabsHTML(prim,wbPrimaryOf(wbTab),'wbPrimary',true)+'</div></div>';
   }
   return '<div class="mod-page">'+head+body+'</div>'+(wbModal?wbModalHTML():'');
 };

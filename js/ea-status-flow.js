@@ -84,7 +84,7 @@
       const T=['Pending Manager Approval','Pending Finance Verification','Sent Back','Approved'];
       const tiles=T.map(function(s){return caStat(s,cnt(s),eaApprF===s,'eaStat(\''+s+'\')',TONE[s]);}).join('');
       const tmp=document.createElement('div');tmp.innerHTML=out;
-      const box=tmp.querySelector('.exp-stats');if(box){box.innerHTML=tiles;out=tmp.innerHTML;}
+      const box=tmp.querySelector('.exp-stats');if(box){box.innerHTML=tiles;box.classList.add('ea-flow-stats');out=tmp.innerHTML;}
       return out;
     };
   }
