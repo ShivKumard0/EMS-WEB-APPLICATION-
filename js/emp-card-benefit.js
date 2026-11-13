@@ -34,13 +34,17 @@ const ecbBook={};
       +'.ecb-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--navy,#0f172a);margin:16px 0 8px}'
       +'.ecb-h span+span{font-size:12px;font-weight:500;color:var(--gray,#6a7282)}'
       +'.ecb .cs-toggle input:checked+.cs-toggle-slider{background:#1a1a1a}'
-      /* The Limit box: square and plain (product owner, 13 Nov 2026) - small corners, no up/down arrows. */
-      +'.ecb .ecb-limit.ep-form-input{width:110px;height:36px;flex:none;margin:0;padding:0 10px;border:1px solid var(--border,#e5e7eb);border-radius:4px;'
-        +'background:#fff;font-size:13px;color:var(--navy,#0f172a);box-shadow:none;-moz-appearance:textfield;appearance:textfield}'
+      /* The Limit box: clean, slightly rounded (product owner, 13 Nov 2026) - a light border, white even while its
+         benefit is off (only the placeholder is paler then), no up/down arrows, a soft ring while typing. */
+      +'.ecb .ecb-limit.ep-form-input{width:112px;height:34px;flex:none;margin:0;padding:0 12px;border:1px solid #e5e7eb;border-radius:8px;'
+        +'background:#fff;font-size:13px;color:var(--navy,#0f172a);box-shadow:none;-moz-appearance:textfield;appearance:textfield;transition:border-color .15s,box-shadow .15s}'
+      +'.ecb .ecb-limit.ep-form-input::placeholder{color:#9ca3af}'
       +'.ecb .ecb-limit.ep-form-input::-webkit-outer-spin-button,.ecb .ecb-limit.ep-form-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}'
-      +'.ecb .ecb-limit.ep-form-input:focus{outline:none;border-color:#1a1a1a}'
-      +'.ecb .ecb-limit.ep-form-input:disabled{background:#f8fafc;color:#9ca3af;cursor:not-allowed}'
-      +'.ecb .ecb-limit.ep-form-input.is-err{border-color:#dc2626}'
+      +'.ecb .ecb-limit.ep-form-input:hover:not(:disabled){border-color:#d1d5db}'
+      +'.ecb .ecb-limit.ep-form-input:focus{outline:none;border-color:#9ca3af;box-shadow:0 0 0 3px rgba(17,24,39,.06)}'
+      +'.ecb .ecb-limit.ep-form-input:disabled{background:#fff;border-color:#f0f1f3;cursor:not-allowed}'
+      +'.ecb .ecb-limit.ep-form-input:disabled::placeholder{color:#c7cbd1}'
+      +'.ecb .ecb-limit.ep-form-input.is-err{border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.08)}'
       +'.ecb-amt{font-size:13px;font-weight:600;color:var(--navy,#0f172a);white-space:nowrap}'
       +'.ecb-amt small{display:block;font-size:11px;font-weight:500;color:var(--gray,#6a7282);text-align:right}';
     (document.head||document.documentElement).appendChild(st);
