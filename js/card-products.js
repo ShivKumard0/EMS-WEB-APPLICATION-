@@ -219,7 +219,16 @@ const ccpBook={};
       });
       body=tmp.innerHTML.trim()||'<div class="wb-empty-sm">No benefit wallet on this card.</div>';
     }
-    else if(ltab==='transactions')body=typeof ccCardTxnsHTML==='function'?ccCardTxnsHTML(c):'';
+    /* Transactions: no Dispute column here (product owner, 13 Nov 2026) - other card screens keep it. */
+    else if(ltab==='transactions'){
+      const tmp=document.createElement('div');tmp.innerHTML=typeof ccCardTxnsHTML==='function'?ccCardTxnsHTML(c):'';
+      Array.prototype.forEach.call(tmp.querySelectorAll('table'),function(tb){
+        const hs=tb.querySelectorAll('thead th'),col=Array.prototype.findIndex.call(hs,function(h){return /^Dispute$/i.test(String(h.textContent||'').trim());});
+        if(col<0)return;
+        Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){const cell=tr.children[col];if(cell&&tr.children.length===hs.length)cell.remove();});
+      });
+      body=tmp.innerHTML;
+    }
     else if(ltab==='logs')body=typeof lpLogsView==='function'?lpLogsView(c.logs||[],'',{current:c.status,noAction:{title:'Card history',sub:'Card actions are taken from Corporate Cards → Cards.'}}):'';
     else if(ltab==='workflow')body=typeof wfTimelineHTML==='function'&&typeof wfDoneFromLogs==='function'?wfTimelineHTML(wfDoneFromLogs(c.logs||[])):'';
     else{
