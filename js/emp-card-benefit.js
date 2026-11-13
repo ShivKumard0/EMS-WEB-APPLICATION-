@@ -4,18 +4,32 @@
    wallets and their limits, with Edit to change them (Cancel / Save changes).
    Set once the employee is Active: Add Employee and Bulk Upload Employees are unchanged, and an employee who is not
    Active yet reads "set once … is Active". Editing follows Basic Details' Edit (epCanAdmin: may manage employees, in
-   the employee's own company). Each save goes to the employee's Logs tab. Display only: nothing is linked to
-   Corporate Cards or Wallet & Benefits. */
+   the employee's own company). Each save goes to the employee's Logs tab.
+   ONE RECORD WITH WALLET & BENEFITS (product owner, 13 Nov 2026): the wallets listed are the company's own wallets in
+   Wallet & Benefits (Meal, Fuel, Gift, Telecom, Reimbursement, Health, Corporate Expense …), and each wallet's ☰ →
+   Employees list reads and changes this same record (js/wb-wallet-employees.js). For an employee whose Card Benefit is
+   set, it decides which wallets are on the card ("Off = that wallet is no longer on the employee's card and gets no
+   benefit loads"); the Limit is shown and recorded, amounts still come from Benefit Policies. */
 
-/* eid → {on, wallets:{CODE:limit}, logs:[]}. Top-level so the presentation keeps it (tools/gen-pres-names.js). */
+/* eid → {on, wallets:{CODE:{limit,on}}, logs:[]} (an older save holds wallets:{CODE:limit}, read as on).
+   Top-level so the presentation keeps it (tools/gen-pres-names.js); ecbMeta records the one-time Nova fill. */
 const ecbBook={};
+const ecbMeta={seeded:false};
 
 (function(){
-  /* The same ten wallet and benefit names as Company Settings → Card Setup. Only the name is shown (product owner,
-     13 Nov 2026: no sub-line such as Flexi Benefit under it); the third value is kept for reference. */
-  const WALLETS=[['MEAL','Meal','Flexi Benefit'],['FUEL','Fuel','Flexi Benefit'],['GIFT','Gift','Flexi Benefit'],['TEL','Telecom','Flexi Benefit'],
-    ['BOOK','Books & Learning','Benefit'],['WELL','Wellness','Benefit'],['CORP','Corporate Expense','Company Expense'],['REIMB','Reimbursement','Reimbursement'],
-    ['PERS','Personal','Personal'],['NCMC','Transit / NCMC','Transit']];
+  /* The company's Active wallets in Wallet & Benefits, oldest first with Corporate Expense last: [code, name]. Only
+     the name is shown (product owner, 13 Nov 2026: no sub-line such as Flexi Benefit under it). */
+  const walletsOf=function(ent){
+    if(typeof wbWallets==='undefined')return [];
+    return wbWallets.filter(function(w){return w.entity===ent&&w.status==='Active';})
+      .sort(function(a,b){return ((a.type==='CORP')-(b.type==='CORP'))||(a.id-b.id);})
+      .map(function(w){return [w.type,typeof wbTypeName==='function'?wbTypeName(w.type):w.type];});
+  };
+  const entOf=function(emp){return (emp&&emp.entityId)||(typeof idEntity==='function'?idEntity():'');};
+  let WALLETS=[];   // the wallets of the employee on screen, set whenever the tab is drawn or changed
+  const useWallets=function(emp){WALLETS=walletsOf(entOf(emp));return WALLETS;};
+  /* One wallet's entry, whatever the save's age: {limit, on}. */
+  const entry=function(v){if(v==null||v==='')return null;if(typeof v!=='object')return {limit:Number(v)||0,on:true};return {limit:Number(v.limit)||0,on:v.on!==false};};
   const TAB='card-benefit';
   const E=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const money=function(n){return typeof wbMoney==='function'?wbMoney(n):(Number(n)||0).toLocaleString('en-IN')+' INR';};
@@ -59,7 +73,9 @@ const ecbBook={};
   const canEdit=function(emp){return !!emp&&emp.status==='Active'&&(typeof epCanAdmin==='function'?epCanAdmin(emp):(typeof emsCan!=='function'||emsCan('h2r.employee.manage')));};
   const saved=function(k){
     const b=ecbBook[k],out={on:false,sel:{},lim:{}};if(!b)return out;
-    out.on=!!b.on;Object.keys(b.wallets||{}).forEach(function(c){out.sel[c]=true;out.lim[c]=String(b.wallets[c]);});return out;
+    out.on=!!b.on;
+    Object.keys(b.wallets||{}).forEach(function(c){const e=entry(b.wallets[c]);if(!e)return;if(e.on&&out.on)out.sel[c]=true;if(e.limit)out.lim[c]=String(e.limit);});
+    return out;
   };
   const hasSaved=function(k){return !!ecbBook[k]&&ecbBook[k].on!==undefined;};
   const cur=function(k){return draft&&draft.key===k?draft:saved(k);};
@@ -109,7 +125,8 @@ const ecbBook={};
       +'</div>';
   }
   function tabHTML(emp){
-    const k=keyOf(emp);
+    const k=keyOf(emp);useWallets(emp);
+    if(!WALLETS.length)return '<div id="ecb-root" class="ecb">'+head('')+'<div class="wb-empty-sm" style="margin-top:12px">No wallets are set up in Wallet &amp; Benefits yet.</div></div>';
     if(hasSaved(k)&&editing!==k)return viewHTML(emp);
     if(canEdit(emp))return formHTML(emp);
     const why=emp.status!=='Active'?'Card Benefit is set once '+E(emp.name)+' is Active.':'No card benefits set for '+E(emp.name)+'.';
@@ -137,21 +154,95 @@ const ecbBook={};
   window.ecbEditOn=function(){const emp=empNow();if(!canEdit(emp))return;editing=keyOf(emp);draft=null;showErr=false;paint();};
   window.ecbSave=function(){
     const emp=empNow();if(!canEdit(emp))return;
-    const k=keyOf(emp);
+    const k=keyOf(emp);useWallets(emp);
     if(!dirty(k)){draft=null;editing='';showErr=false;paint();return;}
     const d=draft,on=WALLETS.filter(function(w){return d.sel[w[0]];});
     if(d.on&&!on.length){showToast('Turn on a benefit','error','Turn on at least one benefit, or turn Wallets off.');return;}
     const bad=d.on?on.filter(function(w){return !(Number(d.lim[w[0]])>0);}):[];
     if(bad.length){showErr=true;paint();showToast('Set the limits','error','Enter a limit greater than 0 for '+bad.map(function(w){return w[1];}).join(', ')+'.');return;}
-    const wallets={};if(d.on)on.forEach(function(w){wallets[w[0]]=Math.round(Number(d.lim[w[0]])*100)/100;});
-    const b=ecbBook[k]||(ecbBook[k]={logs:[]});b.on=!!d.on;b.wallets=wallets;b.logs=b.logs||[];
-    const text=d.on?'Wallets enabled: '+on.map(function(w){return w[1]+' (limit '+money(wallets[w[0]])+')';}).join(', ')+'.':'Wallets off.';
+    /* Each wallet keeps its limit; a wallet turned off - or every wallet, with Wallets off - stays listed as Off. */
+    const b=ecbBook[k]||(ecbBook[k]={logs:[]}),wallets=Object.assign({},b.wallets||{});
+    WALLETS.forEach(function(w){
+      const c=w[0],was=entry(wallets[c]),lim=Math.round((Number(d.lim[c])||0)*100)/100;
+      if(d.on&&d.sel[c])wallets[c]={limit:lim,on:true};
+      else if(was||lim>0)wallets[c]={limit:lim||(was?was.limit:0),on:false};
+    });
+    b.on=!!d.on;b.wallets=wallets;b.logs=b.logs||[];
+    const text=d.on?'Wallets enabled: '+on.map(function(w){return w[1]+' (limit '+money(wallets[w[0]].limit)+')';}).join(', ')+'.':'Wallets off.';
     const s=typeof stampNow==='function'?stampNow():{date:new Date().toLocaleDateString(),time:''};
     b.logs.unshift({date:s.date,time:s.time,user:typeof wbActor==='function'?wbActor():(typeof CURRENT_USER!=='undefined'?CURRENT_USER:''),userId:typeof idMe==='function'?idMe():'',status:emp.status,action:text});
     draft=null;editing='';showErr=false;paint();
     showToast('Card Benefit saved','success',emp.name+' · '+text);
     if(typeof presSaveSoon==='function')presSaveSoon();
   };
+
+  /* ── The same record, for Wallet & Benefits → a wallet's Employees list (js/wb-wallet-employees.js) ── */
+  const log=function(eid,status,text){
+    const b=ecbBook[eid];if(!b)return;b.logs=b.logs||[];
+    const s=typeof stampNow==='function'?stampNow():{date:new Date().toLocaleDateString(),time:''};
+    b.logs.unshift({date:s.date,time:s.time,user:typeof wbActor==='function'?wbActor():(typeof CURRENT_USER!=='undefined'?CURRENT_USER:''),userId:typeof idMe==='function'?idMe():'',status:status||'Active',action:text});
+  };
+  /* Is the employee's Card Benefit set? Then it decides their wallets. */
+  window.ecbConfigured=function(eid){const b=ecbBook[eid];return !!b&&b.on!==undefined;};
+  /* {limit, on} of one wallet for one employee (on: the wallet is on and so is Wallets); null when not listed. */
+  window.ecbEntry=function(eid,code){
+    const b=ecbBook[eid];if(!b||b.on===undefined)return null;
+    const e=entry((b.wallets||{})[code]);return e?{limit:e.limit,on:e.on&&!!b.on}:null;
+  };
+  window.ecbWalletsOf=walletsOf;
+  /* Change one wallet for one employee: o = {limit} and/or {on}. Switching a wallet on turns Wallets on; switching the
+     last one off turns Wallets off. Logged in the employee's Logs tab. */
+  window.ecbSetWallet=function(eid,code,o,text,status){
+    const b=ecbBook[eid]||(ecbBook[eid]={logs:[],wallets:{}});
+    const first=b.on===undefined;b.wallets=b.wallets||{};
+    if(first||!b.on)Object.keys(b.wallets).forEach(function(c){const e=entry(b.wallets[c]);if(e)b.wallets[c]={limit:e.limit,on:false};});   // nothing was on: start from Off
+    const e=entry(b.wallets[code])||{limit:0,on:false};
+    if(o&&o.limit!=null)e.limit=Math.round((Number(o.limit)||0)*100)/100;
+    if(o&&o.on!=null)e.on=!!o.on;
+    b.wallets[code]={limit:e.limit,on:e.on};
+    b.on=Object.keys(b.wallets).some(function(c){const x=entry(b.wallets[c]);return !!(x&&x.on);});
+    if(text)log(eid,status,text);
+    if(draft&&draft.key===eid){draft=null;editing='';}
+    if(typeof presSaveSoon==='function')presSaveSoon();
+  };
+
+  /* ── Nova Retail: every Active employee's Card Benefit filled in once (product owner, 13 Nov 2026: "realistic
+     dummy details") - every wallet on, so nobody's card changes, with limits by role: the general manager, managers,
+     field staff (Sales, Operations) and office staff. Health matches the 1,500 a month Health & Wellness benefit and
+     Meal Arjun's 2,200. Records already set are left as they are. ── */
+  const TIERS={
+    gm:     {MEAL:3000,FUEL:5000,TEL:2000,GIFT:2000,HLTH:1500,REIMB:15000,CORP:50000},
+    manager:{MEAL:2500,FUEL:4000,TEL:1500,GIFT:1500,HLTH:1500,REIMB:10000,CORP:25000},
+    field:  {MEAL:2200,FUEL:3000,TEL:1000,GIFT:1000,HLTH:1500,REIMB:7500,CORP:10000},
+    office: {MEAL:2200,FUEL:1500,TEL:1000,GIFT:1000,HLTH:1500,REIMB:5000,CORP:5000}};
+  const tierOf=function(e){
+    const t=String(e.jobTitle||e.designation||'');
+    if(/General Manager/i.test(t))return 'gm';
+    if(/Manager|Controller|Officer|Business Partner/i.test(t))return 'manager';
+    return /^(Sales|Operations)$/i.test(String(e.dept||''))?'field':'office';
+  };
+  window.ecbSeedNova=function(){
+    if(ecbMeta.seeded||typeof PRES_ON==='undefined'||!PRES_ON||typeof presNova!=='function')return;
+    if(typeof presBuilding!=='undefined'&&presBuilding)return;
+    const n=presNova();if(!n)return;
+    const ent=n.entityId||n.id,ws=walletsOf(ent);if(!ws.length)return;
+    const people=(typeof directEmpData!=='undefined'?directEmpData:[]).filter(function(e){return e.entityId===ent&&e.status==='Active'&&e.eid;});
+    const day=typeof wbAddDays==='function'&&typeof wbToday==='function'?wbAddDays(wbToday(),-12):'';
+    const date=day&&typeof cdLabel==='function'?cdLabel(day):'';
+    people.forEach(function(e,i){
+      const b=ecbBook[e.eid];if(b&&b.on!==undefined)return;
+      const L=TIERS[tierOf(e)],wallets={};
+      ws.forEach(function(w){wallets[w[0]]={limit:L[w[0]]||1000,on:true};});
+      const mins=10+Math.floor(i*37/60),secs=(i*13)%60;
+      ecbBook[e.eid]={on:true,wallets:wallets,logs:[{date:date||'01 Nov 2026',time:'10:'+String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0')+' AM',user:'Karan Shah',userId:'',status:'Active',
+        action:'Wallets enabled: '+ws.map(function(w){return w[1]+' (limit '+money(wallets[w[0]].limit)+')';}).join(', ')+'.'}]};
+    });
+    ecbMeta.seeded=true;
+    if(typeof presSaveSoon==='function')presSaveSoon();
+  };
+  window.addEventListener('load',function(){
+    if(typeof PRES_READY!=='undefined'&&PRES_READY&&PRES_READY.then)PRES_READY.then(function(){try{window.ecbSeedNova();}catch(e){if(typeof console!=='undefined')console.warn('card benefit fill',e);}});
+  });
 
   /* The tab, after the panel's other tabs. */
   if(typeof deExtraTabs==='function'){
