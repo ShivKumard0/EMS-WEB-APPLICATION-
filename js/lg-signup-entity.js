@@ -188,7 +188,7 @@
      Payroll, Leaves, Attendance, Module Control, E-Sign) and Logs. Every value is the sign-up's own: blank until
      entered with Edit, saved with the row, written to its Logs. Dhi Hyperlocal's settings are never read or changed. ── */
   const TABS=[['basic-details','Basic Details'],['banking-details','Banking Details'],['attachments','Attachments'],['roles-access','Roles & Access'],
-    ['payroll','Payroll'],['leaves','Leaves'],['attendance','Attendance'],['module-control','Module Control'],['esign','E-Sign'],['logs','Logs']];
+    ['payroll','Payroll'],['leaves','Leaves'],['attendance','Attendance'],['module-control','Module Control'],['card-setup','Card Setup'],['esign','E-Sign'],['logs','Logs']];
   const COUNTRIES=['India','United Arab Emirates','Singapore','United Kingdom','United States'];
   const CUR=['INR','AED','SGD','GBP','USD'],TZ=['Asia/Kolkata','Asia/Dubai','Asia/Singapore','Europe/London','America/New_York'];
   const YN=['Yes','No'],ED=['Enabled','Disabled'];
@@ -335,6 +335,7 @@
     else if(suTab==='attachments')body=heroOf(r)+sectionTitle('Attachments','')+(typeof attachTabHTML==='function'?attachTabHTML('su',r.uid):'');
     else if(suTab==='roles-access')body=rolesHTML(r);
     else if(suTab==='module-control')body=heroOf(r)+(typeof mcTabHTML==='function'?withEnt(r,function(){return mcTabHTML();}):'');
+    else if(suTab==='card-setup')body=heroOf(r)+ccsHTML('SU-'+r.uid);
     else{
       const form='<div class="lp-logs-form">'
         +'<div class="lp-logs-form-header"><span class="lp-log-dot lp-log-dot--active"></span>'+esc(r.status)+'</div>'
@@ -444,13 +445,89 @@
     showToast('Status updated','success',r.store+' is '+status+'.');
     if(typeof renderADTPage==='function')renderADTPage();
   };
+  /* ── 5 · Card Setup (product owner, 13 Nov 2026): the bank that issues the company's cards - one at a time - and,
+     once a bank is enabled, the wallets on its card. In Dhi Hyperlocal for the Super Admin: on its own row's panel
+     (after Module Control) and on every sign-up's. Each row keeps its own choice (Save changes / Discard); a sign-up's
+     saves go to its Logs. Display only: nothing is linked to Corporate Cards or anything else. ── */
+  const CCS_KEY='adt-pres-cardsetup';
+  const CCS_BANKS=[['rbl','RBL Bank','RuPay prepaid multi-wallet card'],['icici','ICICI Bank','Multi-wallet prepaid card'],['sbi','SBI','Prepaid multi-wallet card']];
+  const CCS_WALLETS=[['MEAL','Meal','Flexi Benefit'],['FUEL','Fuel','Flexi Benefit'],['GIFT','Gift','Flexi Benefit'],['TEL','Telecom','Flexi Benefit'],
+    ['BOOK','Books & Learning','Benefit'],['WELL','Wellness','Benefit'],['CORP','Corporate Expense','Company Expense'],['REIMB','Reimbursement','Reimbursement'],
+    ['PERS','Personal','Personal'],['NCMC','Transit / NCMC','Transit']];
+  let ccsBook={};try{ccsBook=JSON.parse(localStorage.getItem(CCS_KEY)||'{}')||{};}catch(e){ccsBook={};}
+  let ccsDraft=null;   // {key, bank, wallets} - changes not yet saved
+  const ccsSaved=function(k){const b=ccsBook[k];return b?{bank:b.bank||'',wallets:Object.assign({},b.wallets||{})}:{bank:'',wallets:{}};};
+  const ccsCur=function(k){return ccsDraft&&ccsDraft.key===k?ccsDraft:ccsSaved(k);};
+  const ccsEdit=function(k){if(!ccsDraft||ccsDraft.key!==k)ccsDraft=Object.assign({key:k},ccsSaved(k));return ccsDraft;};
+  const ccsSame=function(a,b){const w=function(x){return CCS_WALLETS.filter(function(v){return x.wallets[v[0]];}).map(function(v){return v[0];}).join();};return a.bank===b.bank&&w(a)===w(b);};
+  const ccsDirty=function(k){return !!(ccsDraft&&ccsDraft.key===k&&!ccsSame(ccsDraft,ccsSaved(k)));};
+  /* The row the panel is showing: a sign-up, or the company's own row. */
+  const ccsKeyNow=function(){const r=recOfRow(csSelectedItem);return r?'SU-'+r.uid:(typeof idEntity==='function'?idEntity():'');};
+  function ccsHTML(k){
+    const c=ccsCur(k),bank=CCS_BANKS.find(function(b){return b[0]===c.bank;}),d=ccsDirty(k);
+    const n=CCS_WALLETS.filter(function(w){return c.wallets[w[0]];}).length;
+    const cb=function(on,js){return '<input type="checkbox"'+(on?' checked':'')+' onchange="'+js+'" style="width:16px;height:16px;flex:none;cursor:pointer;accent-color:var(--navy,#0f172a)">';};
+    return '<div id="ccs-root" class="mcs">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="lp-sb-section-title">Card Setup</span>'
+        +(d?(typeof axBadge==='function'?axBadge('wait','Unsaved changes'):'Unsaved changes'):'')+'</div>'
+      +'<div style="font-size:11.5px;color:var(--gray,#6a7282);margin-top:6px">The bank that issues the company\'s cards, and the wallets on its card. One bank at a time.</div>'
+      +'<div class="mcs-h">Banks</div>'
+      +CCS_BANKS.map(function(b){const on=c.bank===b[0];
+        return '<div class="mcs-card"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(b[1])+'</div><div class="mcs-sub">'+esc(b[2])+'</div></div>'
+          +(on?'<div style="display:flex;align-items:center;gap:8px">'+(typeof axBadge==='function'?axBadge('ok','Enabled'):'Enabled')
+              +'<button type="button" class="btn btn-outline btn-sm" onclick="ccsBank(\'\')">Disable</button></div>'
+            :'<button type="button" class="btn btn-primary btn-sm" onclick="ccsBank(\''+b[0]+'\')">Enable</button>')
+          +'</div></div>';}).join('')
+      +(bank?'<div class="mcs-h" style="display:flex;justify-content:space-between;align-items:center"><span>Add Wallets · '+esc(bank[1])+'</span>'
+          +'<span style="font-size:12px;font-weight:500;color:var(--gray,#6a7282)">'+n+' of '+CCS_WALLETS.length+' selected</span></div>'
+        +CCS_WALLETS.map(function(w){
+          return '<label class="mcs-card" style="display:block;cursor:pointer"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(w[1])+'</div><div class="mcs-sub">'+esc(w[2])+'</div></div>'
+            +cb(!!c.wallets[w[0]],'ccsWallet(\''+w[0]+'\',this.checked)')+'</div></label>';}).join(''):'')
+      +(d?'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccsDiscard()">Discard</button><button class="ep-save-btn" onclick="ccsSave()">Save changes</button></div>':'')
+      +'</div>';
+  }
+  const ccsPaint=function(){const el=document.getElementById('ccs-root');if(el)el.outerHTML=ccsHTML(ccsKeyNow());};
+  window.ccsBank=function(b){const d=ccsEdit(ccsKeyNow());d.bank=b;ccsPaint();};
+  window.ccsWallet=function(w,on){const d=ccsEdit(ccsKeyNow());d.wallets=Object.assign({},d.wallets);if(on)d.wallets[w]=true;else delete d.wallets[w];ccsPaint();};
+  window.ccsDiscard=function(){ccsDraft=null;ccsPaint();};
+  window.ccsSave=function(){
+    const k=ccsKeyNow();if(!ccsDirty(k)){ccsDraft=null;ccsPaint();return;}
+    const d=ccsDraft,bank=CCS_BANKS.find(function(b){return b[0]===d.bank;});
+    const ws=CCS_WALLETS.filter(function(w){return d.wallets[w[0]];}).map(function(w){return w[1];});
+    ccsBook[k]={bank:d.bank,wallets:Object.assign({},d.wallets)};ccsDraft=null;
+    try{localStorage.setItem(CCS_KEY,JSON.stringify(ccsBook));}catch(e){}
+    const text=bank?bank[1]+' enabled; wallets: '+(ws.length?ws.join(', '):'none')+'.':'No bank enabled.';
+    const r=recOfRow(csSelectedItem);if(r){logIt(r,'Card Setup updated: '+text);r.updated=new Date().toISOString();save();}
+    ccsPaint();showToast('Card Setup saved','success',text);
+  };
+  /* The company's own row: a Card Setup tab after Module Control, for the Super Admin in Dhi Hyperlocal. */
+  const ccsMainOn=function(){return inDhi()&&typeof emsRole==='function'&&emsRole()==='Super Admin';};
+  if(typeof CS_GROUPS!=='undefined'&&!CS_GROUPS.some(function(g){return g.id==='cardsetup';})){
+    const at=CS_GROUPS.findIndex(function(g){return g.id==='platform';});
+    CS_GROUPS.splice(at<0?CS_GROUPS.length:at+1,0,{id:'cardsetup',label:'Card Setup',tabs:['cs-card-setup']});
+  }
+  if(typeof csExtraTabs==='function'){
+    const x0=csExtraTabs;
+    csExtraTabs=function(){const t=x0.apply(this,arguments);return ccsMainOn()?t.concat([{id:'cs-card-setup',label:'Card Setup'}]):t;};
+  }
+  if(typeof renderCsSidebar==='function'){
+    const q0=renderCsSidebar;
+    renderCsSidebar=function(){
+      const out=q0.apply(this,arguments);
+      if(recOfRow(csSelectedItem)||typeof csTab==='undefined'||csTab!=='cs-card-setup')return out;
+      const tmp=document.createElement('div');tmp.innerHTML=out;
+      const body=tmp.querySelector('.lp-isb-body');if(!body)return out;
+      body.innerHTML=ccsHTML(idEntity());
+      return tmp.innerHTML;
+    };
+  }
   /* Reset presentation data clears the sign-ups too. */
   if(typeof presResetClick==='function'){
     const z0=presResetClick;
     presResetClick=function(){
       const out=z0.apply(this,arguments);
       let gone=false;try{gone=!localStorage.getItem(typeof PRES_KEY!=='undefined'?PRES_KEY:'adt-presentation-v1');}catch(e){}
-      if(gone){recs=[];try{localStorage.removeItem(KEY);}catch(e){}}
+      if(gone){recs=[];try{localStorage.removeItem(KEY);localStorage.removeItem(CCS_KEY);}catch(e){}}
       return out;
     };
   }
