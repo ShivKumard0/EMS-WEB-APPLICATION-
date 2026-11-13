@@ -28,6 +28,12 @@ function epolKey(r){return 'POL-'+r.id;}
 function epolRec(id){return epolRecords.find(function(r){return r.id===id;})||null;}
 function epolHere(){epolSeedNova();return epolRecords.filter(function(r){return r.entity===idEntity();});}
 function epolCanManage(){return typeof capCan==='function'&&capCan('expense.policy.manage');}
+/* Read access for everyone in the company (product owner, 13 Nov 2026: "in employee in Expense Management show policies
+   as well with just view access", and from the profile menu "show all the policies which is there in the company
+   admin"): anyone holding a role in this company opens Policies and reads every policy - the same list the Company
+   Admin sees. Adding, editing, activating and deactivating still need expense.policy.manage. */
+function epolReadAll(){return typeof idMe==='function'&&!!idMe()&&typeof emsRole==='function'&&!!emsRole();}
+function epolCanView(){return (typeof capCan==='function'&&(capCan('expense.policy.view')||capCan('expense.policy.list')))||epolCanManage()||epolReadAll();}
 function epolCategories(){
   const exp=typeof capCategories==='function'?capCategories():[];
   let adv=[];
@@ -93,7 +99,7 @@ function epolApply(){
 function epolReset(){epolQ='';epolCatF='';epolStatF='';epolSel=null;renderADTPage();}
 function epolToggleStat(s){epolStatF=epolStatF===s?'':s;epolSel=null;renderADTPage();}
 function epolPageHTML(){
-  if(!(typeof capCan==='function'&&(capCan('expense.policy.view')||capCan('expense.policy.list')||epolCanManage())))
+  if(!epolCanView())
     return '<div class="lp-page"><div class="wb-empty"><b>No access</b><span>Policies need the expense.policy.view permission.</span></div></div>';
   const rows=epolRows();
   if(epolSel!=null&&!rows.some(function(r){return r.id===epolSel;}))epolSel=null;
@@ -152,7 +158,7 @@ function epolPanelHTML(){
         onEdit:epolCanManage()?'epolStartEdit('+r.id+')':''})
       +'<div class="lp-sb-detail-grid">'
       +axField(AX_ICO.fTag,'Category',sbEsc(r.category))
-      +axField(AX_ICO.fCheck,'Status',epolBadge(r)+' <span class="ax-sub">'+(r.status==='Active'?'employees see it in My Profile → Policies':'hidden from employees')+'</span>')
+      +axField(AX_ICO.fCheck,'Status',epolBadge(r)+' <span class="ax-sub">'+(r.status==='Active'?'in force':'no longer in force')+'</span>')
       +axField(AX_ICO.fUser,'Created By',sbEsc(r.createdBy||'—')+(r.createdIso?' <span class="ax-sub">'+cdLabel(r.createdIso)+'</span>':''))
       +axField(AX_ICO.fCal,'Last Updated',r.updatedIso?cdLabel(r.updatedIso)+(r.updatedBy?' <span class="ax-sub">by '+sbEsc(r.updatedBy)+'</span>':''):'—')
       +'</div>'
@@ -395,6 +401,11 @@ function epolSeedNova(){
   if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(EPOL_PAGE)<0)EMS_CLIENT_PAGES.push(EPOL_PAGE);
   if(typeof APP_PAGE_PERMS!=='undefined')APP_PAGE_PERMS[EPOL_PAGE]=(APP_PAGE_PERMS['capping-limit']||['expense.policy.list']).slice();
   if(typeof APP_ADD_PERMS!=='undefined')APP_ADD_PERMS[EPOL_PAGE]=['expense.policy.manage'];
+  /* Everyone in the company may open it to read (view only; see epolReadAll). */
+  if(typeof appPagePermitted==='function'){
+    const pp0=appPagePermitted;
+    appPagePermitted=function(pg){if(pg===EPOL_PAGE&&epolReadAll())return true;return pp0.apply(this,arguments);};
+  }
   /* 3 · The page, and its + button. */
   if(typeof renderPageContent==='function'){
     const r0=renderPageContent;

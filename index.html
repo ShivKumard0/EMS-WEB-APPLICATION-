@@ -263,6 +263,11 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
             Expenses & Advances
           </button>
+          <!-- Policies: every policy of the company, to read (product owner, 13 Nov 2026; js/ems-policies.js). -->
+          <button class="hdr-dd-item" data-mc="expenses" onclick="closeAllHdrDD();navigatePage('expense-policies')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+            Policies
+          </button>
           <button class="hdr-dd-item" onclick="closeAllHdrDD();openApplyApplication()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             Apply Application
@@ -2434,7 +2439,7 @@
 <!-- Sign in: the first view, and Sign Out in the profile menu. -->
 <!-- Policies (Expense Management → Policies, My Profile → Policies) and the one-line Expenses & Advances list: before the
      presentation scripts, so the presentation keeps their data. -->
-<script src="js/ems-policies.js?v=20261112po5"></script>
+<script src="js/ems-policies.js?v=20261113pv1"></script>
 <script src="js/ems-list-tidy.js?v=20261112lt1"></script>
 <script src="js/ems-client-teams.js?v=20261112ct4"></script>
 <script src="js/cs-edit.js?v=20261112ce1"></script>
