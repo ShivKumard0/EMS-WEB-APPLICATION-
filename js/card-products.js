@@ -13,7 +13,7 @@ const ccpBook={};
 
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
-  const PG='card-products';
+  const PG='card-products',PGL='card-list-all';
   const E=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const ent=function(){return typeof idEntity==='function'?idEntity():'';};
   const rec=function(){return ccpBook[ent()]||null;};
@@ -377,41 +377,48 @@ const ccpBook={};
       const I=typeof sbIco!=='undefined'?sbIco:{},at=g.children.findIndex(function(c){return c.id==='card-list';});
       g.children.splice(at<0?0:at+1,0,{id:PG,label:'Cards',color:'green',icon:I.card||''});
     }
+    /* Card List also as its own item, right under it (product owner, 13 Nov 2026: "unable to see the card list"). */
+    if(g&&!g.children.some(function(c){return c.id===PGL;})){
+      const I=typeof sbIco!=='undefined'?sbIco:{},at=g.children.findIndex(function(c){return c.id===PG;});
+      g.children.splice(at<0?g.children.length:at+1,0,{id:PGL,label:'Card List',color:'green',icon:I.fileText||I.card||''});
+    }
   }
-  if(typeof supportPageMeta!=='undefined')supportPageMeta[PG]={title:'Cards',context:'Cards',filters:[],columns:[],rows:[]};
-  if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[PG]='cards';
-  if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(PG)<0)EMS_CLIENT_PAGES.push(PG);
+  [PG,PGL].forEach(function(id){
+    if(typeof supportPageMeta!=='undefined')supportPageMeta[id]={title:id===PGL?'Card List':'Cards',context:id===PGL?'Card List':'Cards',filters:[],columns:[],rows:[]};
+    if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[id]='cards';
+    if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(id)<0)EMS_CLIENT_PAGES.push(id);
+  });
   if(typeof appPagePermitted==='function'){
     const p0=appPagePermitted;
     appPagePermitted=function(pg){
-      if(pg!==PG)return p0.apply(this,arguments);
+      if(pg!==PG&&pg!==PGL)return p0.apply(this,arguments);
       return p0('cards')&&(typeof ccAdminView!=='function'||ccAdminView());
     };
   }
   if(typeof renderPageContent==='function'){
     const r0=renderPageContent;
     renderPageContent=function(target){
-      if(typeof page==='undefined'||page!==PG)return r0.apply(this,arguments);
+      if(typeof page==='undefined'||(page!==PG&&page!==PGL))return r0.apply(this,arguments);
       const el=typeof target==='string'?document.getElementById(target):target;if(!el)return;
       if(typeof emsApplyChrome==='function')emsApplyChrome();
       if(typeof emsPageGuard==='function'){const gd=emsPageGuard(page);if(gd){el.innerHTML=gd;return;}}
-      seed();el.innerHTML=pageHTML();
+      seed();el.innerHTML=page===PGL?listHTML():pageHTML();
     };
   }
   if(typeof getPageTitle==='function'){
     const t0=getPageTitle;
-    getPageTitle=function(pg){return pg===PG?'Cards':t0.apply(this,arguments);};
+    getPageTitle=function(pg){return pg===PG?'Cards':pg===PGL?'Card List':t0.apply(this,arguments);};
   }
   if(typeof renderADTPage==='function'){
     const a0=renderADTPage;
     renderADTPage=function(){
       const out=a0.apply(this,arguments);
-      if(typeof page!=='undefined'&&page===PG){const b=document.getElementById('tb-page-add-btn');if(b)b.style.display='none';}
+      if(typeof page!=='undefined'&&(page===PG||page===PGL)){const b=document.getElementById('tb-page-add-btn');if(b)b.style.display='none';}
       return out;
     };
   }
   if(typeof navigatePage==='function'){
     const n0=navigatePage;
-    navigatePage=function(pg){if(pg!==PG){editing=false;draft=null;}return n0.apply(this,arguments);};
+    navigatePage=function(pg){if(pg!==PG){editing=false;draft=null;}if(pg===PG)ptab='cards';return n0.apply(this,arguments);};
   }
 })();

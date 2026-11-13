@@ -32,7 +32,7 @@
         const i=g.children.findIndex(function(c){return c.id==='wallet-benefits';});
         if(i>=0)item=g.children.splice(i,1)[0];
       });
-      if(item){let at=cc.children.findIndex(function(c){return c.id==='card-products';});if(at<0)at=cc.children.findIndex(function(c){return c.id==='card-list';});cc.children.splice(at<0?0:at+1,0,item);}   // after the Cards items
+      if(item){let at=cc.children.findIndex(function(c){return c.id==='card-list-all';});if(at<0)at=cc.children.findIndex(function(c){return c.id==='card-products';});if(at<0)at=cc.children.findIndex(function(c){return c.id==='card-list';});cc.children.splice(at<0?0:at+1,0,item);}   // after the Cards items
     }
   }
 
