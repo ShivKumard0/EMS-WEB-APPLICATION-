@@ -81,15 +81,25 @@ const ccpBook={};
     (document.head||document.documentElement).appendChild(st);
   })();
   const WAVE='<svg class="nxc-wave" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M8.5 7.5a6 6 0 0 1 0 9"/><path d="M12 5a9.5 9.5 0 0 1 0 14"/><path d="M15.5 2.5a13 13 0 0 1 0 19"/></svg>';
+  /* The same card the employee sees in My Cards (emsCardVisual, css/ems-card-visual.css) - for the company admin with
+     no card number, no name and no expiry (product owner, 13 Nov 2026). */
   function cardImage(r){
-    return '<div class="nxc-card" role="img" aria-label="'+E(r.name)+'">'
-      +'<div class="nxc-top"><div><div class="nxc-brand">NOVA<span>×</span>RBL</div><div class="nxc-bank">RBL Bank</div></div><div class="nxc-type">Multiwallet<br>Prepaid</div></div>'
-      +'<div class="nxc-chip"></div>'+WAVE
-      +'<div class="nxc-num">•••• •••• •••• ••••</div>'
-      +'<div class="nxc-foot"><div><div class="nxc-lab">Card Holder</div><div class="nxc-val">NOVA RETAIL EMPLOYEE</div></div>'
-        +'<div><div class="nxc-lab">Valid Thru</div><div class="nxc-val">MM/YY</div></div><div class="nxc-net">Ru<b>Pay</b></div></div>'
-      +'</div>';
+    const p=programme(r.entity);
+    return '<div class="emsvc-modal" style="margin:4px 0 16px;display:flex;justify-content:center"><div class="emsvc-card" role="img" aria-label="'+E(r.name)+'" style="cursor:default">'
+      +(typeof EMS_CARD_WAVES!=='undefined'?EMS_CARD_WAVES:'')
+      +'<div class="emsvc-top"><span class="emsvc-brand"><span class="emsvc-mark">O</span>OpenDhi</span><span class="emsvc-bank">'+E(String(r.bank||'').toUpperCase())+'</span></div>'
+      +'<div class="emsvc-prog">'+E(p&&p.name?p.name:r.name)+'</div>'
+      +'<div class="emsvc-mid"><span class="emsvc-chip"></span>'+(typeof EMS_CONTACTLESS!=='undefined'?EMS_CONTACTLESS:'')+'</div>'
+      +'<div class="emsvc-row" style="justify-content:flex-end"><div class="emsvc-net"><span class="emsvc-rupay">RuPay<i></i></span><span class="emsvc-prepaid">PREPAID</span></div></div>'
+      +'</div></div>';
   }
+  /* Settings (product owner, 13 Nov 2026): where the card works - Online, POS, ATM - International use, and the card's
+     Effective From / Effective To. Display only, like the Wallets switches. */
+  const settingsOf=function(r){
+    if(!r.settings)r.settings={online:true,pos:true,atm:true,intl:false,from:'2026-04-01',to:'2031-03-31'};
+    return r.settings;
+  };
+  const dLabel=function(iso){return iso&&typeof cdLabel==='function'?cdLabel(iso):(iso||'');};
 
   /* ── The listing ── */
   let q='',statusF='',sel=null,tab='details',editing=false,draft=null;
@@ -113,14 +123,14 @@ const ccpBook={};
         +'<td><div class="lp-c-plain">'+E(x.bank)+'</div><div class="lp-c-sub">'+E(x.network)+'</div></td>'
         /* Card Type and Launched On (product owner, 13 Nov 2026: in place of Wallets and Cards Issued). */
         +'<td><div class="lp-c-plain">'+E(x.type)+'</div><div class="lp-c-sub">'+E(x.form)+'</div></td>'
-        +'<td><div class="lp-c-plain">'+E(x.launched)+'</div><div class="lp-c-sub">Valid '+E(String(x.validity||'').replace(/ from issue$/,''))+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(dLabel(settingsOf(x).from))+'</div><div class="lp-c-sub">to '+E(dLabel(settingsOf(x).to))+'</div></td>'
         +'<td>'+badge(x.status==='Active'?'ok':'idle',x.status)+'</td>'
         +dots(x)+'</tr>';
     });
     const body=trs.length?trs.join(''):(typeof ccEmpty==='function'?ccEmpty(7,r?'No card matches this filter.':'No card is set up for this company yet.'):'');
     const act=r&&r.status==='Active'?1:0,ina=r&&r.status!=='Active'?1:0;
     const tiles=typeof caStat==='function'?caStat('Active',act,statusF==='Active','ccpStat(\'Active\')','ok')+caStat('Inactive',ina,statusF==='Inactive','ccpStat(\'Inactive\')','idle'):'';
-    const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card</th><th>Bank · Network</th><th>Card Type</th><th>Launched On</th><th>Status</th><th>Action</th></tr></thead><tbody>'+body+'</tbody></table>';
+    const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card</th><th>Bank · Network</th><th>Card Type</th><th>Effective From</th><th>Status</th><th>Action</th></tr></thead><tbody>'+body+'</tbody></table>';
     return '<div class="lp-page">'
       +(typeof ccFilterBar==='function'?ccFilterBar((typeof lpSearchField==='function'?lpSearchField('nxc-q',q,'Search card, code or bank','ccpApply()'):'')
           +(typeof apCS==='function'?apCS('nxc-status',['Active','Inactive'],statusF,'All Statuses'):'')
@@ -132,10 +142,11 @@ const ccpBook={};
   /* ── The ☰ panel: Details · Wallets · Logs · Workflow ── */
   function panelHTML(){
     const r=rec();if(!r||sel!==r.id)return '';
-    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'workflow',label:'Workflow'}];
+    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'settings',label:'Settings'},{id:'logs',label:'Logs'},{id:'workflow',label:'Workflow'}];
     if(!tabs.some(function(t){return t.id===tab;}))tab='details';
     let body='';
     if(tab==='wallets')body=walletsHTML(r);
+    else if(tab==='settings')body=settingsHTML(r);
     else if(tab==='logs')body=logsHTML(r);
     else if(tab==='workflow')body=typeof wfTimelineHTML==='function'&&typeof wfDoneFromLogs==='function'?wfTimelineHTML(wfDoneFromLogs(r.logs)):'';
     else{
@@ -148,8 +159,7 @@ const ccpBook={};
         +fc('Network',E(r.network))+fc('Card Type',E(r.type))
         +fc('Form',E(r.form))+fcI('money','Currency',E(r.currency))
         +fcI('users','KYC',E(r.kyc))+fcI('users','Cards Issued',String(issued(r.entity)))
-        +fcI('cal','Validity',E(r.validity))+fcI('money','Annual Fee',E(r.fee))
-        +fcI('cal','Launched On',E(r.launched))+fcI('flow','Programme',p?E(p.name)+(p.key?' ('+E(p.key)+')':''):'-')
+        +fcI('money','Annual Fee',E(r.fee))+fcI('flow','Programme',p?E(p.name)+(p.key?' ('+E(p.key)+')':''):'-')
         +fc('Wallets',on.length?E(on.map(function(w){return w[1];}).join(', ')):'None',true)
         +'</div>';
     }
@@ -170,6 +180,46 @@ const ccpBook={};
     if(editing)h+='<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccpCancel()">Cancel</button><button class="ep-save-btn" onclick="ccpSave()">Save changes</button></div>';
     return h+'</div>';
   }
+  let sEdit=false,sDraft=null;
+  function settingsHTML(r){
+    const st=settingsOf(r),cur=sEdit&&sDraft?sDraft:st,c=can();
+    const row=function(k,label){
+      const on=!!cur[k];
+      return '<div class="nxc-w"><span class="nxc-w-name">'+E(label)+'</span>'+(sEdit?'':badge(on?'ok':'idle',on?'On':'Off'))
+        +'<label class="cs-toggle" title="'+(sEdit?(on?'Turn off ':'Turn on ')+E(label):(on?'On':'Off'))+'"'+(sEdit?'':' style="cursor:default"')+'><input type="checkbox" aria-label="'+E(label)+'"'+(on?' checked':'')+(sEdit?'':' disabled')
+          +' onchange="ccpSetPick(\''+k+'\',this.checked)"><span class="cs-toggle-slider"></span></label></div>';
+    };
+    let h='<div class="nxc"><div class="lp-sb-view-header"><span class="lp-sb-section-title">Channels</span>'
+      +(c&&!sEdit?'<button class="lp-sb-view-edit-btn" onclick="ccpSetEdit()">'+(typeof SB_PEN!=='undefined'?SB_PEN+' ':'')+'Edit</button>':'')+'</div>'
+      +row('online','Online')+row('pos','POS')+row('atm','ATM')
+      +'<div class="lp-sb-view-header" style="margin-top:14px"><span class="lp-sb-section-title">International Use</span></div>'
+      +row('intl','International Use')
+      +'<div class="lp-sb-view-header" style="margin-top:14px"><span class="lp-sb-section-title">Validity</span></div>';
+    if(sEdit)h+='<div class="ep-form-grid">'
+      +'<div class="ep-form-group"><label class="ep-form-label">Effective From <span class="req">*</span></label>'+(typeof apCD==='function'?apCD('nxc-s-from',cur.from,'Select date'):'')+'</div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Effective To <span class="req">*</span></label>'+(typeof apCD==='function'?apCD('nxc-s-to',cur.to,'Select date'):'')+'</div></div>'
+      +'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccpSetCancel()">Cancel</button><button class="ep-save-btn" onclick="ccpSetSave()">Save changes</button></div>';
+    else h+='<div class="lp-sb-detail-grid">'+fcI('cal','Effective From',E(dLabel(st.from)))+fcI('cal','Effective To',E(dLabel(st.to)))+'</div>';
+    return h+'</div>';
+  }
+  const sSyncDates=function(){if(!sDraft||typeof getCDValue!=='function')return;const f=getCDValue('nxc-s-from'),t=getCDValue('nxc-s-to');if(f)sDraft.from=f;if(t)sDraft.to=t;};
+  window.ccpSetEdit=function(){const r=rec();if(!r||!can())return;sEdit=true;sDraft=Object.assign({},settingsOf(r));repaint();};
+  window.ccpSetCancel=function(){sEdit=false;sDraft=null;repaint();};
+  window.ccpSetPick=function(k,on){if(!sEdit||!sDraft)return;sSyncDates();sDraft[k]=!!on;repaint();};
+  window.ccpSetSave=function(){
+    const r=rec();if(!r||!can()||!sDraft)return;sSyncDates();
+    const d=sDraft,st=settingsOf(r);
+    if(!d.from||!d.to){showToast('Dates required','error','Set Effective From and Effective To.');return;}
+    if(d.to<=d.from){showToast('Check the dates','error','Effective To must be after Effective From.');return;}
+    const L={online:'Online',pos:'POS',atm:'ATM',intl:'International Use'},ch=[];
+    Object.keys(L).forEach(function(k){if(!!d[k]!==!!st[k])ch.push(L[k]+' '+(d[k]?'on':'off'));});
+    if(d.from!==st.from)ch.push('Effective From '+dLabel(st.from)+' → '+dLabel(d.from));
+    if(d.to!==st.to)ch.push('Effective To '+dLabel(st.to)+' → '+dLabel(d.to));
+    if(!ch.length){sEdit=false;sDraft=null;repaint();showToast('No changes','info');return;}
+    r.settings=Object.assign({},d);log(r,r.status,'Settings updated: '+ch.join(', ')+'.');
+    sEdit=false;sDraft=null;renderADTPage();
+    showToast('Settings saved','success',r.name+' · '+ch.join(', ')+'.');
+  };
   /* Logs: the record's history and its status move (Active / Inactive) with a comment, as on every listing. */
   function logsHTML(r){
     const on=r.status==='Active',next=on?'Inactive':'Active';
@@ -196,7 +246,7 @@ const ccpBook={};
     document.querySelectorAll('.nxc-row').forEach(function(x){x.classList.toggle('lp-row-selected',x.id==='nxc-row-'+id);});
   };
   window.ccpClose=function(){sel=null;editing=false;draft=null;const sb=document.getElementById('nxc-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.nxc-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
-  window.ccpNav=function(t){tab=t;if(t!=='wallets'){editing=false;draft=null;}repaint();};
+  window.ccpNav=function(t){tab=t;if(t!=='wallets'){editing=false;draft=null;}if(t!=='settings'){sEdit=false;sDraft=null;}repaint();};
   window.ccpEdit=function(){const r=rec();if(!r||!can())return;editing=true;draft=Object.assign({},r.wallets);repaint();};
   window.ccpCancel=function(){editing=false;draft=null;repaint();};
   window.ccpPick=function(code,on){if(!editing||!draft)return;draft[code]=!!on;repaint();};
