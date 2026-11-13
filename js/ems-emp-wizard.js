@@ -44,6 +44,9 @@
   /* ── 2 · Create New Employee ── */
   if(typeof EA_STEPS!=='undefined'){
     const ci=EA_STEPS.findIndex(function(s){return s.key==='compliance';});if(ci>=0)EA_STEPS.splice(ci,1);
+    /* No Benefits & Eligibility step (product owner, 13 Nov 2026): Access Governance is the last step and creates the
+       employee. Benefits stay on by default and no card enrollment is started; both remain on the employee's record. */
+    const bi=EA_STEPS.findIndex(function(s){return s.key==='onc';});if(bi>=0)EA_STEPS.splice(bi,1);
     const idn=EA_STEPS.find(function(s){return s.key==='identity';});
     if(idn)idn.fields=idn.fields.filter(function(f){return f.k!=='status';});
     const acc=EA_STEPS.find(function(s){return s.key==='access';});
@@ -148,8 +151,8 @@
   /* ── 4 · Bulk Upload Employees: the same details as Create New Employee (product owner, 13 Nov 2026) ──
      The format and the sample ask what the form asks, in its order: Identity (First Name, Last Name, Email, Country
      Dial Code, Phone Number, Gender, Date of Birth, Nationality), Employment Structure (Joining Date, Employment Type,
-     Department, Designation, Work Location), Access Governance (Assign Team, Reporting Manager, Role within Team) and
-     Benefits Eligible. No Employment Country and no ID Proof Types (the form no longer asks them). Every employee is
+     Department, Designation, Work Location) and Access Governance (Assign Team, Reporting Manager, Role within
+     Team). No Benefits Eligible (the form has no Benefits & Eligibility step), no Employment Country and no ID Proof Types (the form no longer asks them). Every employee is
      created Pending - no status choice - and is made Active from their Logs, like one added by hand. While the
      presentation prepares its company, the original format is used, so the prepared people are exactly as before. */
   if(typeof EMB_COLS!=='undefined'&&typeof EMB_LISTS!=='undefined'){
@@ -170,10 +173,9 @@
       C('location','Work Location',1,'Where the employee works.','Listed value','One of the listed work locations.',{list:'location'}),
       C('team','Assign Team',0,'The team the employee belongs to.','Listed value','One of this company\'s teams.',{list:'team'}),
       C('manager','Reporting Manager',0,'The employee\'s reporting manager.','Name or email','An employee of this company, or another row in this file; not the employee themself.',{note:'Gives the manager no extra access.'}),
-      C('teamRole','Role within Team',0,'The employee\'s role in the team.','Team Member or Team Manager','One of the listed roles. Needs Assign Team.',{list:'teamRole'}),
-      C('benefits','Benefits Eligible',0,'Whether the employee takes part in benefit policies.','Yes or No','Yes or No. Blank means Yes.',{list:'benefits'})];
+      C('teamRole','Role within Team',0,'The employee\'s role in the team.','Team Member or Team Manager','One of the listed roles. Needs Assign Team.',{list:'teamRole'})];
     const NEW_LISTS=[['dial','Country Dial Code'],['gender','Gender'],['nationality','Nationality'],['empType','Employment Type'],['dept','Department'],['desig','Designation'],
-      ['location','Work Location'],['team','Assign Team'],['teamRole','Role within Team'],['benefits','Benefits Eligible']];
+      ['location','Work Location'],['team','Assign Team'],['teamRole','Role within Team']];
     const OLD_COLS=EMB_COLS.slice(),OLD_LISTS=EMB_LISTS.slice();
     const building=function(){return typeof presBuilding!=='undefined'&&presBuilding;};
     const useCols=function(){const nw=!building(),c=nw?NEW_COLS:OLD_COLS,l=nw?NEW_LISTS:OLD_LISTS;
@@ -183,7 +185,7 @@
       EMB_STEPS[EMB_STEPS.length-1]='Every employee is created Pending. Make each one Active from their Logs (Mark Active), as for an employee added one at a time.';
     if(typeof embLists==='function'){
       const l0=embLists;
-      embLists=function(){const L=l0.apply(this,arguments);L.team=eaTeamNames();L.teamRole=EA_TEAM_ROLES.slice();L.benefits=['Yes','No'];return L;};
+      embLists=function(){const L=l0.apply(this,arguments);L.team=eaTeamNames();L.teamRole=EA_TEAM_ROLES.slice();return L;};
     }
     if(typeof embFormatBook==='function'){const f0=embFormatBook;embFormatBook=function(){useCols();return f0.apply(this,arguments);};}
     /* Every employee starts Pending: the status is shown, not chosen. */
@@ -219,8 +221,6 @@
           if(d.team){const p=embPick(L.team,d.team);if(p)d.team=p;else add.push({field:'Assign Team',msg:'Assign Team not found in this company'});}
           if(d.teamRole){const p=embPick(L.teamRole,d.teamRole);if(!p)add.push({field:'Role within Team',msg:'Role within Team must be Team Member or Team Manager'});
             else{d.teamRole=p;if(!d.team)add.push({field:'Role within Team',msg:'Role within Team needs Assign Team'});}}
-          if(d.benefits){const p=embPick(L.benefits,d.benefits);if(p)d.benefits=p;else add.push({field:'Benefits Eligible',msg:'Benefits Eligible must be Yes or No'});}
-          else d.benefits='Yes';
           if(!add.length)return;
           r.errors=add.concat(r.status==='Valid'?[]:r.errors);r.status='Invalid';
         });
@@ -229,7 +229,7 @@
         return res;
       };
     }
-    /* Created exactly as one added by hand: Pending, the team and role on its first log, benefits as given. */
+    /* Created exactly as one added by hand: Pending, the team and role on its first log, benefits on, no card enrollment. */
     if(typeof embCreate==='function'){
       const c0=embCreate;
       embCreate=function(){
@@ -238,7 +238,7 @@
         const a0=eaCreateEmployee;
         eaCreateEmployee=function(d,kind,o){
           const t=d.team||'';d.teams=t?[t]:[];d.accessRole='Employee';
-          d.onc={enroll:false,benefitsEligible:String(d.benefits||'Yes').toLowerCase()!=='no',fields:{}};
+          d.onc={enroll:false,benefitsEligible:true,fields:{}};   // as the form: benefits on, no card enrollment
           if(o&&o.action)o.action=o.action.replace('No team assigned yet.',(t?'Assigned to '+t+(d.teamRole?' as '+d.teamRole:'')+'.':'No team assigned yet.')+' Access role: Employee.');
           return a0.apply(this,arguments);
         };
@@ -253,7 +253,7 @@
       const ok=(team?eaTeamManagers(team):[]).find(function(n){return typeof idEmpByName==='function'&&!!idEmpByName(n,idEntity());});
       return ok||'';
     };
-    const fill=function(r){const team=teamFor(r.dept);return Object.assign({},r,{team:team,manager:mgrName(team,r.manager),teamRole:'Team Member',benefits:'Yes'});};
+    const fill=function(r){const team=teamFor(r.dept);return Object.assign({},r,{team:team,manager:mgrName(team,r.manager),teamRole:'Team Member'});};
     if(typeof embSampleRows==='function'){
       const s0=embSampleRows;
       embSampleRows=function(){const rows=s0.apply(this,arguments);if(!rows||building())return rows;useCols();return rows.map(fill);};
