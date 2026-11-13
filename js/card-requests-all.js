@@ -19,6 +19,34 @@ const CC_RQA_STATES=['Draft','Awaiting Approval','Follow-Up','Enrollment Pending
    New cards, replacements, add-a-wallet requests and Corporate Expense loads are not listed (their records and panels
    are unchanged). No New Card Request +, no Bulk Files / Benefit Loads strip, no Enrollment Pending box. False = as before. */
 const CC_RQA_TOPUPS_ONLY=true;
+/* Like Expenses & Advances (product owner, 13 Nov 2026), with CC_RQA_TOPUPS_ONLY: columns S. No · Request · Employee ·
+   Category (the wallet) · Amount · Status · Pending At · Action, one line each. The status says where the request is,
+   in the Expenses & Advances words - Pending Manager Approval · Pending Finance Verification · Sent Back · Approved ·
+   Rejected; once the manager and Finance have approved it reads Approved, nothing more to do ("no need to load or any
+   thing else"; the panel has no Load or Execution tab here). Pending At: who acts next. Action: the status dropdown and
+   ☰ (js/row-logs.js) - Approve, Reject, Send for Follow-Up through the request's own approval engine, as its Logs do,
+   comment required; the company admin may act in the manager's or Finance's place. */
+const CC_RQA_FLOW=['Draft','Pending Manager Approval','Pending Finance Verification','Sent Back','Approved','Rejected','Withdrawn','Cancelled'];
+const CC_RQA_TONE={'Draft':'idle','Pending Manager Approval':'wait','Pending Finance Verification':'wait','Sent Back':'wait','Approved':'ok','Rejected':'bad','Withdrawn':'idle','Cancelled':'idle'};
+const CC_RQA_MOVE_LABEL={'Approved':'Approve','Rejected':'Reject','Follow-Up':'Send for Follow-Up','Awaiting Approval':'Resubmit'};
+function ccRqaNames(list){list=(list||[]).map(caN).filter(Boolean);return list.length>2?list.slice(0,2).join(', ')+' +'+(list.length-2):list.join(', ');}
+/* {label, at, role}: where a load is and who acts next. */
+function ccRqaFlowOf(l){
+  const s=l.status;
+  if(s==='Draft')return {label:'Draft',at:l.name||'',role:'Employee'};
+  if(s==='Follow-Up')return {label:'Sent Back',at:l.name||'',role:'Employee'};
+  if(s==='Awaiting Approval'){
+    const st=caActiveStage(l),mgr=!!st&&(st.type==='Reporting Manager'||/manager/i.test(st.name||'')),fin=!!st&&/finance/i.test(st.name||'');
+    return {label:mgr?'Pending Manager Approval':fin?'Pending Finance Verification':'Pending '+(st?st.name:'Approval'),at:st?ccRqaNames(st.approvers):'',role:mgr?'Manager':fin?'Finance':''};
+  }
+  if(s==='Rejected'||s==='Withdrawn')return {label:s,at:'',role:''};
+  if(ccLoadLabel(l)==='Cancelled')return {label:'Cancelled',at:'',role:''};
+  return {label:'Approved',at:'',role:''};
+}
+/* On this list (or a load panel opened from it) in its current form. */
+function ccRqaHere(){
+  return CC_RQA_TOPUPS_ONLY&&ccRqaOn()&&typeof page!=='undefined'&&page==='cards'&&(ccPageTab==='requests'||ccPageTab==='loads')&&ccRqView()==='all';
+}
 function ccRqaOn(){return typeof ccAdminView!=='function'||ccAdminView();}
 function ccRqaStampMs(s){const t=Date.parse(String(s||'').replace(' | ',' '));return isNaN(t)?0:t;}
 /* One row per request and per load this person may see. */
@@ -38,6 +66,7 @@ function ccRqaItems(){
     out.push({kind:'load',rec:l,id:l.id,key:expKey(l),type:CC_RQA_TOPUPS_ONLY?(ben?'Benefit Load':'Wallet Request'):l.selfRequest?'Load Request':ben?'Benefit Load':'Company Load',typeSub:ccOriginText(l).replace(/^Benefit allocation /,'').replace(/^Individual$/,''),
       name:l.name,empId:l.empId,whoSub:c?ccMask(c.last4)+' · '+expKey(c):'',details:wbTypeName(l.wallet),detailsSub:p?p.code||p.key:'',
       prog:p?ccProgLabel(p):'',status:ccLoadLabel(l),at:ccRqaStampMs(l.createdAt)});
+    if(CC_RQA_TOPUPS_ONLY){const f=ccRqaFlowOf(l),x=out[out.length-1];x.status=f.label;x.pend=f.at?(f.role?f.at+' ('+f.role+')':f.at):'';}
   });
   out.sort(function(a,b){return b.at-a.at||(a.kind===b.kind?b.id-a.id:0);});
   return out;
@@ -52,7 +81,21 @@ function ccRqaShown(all){
     return true;
   });
 }
+/* One line per cell, as Expenses & Advances. */
+function ccRqaFlatRowHTML(x,i,sel){
+  const r=x.rec,cell=typeof rowLogCell==='function'?rowLogCell('cardloads',x.id):'';
+  return '<tr class="ccl-row'+(sel?' lp-row-selected':'')+'" id="ccl-row-'+x.id+'" style="cursor:pointer" onclick="ccRqaOpenLoad('+x.id+')">'
+    +'<td class="lp-c-n">'+(i+1)+'</td>'
+    +'<td><div class="lp-c-main ax-c-link">'+ccE(x.key)+'</div></td>'
+    +'<td><div class="lp-c-plain ax-c-trunc" title="'+attrSafe(x.name)+'">'+ccE(x.name)+'</div></td>'
+    +'<td><div class="lp-c-plain ax-c-trunc" title="'+attrSafe(x.details)+'">'+ccE(x.details)+'</div></td>'
+    +'<td class="exp-c-amt exp-c-nw"><div class="lp-c-plain">'+ccE(expMoney(r.amount,r.currency))+'</div></td>'
+    +'<td>'+axBadge(CC_RQA_TONE[x.status]||statusTone(x.status),x.status)+'</td>'
+    +'<td>'+(x.pend?'<div class="lp-c-plain ax-c-trunc" title="'+attrSafe(x.pend)+'">'+ccE(x.pend)+'</div>':'')+'</td>'
+    +'<td onclick="event.stopPropagation()">'+(cell||'<button type="button" class="ct-dots-btn" title="View Details" onclick="ccRqaOpenLoad('+x.id+')">'+(typeof EMS_DOTS!=='undefined'?EMS_DOTS:'&#9776;')+'</button>')+'</td></tr>';
+}
 function ccRqaRowHTML(x,i,sel){
+  if(CC_RQA_TOPUPS_ONLY&&x.kind==='load')return ccRqaFlatRowHTML(x,i,sel);
   const r=x.rec,isReq=x.kind==='req',open=isReq?'ccRqaOpenReq('+x.id+')':'ccRqaOpenLoad('+x.id+')';
   const amt=isReq?'<span class="wb-muted">—</span>':ccE(expMoney(r.amount,r.currency))+(r.fxCard?'<div class="lp-c-sub">'+ccE(expMoney(r.cardAmount,r.cardCurrency))+'</div>':'')
     +(r.exec&&r.exec.reversed?'<div class="lp-c-sub">'+ccE(expMoney(r.exec.reversed,r.currency))+' reversed</div>':'');
@@ -81,16 +124,18 @@ function ccRqaListHTML(){
   }),ccEmpty(8,'No request or load matches this filter.'));
   const cnt=function(s){return all.filter(function(x){return x.status===s;}).length;};
   const tile=function(s,tone){return caStat(s,cnt(s),ccRqaStatusF===s,'ccRqaStat(\''+s+'\')',tone);};
-  const tiles=tile('Awaiting Approval')+tile('Follow-Up','wait')+(CC_RQA_TOPUPS_ONLY?'':tile('Enrollment Pending','wait'))+tile('Awaiting Execution','wait')+tile('Rejected','bad')+tile('Failed','bad');
+  const tiles=CC_RQA_TOPUPS_ONLY?['Pending Manager Approval','Pending Finance Verification','Sent Back','Approved'].map(function(s){return tile(s,CC_RQA_TONE[s]);}).join('')
+    :tile('Awaiting Approval')+tile('Follow-Up','wait')+tile('Enrollment Pending','wait')+tile('Awaiting Execution','wait')+tile('Rejected','bad')+tile('Failed','bad');
   const types=CC_RQA_TYPES.filter(function(t){return all.some(function(x){return x.type===t;});});
-  const states=(CC_RQA_TOPUPS_ONLY?CC_RQA_STATES.filter(function(s){return all.some(function(x){return x.status===s;});}):CC_RQA_STATES).concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
+  const states=(CC_RQA_TOPUPS_ONLY?CC_RQA_FLOW.filter(function(s){return all.some(function(x){return x.status===s;});}):CC_RQA_STATES).concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
   return ccFilterBar(lpSearchField('cra-f-q',ccRqaQ,'Search request, employee, card or wallet','ccRqaApply()')
       +apCS('cra-f-type',types,ccRqaTypeF,'All Types')
       +apCS('cra-f-prog',ccProgs().map(ccProgLabel),ccRqaProgF,'All Programmes')
       +apCS('cra-f-status',states,ccRqaStatusF,'All Statuses')
       +clearFiltersBtn([ccRqaQ,ccRqaTypeF,ccRqaProgF,ccRqaStatusF],'ccRqaReset()')+'<button class="lp-pill-search" onclick="ccRqaApply()">Search</button>',tiles)
     +ccDemoNote()+(all.some(function(x){return x.kind==='load';})?ccLoadNote():'')
-    +ccSplit(onLoad?'ccl':'ccr','<table class="lp-table ax-table exp-table cc-table"><thead><tr><th>S. No</th><th>Request</th><th>Employee</th><th>Details</th><th>Amount</th><th>Status</th><th>Current Stage</th><th>Actions</th></tr></thead><tbody>'
+    +ccSplit(onLoad?'ccl':'ccr','<table class="lp-table ax-table exp-table cc-table'+(CC_RQA_TOPUPS_ONLY?' cc-rqa-table':'')+'"><thead><tr>'+(CC_RQA_TOPUPS_ONLY?'<th>S. No</th><th>Request</th><th>Employee</th><th>Category</th><th>Amount</th><th>Status</th><th>Pending At</th><th>Action</th>'
+      :'<th>S. No</th><th>Request</th><th>Employee</th><th>Details</th><th>Amount</th><th>Status</th><th>Current Stage</th><th>Actions</th>')+'</tr></thead><tbody>'
       +pgn.rows+'</tbody></table>'+pgn.pager,onLoad?ccLoadSel!=null:ccReqSel!=null,onLoad?renderCclSidebar:renderCcrSidebar);
 }
 function ccRqaPageHTML(){
@@ -109,9 +154,9 @@ function ccRqaOpenReq(id){
   if(ccPageTab!=='requests'){ccCloseForms();ccLoadSel=null;ccPageTab='requests';ccReqSub='requests';}
   ccReqOpen(id);
 }
-function ccRqaOpenLoad(id){
+function ccRqaOpenLoad(id,tab){
   if(ccPageTab!=='loads'){ccCloseForms();ccReqSel=null;ccPageTab='loads';ccLoadSub='loads';}
-  ccLoadOpen(id);
+  ccLoadOpen(id,tab);
 }
 (function(){
   /* The strip: Requests · Bulk Files · Benefit Loads. */
@@ -156,6 +201,46 @@ function ccRqaOpenLoad(id){
     const f0=window[n];if(typeof f0!=='function')return;
     window[n]=function(){ccRqaQ='';ccRqaTypeF='';ccRqaProgF='';ccRqaStatusF='';return f0.apply(this,arguments);};
   });
+  /* The Action cell (as Expenses & Advances): the status dropdown lists what this person may do now - Approve, Reject,
+     Send for Follow-Up, Resubmit - and runs it through the load's own engine, exactly as its Logs tab does
+     (js/card-load-flow.js); the popup asks for a comment. ☰ opens the request. */
+  if(typeof rlRegister==='function')rlRegister('cardloads',{pre:'ccrl',recordLabel:'Request',rowPrefix:'ccl',
+    rec:function(id){return typeof ccLoad==='function'?ccLoad(Number(id)):null;},
+    status:function(r){return r.status;},
+    moves:function(r){return (typeof ccLoadMoves==='function'?ccLoadMoves(r):[]).map(function(m){return m.to;});},
+    label:function(v){return CC_RQA_MOVE_LABEL[v]||v;},
+    save:function(id){
+      const l=ccLoad(Number(id));if(!l)return;
+      const to=getCSValue('ccrl-log-status-sel'),ta=document.getElementById('ccrl-log-comment-inp');
+      const note=String(ta?ta.value:'').trim().replace(/[.\s]+$/,'');
+      const m=(ccLoadMoves(l)||[]).find(function(x){return x.to===to;});
+      if(!m){showToast('Pick an action','error','Choose what to do from Status.');return;}
+      const mark=function(){return [l.status,(l.logs||[]).length,l.wf?l.wf.current:'',l.wf?l.wf.round:''].join('|');},was=mark();
+      caLogMove(l.id,m.to,note);
+      if(mark()!==was&&note&&!(l.logs||[]).slice(0,4).some(function(x){return String(x.action||'').indexOf(note)>=0;}))caLog(l,l.status,m.label+' · note by '+caN(caMe())+': '+note);
+    },
+    count:function(r){return (r.logs||[]).length;},
+    open:function(id){ccRqaOpenLoad(Number(id));},
+    logs:function(id){ccRqaOpenLoad(Number(id),'logs');},
+    sub:function(r){return ccE(expKey(r))+' &middot; '+ccE(r.name||'');}
+  });
+  /* A request opened from this list: its status reads as on the list, and there is no Load or Execution tab - an approved
+     request is simply Approved. Elsewhere (a card's loads, My Approvals) the panel is unchanged. */
+  if(typeof renderCclSidebar==='function'){
+    const s0=renderCclSidebar;
+    renderCclSidebar=function(){
+      if(!ccRqaHere())return s0.apply(this,arguments);
+      if(ccLoadTab==='load'||ccLoadTab==='execution')ccLoadTab='basic-details';
+      return String(s0.apply(this,arguments)||'').replace(/<button class="lp-isb-tab[^"]*" onclick="ccLoadNav\('(load|execution)'\)">[^<]*<\/button>/g,'');
+    };
+  }
+  if(typeof ccLoadBadge==='function'){
+    const b0=ccLoadBadge;
+    ccLoadBadge=function(l){
+      if(!l||!ccRqaHere())return b0.apply(this,arguments);
+      const s=ccRqaFlowOf(l).label;return axBadge(CC_RQA_TONE[s]||statusTone(s),s);
+    };
+  }
   /* + beside the page title: New Card Request (a load is made from a load's or a card's ☰). */
   if(typeof ccCanAddHere==='function'){
     const a0=ccCanAddHere;

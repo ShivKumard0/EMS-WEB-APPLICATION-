@@ -19,7 +19,9 @@ function ccLoadRouteFix(){
   caWorkflows.forEach(function(w){
     if(w.entity!==ent||caWfKindOf(w)!=='Card Load'||w.mgrFin)return;
     const at=typeof stampNow==='function'?(function(){const s=stampNow();return s.date+' | '+s.time;})():'';
-    w.stages=[caStageDef(1,'Manager review','Reporting Manager','',{fallback:ks}),caStageDef(2,'Finance review','Role','Finance',{rule:'Any One',fallback:ks})];
+    /* Finance review: the same Finance approver as Expenses & Advances, the Finance/Billing Admin (product owner, 13 Nov
+       2026: Rohan Mehta in Nova; the company admin can still decide in his place). */
+    w.stages=[caStageDef(1,'Manager review','Reporting Manager','',{fallback:ks}),caStageDef(2,'Finance review','Role','Finance/Billing Admin',{rule:'Any One',fallback:ks})];
     w.name='Card loads - manager then finance';w.desc='Card loads: the employee\'s reporting manager, then Finance.';
     w.independent=false;w.version=(w.version||1)+1;w.mgrFin=true;
     (w.versions=w.versions||[]).push({v:w.version,at:at,by:ks,reason:'Manager then Finance (product owner, 12 Nov 2026)',stages:JSON.parse(JSON.stringify(w.stages))});

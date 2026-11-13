@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-13.1';
+const PRES_DATA_VERSION='2026-11-13.2';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -773,25 +773,22 @@ function presBuildBaseline(){
       S(RM);ccMatchSync(P.ent);
       return ppl.length+' cards ('+ppl.map(function(x){return expKey(x.c)+' '+x.c.status;}).join(', ')+') · disputes '+expKey(d5)+' '+d5.status+', '+expKey(d6)+' '+d6.status;});
     /* Wallet Requests (product owner, 13 Nov 2026): employees ask from Expenses & Advances → Card Load for a top-up of a
-       benefit wallet; each goes Manager review → Finance review → Load. Every state is here: with the manager, with
-       Finance, sent back, rejected, approved and waiting to be loaded, loaded, and one the bank declined. Karan, the
-       company admin, can decide both steps in their place (with a note). */
+       benefit wallet; each goes Manager review → Finance review (Rohan) and then reads Approved - nothing more to do
+       ("no need to load or anything else"). Every state is here: with the manager, with Finance, sent back, rejected and
+       approved. Karan, the company admin, can decide both steps in their place (with a comment). */
     step('wallet requests (benefit top-ups)',function(){
       if(typeof ccLoadRouteFix==='function')ccLoadRouteFix();   // Manager review → Finance review, before the first one is raised
       const cardOf=function(email){const e=emp(email);return e?ccCardsOfEmp(e.eid).find(function(c){return c.entity===P.ent&&ccCardUsable(c);})||null:null;};
       const ask=function(email,day,time,w,amount,reason){return on(day,time,function(){S(email);const c=cardOf(email);if(!c)throw new Error('no card for '+email);return E(reason,emsLoadReqCreate(c,w,String(amount),reason,'')).rec;});};
       const act=function(l,day,time,decision,reason){on(day,time,function(){const st=caActiveStage(l);if(!st||!st.approvers.length)throw new Error(expKey(l)+': no approver');S(idEmail(st.approvers[0]));
         E(decision+' '+expKey(l),caDecide(l.id,{scope:'claim',decision:decision,reason:reason||'',comment:''}));});};
-      const load=function(l,day,time,res,note){on(day,time,function(){S(RM);E('load '+expKey(l),ccLoadExecRecord(l.id,{result:res,source:'Illustrative',note:note||''}));});};
       const both=function(l,d1,d2){act(l,d1,'11:20','Approve');act(l,d2,'15:40','Approve');};
       const out=[];
-      /* Loaded */
-      let l=ask(AR,dd(3),'10:05','MEAL',1500,'Late working days during the quarter close');both(l,dd(3),dd(4));load(l,dd(4),'17:10','Recorded');out.push(l);
-      l=ask(RS,dd(4),'09:45','FUEL',2000,'Store audits in Pune this month');both(l,dd(4),dd(5));load(l,dd(5),'16:30','Recorded');out.push(l);
-      l=ask(RK,dd(5),'12:15','TEL',600,'Extra data for the hiring drive calls');both(l,dd(5),dd(6));load(l,dd(6),'11:50','Recorded');out.push(l);
-      /* Declined by the bank */
-      l=ask(NA,dd(5),'14:20','GIFT',3000,'Gifts for the branch staff at Diwali');both(l,dd(6),dd(6));load(l,dd(7),'10:40','Failed','The bank declined the load: the card\'s monthly load limit was reached.');out.push(l);
-      /* Approved, waiting to be loaded */
+      /* Approved by the manager and Finance */
+      let l=ask(AR,dd(3),'10:05','MEAL',1500,'Late working days during the quarter close');both(l,dd(3),dd(4));out.push(l);
+      l=ask(RS,dd(4),'09:45','FUEL',2000,'Store audits in Pune this month');both(l,dd(4),dd(5));out.push(l);
+      l=ask(RK,dd(5),'12:15','TEL',600,'Extra data for the hiring drive calls');both(l,dd(5),dd(6));out.push(l);
+      l=ask(NA,dd(5),'14:20','GIFT',3000,'Gifts for the branch staff at Diwali');both(l,dd(6),dd(6));out.push(l);
       l=ask(AI,dd(7),'09:30','FUEL',3500,'Drives to the Thane and Navi Mumbai stores');both(l,dd(7),dd(8));out.push(l);
       l=ask(ST,dd(8),'10:10','HLTH',4000,'Eye test and new spectacles');both(l,dd(8),dd(9));out.push(l);
       /* Rejected by Finance */

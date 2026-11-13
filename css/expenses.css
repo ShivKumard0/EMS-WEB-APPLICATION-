@@ -8,6 +8,12 @@
 .exp-table .exp-c-nw{white-space:nowrap}
 .exp-table .ax-c-trunc{max-width:165px}
 .exp-table .exp-c-cat,.exp-table .exp-c-emp{max-width:120px}
+/* Expenses & Advances and Corporate Cards → Requests & Loads (product owner, 13 Nov 2026: "make this amount and pending
+   at clean"): the request number, the amount and Pending At each stay on one line, Pending At in full - also when the
+   table is tight (the two-line wrap below is for the other text cells). */
+:is(.ea-table,.cc-rqa-table) td:nth-child(2) .lp-c-main,
+:is(.ea-table,.cc-rqa-table) td.exp-c-amt .lp-c-plain,
+:is(.ea-table,.cc-rqa-table) td:nth-child(7) .lp-c-plain{white-space:nowrap!important;display:block!important;overflow:visible!important;max-width:none!important;-webkit-line-clamp:unset!important}
 
 /* Filters beside the status tiles, laid out as on Contracts: each control
    keeps a width that shows its whole placeholder (shrinking them clipped
