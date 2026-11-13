@@ -144,4 +144,123 @@
     const w0=empStepWhyNot;
     empStepWhyNot=function(emp,k){const r=w0.apply(this,arguments);return r&&k==='mark-active'?'Available for Pending employees.':r;};
   }
+
+  /* ── 4 · Bulk Upload Employees: the same details as Create New Employee (product owner, 13 Nov 2026) ──
+     The format and the sample ask what the form asks, in its order: Identity (First Name, Last Name, Email, Country
+     Dial Code, Phone Number, Gender, Date of Birth, Nationality), Employment Structure (Joining Date, Employment Type,
+     Department, Designation, Work Location), Access Governance (Assign Team, Reporting Manager, Role within Team) and
+     Benefits Eligible. No Employment Country and no ID Proof Types (the form no longer asks them). Every employee is
+     created Pending - no status choice - and is made Active from their Logs, like one added by hand. While the
+     presentation prepares its company, the original format is used, so the prepared people are exactly as before. */
+  if(typeof EMB_COLS!=='undefined'&&typeof EMB_LISTS!=='undefined'){
+    const C=function(k,h,req,purpose,fmt,val,o){return Object.assign({k:k,h:h,req:req,purpose:purpose,fmt:fmt,val:val,note:''},o||{});};
+    const NEW_COLS=[
+      C('fname','First Name',1,'The employee\'s first (given) name.','Text','Cannot be blank. Spaces before and after are removed.',{note:'As on official records.'}),
+      C('lname','Last Name',1,'The employee\'s last (family) name.','Text','Cannot be blank.'),
+      C('email','Email',1,'Identifies the employee in ADT.','name@company.com','A valid email. Unique in the file and among this company\'s employees.',{note:'Never include passwords.'}),
+      C('dial','Country Dial Code',1,'Dialling prefix of the phone number.','Text, e.g. +91','One of the listed dial codes.',{list:'dial',note:'Keep the + sign.'}),
+      C('phone','Phone Number',1,'The employee\'s contact number.','Text, digits only','At least 7 digits.',{note:'Enter as text so no digit is lost.'}),
+      C('gender','Gender',1,'Gender.','Listed value','One of the listed values.',{list:'gender'}),
+      C('dob','Date of Birth',1,'Date of birth.','YYYY-MM-DD','A valid past date, before the Joining Date.',{date:1}),
+      C('nationality','Nationality',1,'Nationality.','Listed value','One of the listed nationalities.',{list:'nationality'}),
+      C('doj','Joining Date',1,'Employment start date.','YYYY-MM-DD','A valid calendar date.',{date:1,note:'Every employee is created Pending; make them Active from their Logs.'}),
+      C('empType','Employment Type',1,'Employment arrangement.','Listed value','One of the listed employment types.',{list:'empType'}),
+      C('dept','Department',1,'Department in Company Structure.','Listed value','Must exist in this company\'s Company Structure.',{list:'dept',note:'Departments are never created from the file.'}),
+      C('designation','Designation',1,'Designation in Company Structure.','Listed value','Must exist in this company\'s Company Structure.',{list:'desig',note:'Designations are never created from the file.'}),
+      C('location','Work Location',1,'Where the employee works.','Listed value','One of the listed work locations.',{list:'location'}),
+      C('team','Assign Team',0,'The team the employee belongs to.','Listed value','One of this company\'s teams.',{list:'team'}),
+      C('manager','Reporting Manager',0,'The employee\'s reporting manager.','Name or email','An employee of this company, or another row in this file; not the employee themself.',{note:'Gives the manager no extra access.'}),
+      C('teamRole','Role within Team',0,'The employee\'s role in the team.','Team Member or Team Manager','One of the listed roles. Needs Assign Team.',{list:'teamRole'}),
+      C('benefits','Benefits Eligible',0,'Whether the employee takes part in benefit policies.','Yes or No','Yes or No. Blank means Yes.',{list:'benefits'})];
+    const NEW_LISTS=[['dial','Country Dial Code'],['gender','Gender'],['nationality','Nationality'],['empType','Employment Type'],['dept','Department'],['desig','Designation'],
+      ['location','Work Location'],['team','Assign Team'],['teamRole','Role within Team'],['benefits','Benefits Eligible']];
+    const OLD_COLS=EMB_COLS.slice(),OLD_LISTS=EMB_LISTS.slice();
+    const building=function(){return typeof presBuilding!=='undefined'&&presBuilding;};
+    const useCols=function(){const nw=!building(),c=nw?NEW_COLS:OLD_COLS,l=nw?NEW_LISTS:OLD_LISTS;
+      EMB_COLS.splice.apply(EMB_COLS,[0,EMB_COLS.length].concat(c));EMB_LISTS.splice.apply(EMB_LISTS,[0,EMB_LISTS.length].concat(l));return nw;};
+    useCols();
+    if(typeof EMB_STEPS!=='undefined'&&EMB_STEPS.length)
+      EMB_STEPS[EMB_STEPS.length-1]='Every employee is created Pending. Make each one Active from their Logs (Mark Active), as for an employee added one at a time.';
+    if(typeof embLists==='function'){
+      const l0=embLists;
+      embLists=function(){const L=l0.apply(this,arguments);L.team=eaTeamNames();L.teamRole=EA_TEAM_ROLES.slice();L.benefits=['Yes','No'];return L;};
+    }
+    if(typeof embFormatBook==='function'){const f0=embFormatBook;embFormatBook=function(){useCols();return f0.apply(this,arguments);};}
+    /* Every employee starts Pending: the status is shown, not chosen. */
+    if(typeof embSetStatus==='function')embSetStatus=function(){if(emb)emb.status='Pending';};
+    if(typeof embHTML==='function'){
+      const h0=embHTML;
+      embHTML=function(){
+        if(emb)emb.status='Pending';
+        const out=h0.apply(this,arguments),tmp=document.createElement('div');tmp.innerHTML=out;
+        const cs=tmp.querySelector('#csw-emb-status');
+        if(cs){const d=document.createElement('div');d.className='ea-locked';d.innerHTML=(typeof EA_ICONS!=='undefined'?EA_ICONS.lock:'')+'<span>Pending</span>';cs.replaceWith(d);}
+        return tmp.innerHTML;
+      };
+    }
+    /* A manager given by name is read as that person: another row of the file, or an employee of this company. */
+    if(typeof embCheck==='function'){
+      const k0=embCheck;
+      embCheck=function(grid){
+        if(!useCols())return k0.apply(this,arguments);
+        const ix=function(k){return EMB_COLS.findIndex(function(c){return c.k===k;});};
+        const mi=ix('manager'),fi=ix('fname'),li=ix('lname'),ei=ix('email');
+        const g=(grid||[]).map(function(r){return (r||[]).slice();});
+        const byName={};g.slice(1).forEach(function(r){const n=(String(r[fi]||'').trim()+' '+String(r[li]||'').trim()).trim().toLowerCase();if(n&&r[ei]&&!byName[n])byName[n]=String(r[ei]).trim();});
+        g.slice(1).forEach(function(r){
+          const v=String(r[mi]==null?'':r[mi]).trim();if(!v||v.indexOf('@')>=0)return;
+          const fr=byName[v.toLowerCase()];if(fr){r[mi]=fr;return;}
+          const e=typeof idEmpByName==='function'?idEmpByName(v,idEntity()):null;if(e&&e.email)r[mi]=e.email;
+        });
+        const res=k0.call(this,g);if(!res||res.error)return res;
+        const L=embLists();
+        res.rows.forEach(function(r){
+          const add=[],d=r.d;
+          if(d.team){const p=embPick(L.team,d.team);if(p)d.team=p;else add.push({field:'Assign Team',msg:'Assign Team not found in this company'});}
+          if(d.teamRole){const p=embPick(L.teamRole,d.teamRole);if(!p)add.push({field:'Role within Team',msg:'Role within Team must be Team Member or Team Manager'});
+            else{d.teamRole=p;if(!d.team)add.push({field:'Role within Team',msg:'Role within Team needs Assign Team'});}}
+          if(d.benefits){const p=embPick(L.benefits,d.benefits);if(p)d.benefits=p;else add.push({field:'Benefits Eligible',msg:'Benefits Eligible must be Yes or No'});}
+          else d.benefits='Yes';
+          if(!add.length)return;
+          r.errors=add.concat(r.status==='Valid'?[]:r.errors);r.status='Invalid';
+        });
+        const n=function(s){return res.rows.filter(function(r){return r.status===s;}).length;};
+        res.valid=n('Valid');res.invalid=n('Invalid');res.duplicate=n('Duplicate');
+        return res;
+      };
+    }
+    /* Created exactly as one added by hand: Pending, the team and role on its first log, benefits as given. */
+    if(typeof embCreate==='function'){
+      const c0=embCreate;
+      embCreate=function(){
+        if(!useCols()||typeof eaCreateEmployee!=='function')return c0.apply(this,arguments);
+        if(emb)emb.status='Pending';
+        const a0=eaCreateEmployee;
+        eaCreateEmployee=function(d,kind,o){
+          const t=d.team||'';d.teams=t?[t]:[];d.accessRole='Employee';
+          d.onc={enroll:false,benefitsEligible:String(d.benefits||'Yes').toLowerCase()!=='no',fields:{}};
+          if(o&&o.action)o.action=o.action.replace('No team assigned yet.',(t?'Assigned to '+t+(d.teamRole?' as '+d.teamRole:'')+'.':'No team assigned yet.')+' Access role: Employee.');
+          return a0.apply(this,arguments);
+        };
+        try{return c0.apply(this,arguments);}finally{eaCreateEmployee=a0;}
+      };
+    }
+    /* The sample: every column filled, with this company's own teams and managers. */
+    const teamFor=function(dept){const T=eaTeamNames();return embPick(T,dept+' Team')||T.find(function(t){return t.toLowerCase().indexOf(String(dept||'').toLowerCase())===0;})||T[0]||'';};
+    const mgrName=function(team,given){
+      if(given&&given.indexOf('@')>=0){const e=typeof idEmpByEmail==='function'?idEmpByEmail(given,idEntity()):null;if(e)return e.name;}
+      if(given)return given;
+      const ok=(team?eaTeamManagers(team):[]).find(function(n){return typeof idEmpByName==='function'&&!!idEmpByName(n,idEntity());});
+      return ok||'';
+    };
+    const fill=function(r){const team=teamFor(r.dept);return Object.assign({},r,{team:team,manager:mgrName(team,r.manager),teamRole:'Team Member',benefits:'Yes'});};
+    if(typeof embSampleRows==='function'){
+      const s0=embSampleRows;
+      embSampleRows=function(){const rows=s0.apply(this,arguments);if(!rows||building())return rows;useCols();return rows.map(fill);};
+    }
+    if(typeof presSampleRows==='function'){
+      const p0=presSampleRows;
+      presSampleRows=function(){const rows=p0.apply(this,arguments);return rows?rows.map(fill):rows;};
+    }
+  }
 })();
