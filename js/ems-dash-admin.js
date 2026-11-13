@@ -30,7 +30,6 @@
     });
     return s;
   }
-  const days=function(iso){if(!iso)return 0;const a=new Date(iso+'T00:00:00'),b=new Date((typeof wbToday==='function'?wbToday():'')+'T00:00:00');return Math.max(0,Math.round((b-a)/86400000));};
   function statsHTML(rows){
     const s=[];
     /* 1 · Spend This Month */
@@ -38,15 +37,18 @@
     const ch=before>0?Math.round((now-before)/before*100):null;
     s.push(emsDashStat('Spend This Month',inr(now),ch==null?'claims and card spend':(ch>=0?'↑ ':'↓ ')+Math.abs(ch)+'% vs last month',I('receipt'),
       emsDashAllowed('card-transactions')?"navigatePage('card-transactions',true)":"eaGo('all')"));
-    /* 2 · Pending Approval */
-    const pend=rows.filter(function(x){return x.status==='Awaiting Approval';});
-    let mgr=0,fin=0,oldest=0;
+    /* 2 · Pending Approval (product owner, 13 Nov 2026: "1 · 810 INR" read as 1.810 - "keep the numbers in proper format,
+       and realistic"): the amount waiting on approvers is the figure; below it, how many requests and where they wait.
+       Claims and advances, and the Wallet Requests of Corporate Cards → Requests & Loads (the same rows that list shows). */
+    const pend=rows.filter(function(x){return x.status==='Awaiting Approval';}).map(function(x){return {r:x.r,req:Number(x.req)||0,cur:x.cur};});
+    (typeof ccRqaItems==='function'?ccRqaItems():[]).forEach(function(x){
+      if(x.kind==='load'&&x.rec.status==='Awaiting Approval')pend.push({r:x.rec,req:Number(x.rec.amount)||0,cur:x.rec.currency||'INR'});});
+    let mgr=0,fin=0;
     pend.forEach(function(x){const st=typeof caActiveStage==='function'?caActiveStage(x.r):null;
-      if(st&&(st.type==='Reporting Manager'||/manager/i.test(st.name||'')))mgr++;else fin++;
-      oldest=Math.max(oldest,days(st&&st.assignedAt||x.date));});
-    s.push(emsDashStat('Pending Approval',pend.length+(pend.length?' · '+emsDashSum(pend,function(x){return x.req;}):''),
-      pend.length?mgr+' with managers · '+fin+' with finance'+(oldest?' · oldest '+oldest+' day'+(oldest===1?'':'s'):''):'nothing waiting',
-      I('shieldCheck'),"eaGo('all');eaApprF='Awaiting Approval';renderADTPage()"));
+      if(st&&(st.type==='Reporting Manager'||/manager/i.test(st.name||'')))mgr++;else fin++;});
+    s.push(emsDashStat('Pending Approval',pend.length?emsDashSum(pend,function(x){return x.req;}):inr(0),
+      pend.length?mgr+' with managers · '+fin+' with Finance':'nothing waiting',
+      I('shieldCheck'),"eaGo('all');eaApprF='Pending';renderADTPage()"));
     /* 3 · To Reimburse */
     const due=(typeof expScope==='function'?expScope():[]).filter(function(r){return r.pay&&['Ready for Payment','Pending Verification','Processing','On Hold','Partially Paid'].indexOf(r.pay.status)>=0;});
     const owed=due.reduce(function(t,r){const p=r.pay,v=(Number(p.payable)||0)-(Number(p.settled)||0);return t+(v>0?v:(Number(caApprovedTotal(r))||0));},0);
