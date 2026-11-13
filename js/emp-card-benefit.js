@@ -168,11 +168,12 @@ const ecbBook={};
       if(!out||out.indexOf('navDeTab(\''+TAB+'\')')<0)return out;   // the tab is not offered
       const emp=empNow();if(!emp)return out;
       const tmp=document.createElement('div');tmp.innerHTML=out;
-      /* Second, right after Basic Details, so it is in view when the panel opens - at the end of the row it sat
-         past the scroll edge (product owner, 13 Nov 2026: "unable to see the card benefit"). */
+      /* Order (product owner, 13 Nov 2026): Basic Details · KYC · Card Benefit · then the rest as they were. At the
+         end of the row Card Benefit sat past the scroll edge ("unable to see the card benefit"). */
       const bar=tmp.querySelector('#de-isb-tabs'),first=bar&&bar.firstElementChild;
-      const mine=bar&&Array.prototype.find.call(bar.children,function(b){return (b.getAttribute('onclick')||'').indexOf('navDeTab(\''+TAB+'\')')>=0;});
-      if(first&&mine&&mine!==first&&first.nextElementSibling!==mine)bar.insertBefore(mine,first.nextElementSibling);
+      const tabOf=function(id){return bar?Array.prototype.find.call(bar.children,function(b){return (b.getAttribute('onclick')||'').indexOf('navDeTab(\''+id+'\')')>=0;}):null;};
+      let after=first;
+      [tabOf('onc-card'),tabOf(TAB)].forEach(function(t){if(!t||!after||t===after)return;bar.insertBefore(t,after.nextElementSibling);after=t;});
       if(typeof deTab!=='undefined'&&deTab===TAB){const body=tmp.querySelector('.lp-isb-body');if(body)body.innerHTML=tabHTML(emp);}
       return tmp.innerHTML;
     };
