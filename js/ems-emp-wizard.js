@@ -253,7 +253,7 @@
       const ok=(team?eaTeamManagers(team):[]).find(function(n){return typeof idEmpByName==='function'&&!!idEmpByName(n,idEntity());});
       return ok||'';
     };
-    const fill=function(r){const team=teamFor(r.dept);return Object.assign({},r,{team:team,manager:mgrName(team,r.manager),teamRole:'Team Member'});};
+    const fill=function(r){const team=(r.team&&embPick(eaTeamNames(),r.team))||teamFor(r.dept);return Object.assign({},r,{team:team,manager:mgrName(team,r.manager),teamRole:'Team Member'});};
     if(typeof embSampleRows==='function'){
       const s0=embSampleRows;
       embSampleRows=function(){const rows=s0.apply(this,arguments);if(!rows||building())return rows;useCols();return rows.map(fill);};

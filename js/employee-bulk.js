@@ -605,7 +605,8 @@ function embDownloadFormat(){
   tsxSave(embFormatBook([]),embFileName('Format'));
   showToast('Format downloaded','success',embFileName('Format'));
 }
-/* Three illustrative employees, with this company's own valid values. */
+/* Fourteen sample employees (product owner, 13 Nov 2026), with this company's own valid values.
+   The first row stays first: the presentation builds its company from it. */
 function embSampleRows(){
   const L=embLists();
   if(!L.dept.length||!L.desig.length||!L.country.length)return null;
@@ -613,7 +614,18 @@ function embSampleRows(){
   const like=function(list,want,word){return embPick(list,want)||list.find(function(x){return word&&x.toLowerCase().split(/[\s\-—]+/).some(function(w){return w.indexOf(word)===0;});})||list[0];};
   const base=[['Isha','Rao','isha.rao.sample01@example.com','9999900001','2026-11-16','Operations','op','Operations Associate','op','Hyderabad','hyd','Female','1996-04-12'],
     ['Aditya','Sen','aditya.sen.sample02@example.com','9999900002','2026-11-17','Finance','fin','Finance Associate','financ','Hyderabad','hyd','Male','1994-09-03'],
-    ['Maya','Nair','maya.nair.sample03@example.com','9999900003','2026-11-18','Operations','ops','Analyst','analyst','Bengaluru','bang','Female','1997-01-25']];
+    ['Maya','Nair','maya.nair.sample03@example.com','9999900003','2026-11-18','Operations','ops','Analyst','analyst','Bengaluru','bang','Female','1997-01-25'],
+    ['Rohan','Das','rohan.das.sample04@example.com','9999900004','2026-11-19','Sales','sales','Sales Executive','sales','Mumbai','mum','Male','1995-06-21'],
+    ['Priya','Menon','priya.menon.sample05@example.com','9999900005','2026-11-20','Human Resources','human','HR Executive','hr','Delhi','del','Female','1993-11-08'],
+    ['Karan','Mehta','karan.mehta.sample06@example.com','9999900006','2026-11-23','Administration','admin','Admin Executive','admin','Hyderabad','hyd','Male','1992-02-14'],
+    ['Sneha','Iyer','sneha.iyer.sample07@example.com','9999900007','2026-11-24','Technology','tech','Software Engineer','software','Bengaluru','bang','Female','1998-07-30'],
+    ['Vikram','Singh','vikram.singh.sample08@example.com','9999900008','2026-11-25','Marketing','market','Marketing Executive','market','Mumbai','mum','Male','1996-03-17'],
+    ['Ananya','Ghosh','ananya.ghosh.sample09@example.com','9999900009','2026-11-26','Finance','fin','Accountant','account','Delhi','del','Female','1995-10-05'],
+    ['Arjun','Patel','arjun.patel.sample10@example.com','9999900010','2026-11-27','Operations','op','Operations Executive','op','Hyderabad','hyd','Male','1994-12-22'],
+    ['Neha','Joshi','neha.joshi.sample11@example.com','9999900011','2026-11-30','Sales','sales','Sales Manager','sales','Bengaluru','bang','Female','1990-08-13'],
+    ['Rahul','Kumar','rahul.kumar.sample12@example.com','9999900012','2026-12-01','Technology','tech','Analyst','analyst','Remote — India','remote','Male','1997-05-09'],
+    ['Divya','Pillai','divya.pillai.sample13@example.com','9999900013','2026-12-02','Human Resources','human','Recruiter','recruit','Hyderabad','hyd','Female','1996-01-28'],
+    ['Sameer','Khan','sameer.khan.sample14@example.com','9999900014','2026-12-03','Operations','op','Team Lead','lead','Punjab','pun','Male','1991-09-19']];
   return base.map(function(b){
     return {fname:b[0],lname:b[1],email:b[2],dial:embPick(L.dial,'+91')||L.dial[0],phone:b[3],country:L.country[0],doj:b[4],empType:embPick(L.empType,'Full Time')||L.empType[0],
       dept:like(L.dept,b[5],b[6]),designation:like(L.desig,b[7],b[8]),manager:'',location:like(L.location,b[9],b[10]),gender:embPick(L.gender,b[11])||L.gender[0],dob:b[12],

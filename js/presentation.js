@@ -960,31 +960,55 @@ if(PRES_ON){
 }
 
 /* ── Bulk upload sample, ready for the prepared company ────────────────
-   In Nova Retail, Download Sample gives three new joiners who are not yet
-   in the company: realistic names, company work emails and existing
-   reporting managers, joining a week from today. Each download picks people
-   not already there, so the file always validates and can be uploaded live.
-   Other companies keep the standard sample. */
+   In Nova Retail, Download Sample gives fourteen new joiners (product owner,
+   13 Nov 2026) who are not yet in the company: realistic names, company work
+   emails, Nova's own teams and reporting managers, their branch, joining a
+   week from today. Each download picks people not already there, so the file
+   always validates and can be uploaded live (twice, from 28 joiners).
+   Other companies keep the standard sample.
+   first, last, department, designation, reporting manager, gender, date of birth, work location */
 const PRES_JOINERS=[
-  ['Tanvi','Desai','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1998-03-14'],
-  ['Rahul','Nair','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1996-07-22'],
-  ['Aditi','Kulkarni','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1997-11-05'],
-  ['Nikhil','Verma','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1995-02-18'],
-  ['Pooja','Reddy','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1997-06-09'],
-  ['Ishaan','Malhotra','Finance','Finance Executive','rohan.mehta@novaretail.in','Male','1996-12-01'],
-  ['Kavya','Menon','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1999-01-27'],
-  ['Arnav','Gupta','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1995-10-11'],
-  ['Neha','Bhatt','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1998-08-30']
+  ['Tanvi','Desai','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1998-03-14','Bengaluru Branch'],
+  ['Rahul','Nair','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1996-07-22','Pune Branch'],
+  ['Aditi','Kulkarni','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1997-11-05','Hyderabad'],
+  ['Nikhil','Verma','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1995-02-18','Bengaluru Branch'],
+  ['Pooja','Reddy','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1997-06-09','Pune Branch'],
+  ['Ishaan','Malhotra','Finance','Finance Executive','rohan.mehta@novaretail.in','Male','1996-12-01','Hyderabad'],
+  ['Kavya','Menon','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1999-01-27','Bengaluru Branch'],
+  ['Arnav','Gupta','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1995-10-11','Pune Branch'],
+  ['Neha','Bhatt','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1998-08-30','Hyderabad'],
+  ['Simran','Kaur','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1998-05-19','Hyderabad'],
+  ['Varun','Chopra','Operations','Store Associate','sneha.kulkarni@novaretail.in','Male','1999-08-11','Pune Branch'],
+  ['Ayesha','Siddiqui','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1997-12-06','Hyderabad'],
+  ['Kunal','Bhardwaj','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1998-02-23','Hyderabad'],
+  ['Roshni','Das','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Female','1996-09-17','Bengaluru Branch'],
+  ['Yash','Tiwari','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Male','1997-04-02','Hyderabad'],
+  ['Pallavi','Sawant','Administration','Admin Executive','karan.shah@novaretail.in','Female','1995-11-28','Hyderabad'],
+  ['Abhishek','Rathore','Finance','Accounts Executive','rohan.mehta@novaretail.in','Male','1996-06-14','Hyderabad'],
+  ['Sakshi','Bajaj','Human Resources','Talent Acquisition Executive','riya.kapoor@novaretail.in','Female','1998-10-21','Hyderabad'],
+  ['Manoj','Hegde','Operations','Store Associate','karthik.reddy@novaretail.in','Male','1997-07-07','Bengaluru Branch'],
+  ['Tanya','Ghosh','Product','Merchandise Planner','nikhil.bansal@novaretail.in','Female','1995-03-30','Hyderabad'],
+  ['Siddharth','Rane','Administration','System Administrator','imran.khan@novaretail.in','Male','1994-12-09','Hyderabad'],
+  ['Bhavna','Chawla','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1998-01-15','Bengaluru Branch'],
+  ['Prateek','Jha','Operations','Logistics Coordinator','ananya.iyer@novaretail.in','Male','1996-08-24','Pune Branch'],
+  ['Anushka','Mathur','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1997-05-12','Hyderabad'],
+  ['Dev','Kapadia','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1995-02-04','Hyderabad'],
+  ['Zoya','Mirza','Compliance','Risk Analyst','sara.thomas@novaretail.in','Female','1996-11-13','Hyderabad'],
+  ['Harsh','Vardhan','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1999-04-26','Bengaluru Branch'],
+  ['Komal','Bedi','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1998-07-31','Pune Branch']
 ];
 function presSampleRows(){
   const nova=presNova();if(!nova||idEntity()!==nova.entityId||typeof embSampleRows!=='function')return null;
   const base=(embSampleRows()||[])[0];if(!base)return null;
-  const doj=wbAddDays(wbToday(),7),out=[];
+  const doj=wbAddDays(wbToday(),7),locs=embLists().location||[],out=[];
+  /* The team that holds the designation (Nova's department teams). */
+  const teamOf=function(desig){const t=PRES_TEAMS.find(function(x){return x[1].indexOf(desig)>=0;});return t?t[0]:'';};
   PRES_JOINERS.forEach(function(p,i){
-    if(out.length>=3)return;
+    if(out.length>=14)return;
     const email=(p[0]+'.'+p[1]).toLowerCase()+'@novaretail.in';
     if(typeof eaEmailOwner==='function'&&eaEmailOwner(email,nova.entityId))return;
-    out.push(Object.assign({},base,{fname:p[0],lname:p[1],email:email,phone:'98200002'+String(10+i),dept:p[2],designation:p[3],manager:p[4],gender:p[5],dob:p[6],doj:doj}));
+    out.push(Object.assign({},base,{fname:p[0],lname:p[1],email:email,phone:'98200002'+String(10+i),dept:p[2],designation:p[3],manager:p[4],gender:p[5],dob:p[6],doj:doj,
+      location:embPick(locs,p[7])||base.location,team:teamOf(p[3])}));
   });
   return out.length?out:null;
 }
@@ -994,7 +1018,7 @@ if(PRES_ON&&typeof embDownloadSample==='function'){
     const rows=presSampleRows();if(!rows)return ds0.apply(this,arguments);
     if(!emsCan('h2r.employee.bulk')){emsDeny('download the sample');return;}
     tsxSave(embFormatBook(rows),embFileName('Sample'));
-    showToast('Sample downloaded','success',embFileName('Sample')+' · '+rows.map(function(r){return r.fname+' '+r.lname;}).join(', ')+'.');
+    showToast('Sample downloaded','success',embFileName('Sample')+' · '+rows.length+' employees.');
   };
 }
 
@@ -1025,13 +1049,7 @@ function presEnsureBranches(){
   });
   nova.presBranchesSet=true;
 }
-/* New joiners in the sample go to a branch each. */
-(function(){
-  if(typeof presSampleRows!=='function')return;
-  const r0=presSampleRows,at=['Bengaluru Branch','Pune Branch','Hyderabad'];
-  presSampleRows=function(){const rows=r0.apply(this,arguments);if(!rows)return rows;const names=typeof emsBranchNames==='function'?emsBranchNames():[];
-    rows.forEach(function(r,i){if(names.indexOf(at[i%3])>=0)r.location=at[i%3];});return rows;};
-})();
+/* New joiners in the sample: each one's branch is in PRES_JOINERS (13 Nov 2026). */
 
 /* ── One discreet Illustrative label instead of repeated technical notes ──
    In the presentation company, bank-side activity is simulated: the header
