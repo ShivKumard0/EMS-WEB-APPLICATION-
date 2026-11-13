@@ -165,12 +165,15 @@ const ecbBook={};
     renderDeSidebar=function(){
       if(typeof deTab!=='undefined'&&deTab==='benefits')deTab='basic-details';   // a panel left on the removed Benefits tab
       const out=r0.apply(this,arguments);
-      if(typeof deTab==='undefined'||deTab!==TAB||!out)return out;
+      if(!out||out.indexOf('navDeTab(\''+TAB+'\')')<0)return out;   // the tab is not offered
       const emp=empNow();if(!emp)return out;
-      if(typeof deExtraTabs==='function'&&!deExtraTabs(emp).some(function(t){return t.id===TAB;}))return out;
       const tmp=document.createElement('div');tmp.innerHTML=out;
-      const body=tmp.querySelector('.lp-isb-body');if(!body)return out;
-      body.innerHTML=tabHTML(emp);
+      /* Second, right after Basic Details, so it is in view when the panel opens - at the end of the row it sat
+         past the scroll edge (product owner, 13 Nov 2026: "unable to see the card benefit"). */
+      const bar=tmp.querySelector('#de-isb-tabs'),first=bar&&bar.firstElementChild;
+      const mine=bar&&Array.prototype.find.call(bar.children,function(b){return (b.getAttribute('onclick')||'').indexOf('navDeTab(\''+TAB+'\')')>=0;});
+      if(first&&mine&&mine!==first&&first.nextElementSibling!==mine)bar.insertBefore(mine,first.nextElementSibling);
+      if(typeof deTab!=='undefined'&&deTab===TAB){const body=tmp.querySelector('.lp-isb-body');if(body)body.innerHTML=tabHTML(emp);}
       return tmp.innerHTML;
     };
   }
