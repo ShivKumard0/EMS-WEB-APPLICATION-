@@ -9,11 +9,20 @@
                Ready to Disburse · Disbursement Processing · Disbursed · Disbursement Failed · Settled */
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
-  const FLOW=['Draft','Pending Manager Approval','Pending Finance Verification','Sent Back','Approved','Reimbursed','Reimbursement Failed',
-    'Disbursed','Disbursement Failed','Settled','Rejected','Withdrawn','Cancelled'];
+  /* Few statuses (product owner, 13 Nov 2026: "pending, approved, rejected are the only statuses" - Pending At already
+     says who has to act - "keep the reimbursed status as well, once ... the money transfer happens"; an advance reads
+     Disbursed): Draft, Pending Manager Approval, Pending Finance Verification and Sent Back read Pending; Rejected,
+     Withdrawn and Cancelled read Rejected; a paid claim reads Reimbursed; a paid advance reads Disbursed (also once
+     settled); everything else approved - a payment still to be made or one that failed - reads Approved. The status
+     filter, the tiles and the Action button use the same words. */
+  const FLOW=['Pending','Approved','Rejected','Reimbursed','Disbursed'];
+  const THREE=function(l){l=String(l||'');if(/^(Draft|Sent Back|Awaiting Approval|Follow-Up)$|^Pending/.test(l))return 'Pending';if(/^(Rejected|Withdrawn|Cancelled)$/.test(l))return 'Rejected';
+    if(l==='Reimbursed')return 'Reimbursed';if(l==='Disbursed'||l==='Settled')return 'Disbursed';return 'Approved';};
+  const SHOWN={};   // 'exp:12' → the word on the list, for the row's Action button
+  window.emsThreeStatus=THREE;
   const TONE={'Draft':'idle','Pending Manager Approval':'wait','Pending Finance Verification':'wait','Sent Back':'wait','Ready to Reimburse':'info',
     'Reimbursement Processing':'info','Reimbursed':'ok','Reimbursement Failed':'bad','Ready to Disburse':'info','Disbursement Processing':'info',
-    'Disbursed':'ok','Disbursement Failed':'bad','Settled':'ok','Closed':'ok','Approved':'ok','Rejected':'bad','Withdrawn':'idle','Cancelled':'idle'};
+    'Disbursed':'ok','Disbursement Failed':'bad','Settled':'ok','Closed':'ok','Approved':'ok','Rejected':'bad','Withdrawn':'idle','Cancelled':'idle','Pending':'wait'};
   const names=function(list){list=(list||[]).map(function(u){return typeof caN==='function'?caN(u):u;}).filter(Boolean);
     return list.length>2?list.slice(0,2).join(', ')+' +'+(list.length-2):list.join(', ');};
   const stageKind=function(st){return st&&(st.type==='Reporting Manager'||/manager/i.test(st.name||''))?'Manager':(st&&/finance/i.test(st.name||'')?'Finance':(st?st.name:''));};
@@ -48,8 +57,13 @@
   /* Rows carry their flow status. */
   if(typeof eaRows==='function'){
     const r0=eaRows;
-    eaRows=function(){const out=r0.apply(this,arguments);out.forEach(function(x){const f=flowOf(x);x.flow=f.label;x.at=f.at;x.atRole=f.role;});return out;};
+    eaRows=function(){const out=r0.apply(this,arguments);out.forEach(function(x){const f=flowOf(x);x.flow=THREE(f.label);x.at=f.at;x.atRole=f.role;SHOWN[x.kind+':'+x.id]=x.flow;});return out;};
   }
+  /* The Action button reads the same word as the Status column. */
+  [['expenses','exp'],['advances','adv']].forEach(function(k){
+    const c=typeof rlConfig==='function'?rlConfig(k[0]):null;if(!c||c.threeWords)return;
+    c.status=function(r){return (r&&SHOWN[k[1]+':'+r.id])||THREE(r&&r.status);};c.threeWords=true;
+  });
   /* The status filter and the tiles pick a flow status. */
   if(typeof eaRowPass==='function'){
     const p0=eaRowPass;
@@ -81,7 +95,7 @@
       out=out.replace('<th>Payment</th>','<th>Pending At</th>');
       /* Tiles: where the requests are waiting. */
       const all=eaRows(),cnt=function(s){return all.filter(function(x){return x.flow===s;}).length;};
-      const T=['Pending Manager Approval','Pending Finance Verification','Sent Back','Approved'];
+      const T=FLOW;
       const tiles=T.map(function(s){return caStat(s,cnt(s),eaApprF===s,'eaStat(\''+s+'\')',TONE[s]);}).join('');
       const tmp=document.createElement('div');tmp.innerHTML=out;
       const box=tmp.querySelector('.exp-stats');if(box){box.innerHTML=tiles;box.classList.add('ea-flow-stats');out=tmp.innerHTML;}

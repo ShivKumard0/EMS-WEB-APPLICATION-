@@ -26,21 +26,23 @@ const CC_RQA_TOPUPS_ONLY=true;
    thing else"; the panel has no Load or Execution tab here). Pending At: who acts next. Action: the status dropdown and
    ☰ (js/row-logs.js) - Approve, Reject, Send for Follow-Up through the request's own approval engine, as its Logs do,
    comment required; the company admin may act in the manager's or Finance's place. */
-const CC_RQA_FLOW=['Draft','Pending Manager Approval','Pending Finance Verification','Sent Back','Approved','Rejected','Withdrawn','Cancelled'];
-const CC_RQA_TONE={'Draft':'idle','Pending Manager Approval':'wait','Pending Finance Verification':'wait','Sent Back':'wait','Approved':'ok','Rejected':'bad','Withdrawn':'idle','Cancelled':'idle'};
+/* Only three statuses (product owner, 13 Nov 2026: "pending, approved, rejected are the only statuses" - Pending At says
+   who has to act): Draft, with the manager, with Finance and sent back read Pending; Rejected, Withdrawn and Cancelled read
+   Rejected; the rest reads Approved. The tiles, the status filter and the Action button use the same three words. */
+const CC_RQA_FLOW=['Pending','Approved','Rejected'];
+const CC_RQA_TONE={'Pending':'wait','Approved':'ok','Rejected':'bad'};
+function ccRqaThree(s){s=String(s||'');return /^(Draft|Awaiting Approval|Follow-Up)$|^Pending/.test(s)?'Pending':/^(Rejected|Withdrawn|Cancelled)$/.test(s)?'Rejected':'Approved';}
 const CC_RQA_MOVE_LABEL={'Approved':'Approve','Rejected':'Reject','Follow-Up':'Send for Follow-Up','Awaiting Approval':'Resubmit'};
 function ccRqaNames(list){list=(list||[]).map(caN).filter(Boolean);return list.length>2?list.slice(0,2).join(', ')+' +'+(list.length-2):list.join(', ');}
 /* {label, at, role}: where a load is and who acts next. */
 function ccRqaFlowOf(l){
   const s=l.status;
-  if(s==='Draft')return {label:'Draft',at:l.name||'',role:'Employee'};
-  if(s==='Follow-Up')return {label:'Sent Back',at:l.name||'',role:'Employee'};
+  if(s==='Draft'||s==='Follow-Up')return {label:'Pending',at:l.name||'',role:'Employee'};
   if(s==='Awaiting Approval'){
     const st=caActiveStage(l),mgr=!!st&&(st.type==='Reporting Manager'||/manager/i.test(st.name||'')),fin=!!st&&/finance/i.test(st.name||'');
-    return {label:mgr?'Pending Manager Approval':fin?'Pending Finance Verification':'Pending '+(st?st.name:'Approval'),at:st?ccRqaNames(st.approvers):'',role:mgr?'Manager':fin?'Finance':''};
+    return {label:'Pending',at:st?ccRqaNames(st.approvers):'',role:mgr?'Manager':fin?'Finance':''};
   }
-  if(s==='Rejected'||s==='Withdrawn')return {label:s,at:'',role:''};
-  if(ccLoadLabel(l)==='Cancelled')return {label:'Cancelled',at:'',role:''};
+  if(s==='Rejected'||s==='Withdrawn'||ccLoadLabel(l)==='Cancelled')return {label:'Rejected',at:'',role:''};
   return {label:'Approved',at:'',role:''};
 }
 /* On this list (or a load panel opened from it) in its current form. */
@@ -124,10 +126,11 @@ function ccRqaListHTML(){
   }),ccEmpty(8,'No request or load matches this filter.'));
   const cnt=function(s){return all.filter(function(x){return x.status===s;}).length;};
   const tile=function(s,tone){return caStat(s,cnt(s),ccRqaStatusF===s,'ccRqaStat(\''+s+'\')',tone);};
-  const tiles=CC_RQA_TOPUPS_ONLY?['Pending Manager Approval','Pending Finance Verification','Sent Back','Approved'].map(function(s){return tile(s,CC_RQA_TONE[s]);}).join('')
+  const tiles=CC_RQA_TOPUPS_ONLY?CC_RQA_FLOW.map(function(s){return tile(s,CC_RQA_TONE[s]);}).join('')
     :tile('Awaiting Approval')+tile('Follow-Up','wait')+tile('Enrollment Pending','wait')+tile('Awaiting Execution','wait')+tile('Rejected','bad')+tile('Failed','bad');
   const types=CC_RQA_TYPES.filter(function(t){return all.some(function(x){return x.type===t;});});
-  const states=(CC_RQA_TOPUPS_ONLY?CC_RQA_FLOW.filter(function(s){return all.some(function(x){return x.status===s;});}):CC_RQA_STATES).concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
+  const states=CC_RQA_TOPUPS_ONLY?CC_RQA_FLOW.slice()
+    :CC_RQA_STATES.concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
   return ccFilterBar(lpSearchField('cra-f-q',ccRqaQ,'Search request, employee, card or wallet','ccRqaApply()')
       +apCS('cra-f-type',types,ccRqaTypeF,'All Types')
       +apCS('cra-f-prog',ccProgs().map(ccProgLabel),ccRqaProgF,'All Programmes')
@@ -206,7 +209,7 @@ function ccRqaOpenLoad(id,tab){
      (js/card-load-flow.js); the popup asks for a comment. ☰ opens the request. */
   if(typeof rlRegister==='function')rlRegister('cardloads',{pre:'ccrl',recordLabel:'Request',rowPrefix:'ccl',
     rec:function(id){return typeof ccLoad==='function'?ccLoad(Number(id)):null;},
-    status:function(r){return r.status;},
+    status:function(r){return CC_RQA_TOPUPS_ONLY?ccRqaThree(r.status):r.status;},
     moves:function(r){return (typeof ccLoadMoves==='function'?ccLoadMoves(r):[]).map(function(m){return m.to;});},
     label:function(v){return CC_RQA_MOVE_LABEL[v]||v;},
     save:function(id){
