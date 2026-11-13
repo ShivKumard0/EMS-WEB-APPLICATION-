@@ -472,11 +472,12 @@
         +(d?(typeof axBadge==='function'?axBadge('wait','Unsaved changes'):'Unsaved changes'):'')+'</div>'
       +'<div style="font-size:11.5px;color:var(--gray,#6a7282);margin-top:6px">The bank that issues the company\'s cards, and the wallets on its card. One bank at a time.</div>'
       +'<div class="mcs-h">Banks</div>'
-      +CCS_BANKS.map(function(b){const on=c.bank===b[0];
+      /* A toggle per bank (product owner, 13 Nov 2026): while one is on, the other two are locked until it is turned off. */
+      +CCS_BANKS.map(function(b){const on=c.bank===b[0],locked=!!c.bank&&!on,cur=locked?(CCS_BANKS.find(function(x){return x[0]===c.bank;})||[0,''])[1]:'';
         return '<div class="mcs-card"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(b[1])+'</div><div class="mcs-sub">'+esc(b[2])+'</div></div>'
-          +(on?'<div style="display:flex;align-items:center;gap:8px">'+(typeof axBadge==='function'?axBadge('ok','Enabled'):'Enabled')
-              +'<button type="button" class="btn btn-outline btn-sm" onclick="ccsBank(\'\')">Disable</button></div>'
-            :'<button type="button" class="btn btn-primary btn-sm" onclick="ccsBank(\''+b[0]+'\')">Enable</button>')
+          +'<label class="cs-toggle"'+(locked?' title="Turn off '+attrSafe(cur)+' first" style="cursor:not-allowed"':' title="'+(on?'Turn off':'Turn on')+' '+attrSafe(b[1])+'"')+'>'
+            +'<input type="checkbox" aria-label="'+attrSafe(b[1])+'"'+(on?' checked':'')+(locked?' disabled':'')+' onchange="ccsBank(this.checked?\''+b[0]+'\':\'\')">'
+            +'<span class="cs-toggle-slider"></span></label>'
           +'</div></div>';}).join('')
       +(bank?'<div class="mcs-h" style="display:flex;justify-content:space-between;align-items:center"><span>Add Wallets · '+esc(bank[1])+'</span>'
           +'<span style="font-size:12px;font-weight:500;color:var(--gray,#6a7282)">'+n+' of '+CCS_WALLETS.length+' selected</span></div>'
@@ -487,7 +488,7 @@
       +'</div>';
   }
   const ccsPaint=function(){const el=document.getElementById('ccs-root');if(el)el.outerHTML=ccsHTML(ccsKeyNow());};
-  window.ccsBank=function(b){const d=ccsEdit(ccsKeyNow());d.bank=b;ccsPaint();};
+  window.ccsBank=function(b){const d=ccsEdit(ccsKeyNow());if(b&&d.bank&&d.bank!==b){ccsPaint();return;}d.bank=b;ccsPaint();};   // another bank waits until this one is off
   window.ccsWallet=function(w,on){const d=ccsEdit(ccsKeyNow());d.wallets=Object.assign({},d.wallets);if(on)d.wallets[w]=true;else delete d.wallets[w];ccsPaint();};
   window.ccsDiscard=function(){ccsDraft=null;ccsPaint();};
   window.ccsSave=function(){
