@@ -15,7 +15,7 @@
 const PRES_ON=/[?&]env=presentation\b/.test(location.search);
 const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
-const PRES_DATA_VERSION='2026-11-12.12';
+const PRES_DATA_VERSION='2026-11-13.1';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
@@ -772,6 +772,43 @@ function presBuildBaseline(){
       const d6=dsp(AI,made[AI][0],dd(5),'12:10','Cancelled Transaction Charged','IndiGo cancelled the 4 Nov flight to Bengaluru; the fare of 6,840 has not been refunded.','indigo-cancellation-email.pdf',6840,dd(5),'15:30');
       S(RM);ccMatchSync(P.ent);
       return ppl.length+' cards ('+ppl.map(function(x){return expKey(x.c)+' '+x.c.status;}).join(', ')+') · disputes '+expKey(d5)+' '+d5.status+', '+expKey(d6)+' '+d6.status;});
+    /* Wallet Requests (product owner, 13 Nov 2026): employees ask from Expenses & Advances → Card Load for a top-up of a
+       benefit wallet; each goes Manager review → Finance review → Load. Every state is here: with the manager, with
+       Finance, sent back, rejected, approved and waiting to be loaded, loaded, and one the bank declined. Karan, the
+       company admin, can decide both steps in their place (with a note). */
+    step('wallet requests (benefit top-ups)',function(){
+      if(typeof ccLoadRouteFix==='function')ccLoadRouteFix();   // Manager review → Finance review, before the first one is raised
+      const cardOf=function(email){const e=emp(email);return e?ccCardsOfEmp(e.eid).find(function(c){return c.entity===P.ent&&ccCardUsable(c);})||null:null;};
+      const ask=function(email,day,time,w,amount,reason){return on(day,time,function(){S(email);const c=cardOf(email);if(!c)throw new Error('no card for '+email);return E(reason,emsLoadReqCreate(c,w,String(amount),reason,'')).rec;});};
+      const act=function(l,day,time,decision,reason){on(day,time,function(){const st=caActiveStage(l);if(!st||!st.approvers.length)throw new Error(expKey(l)+': no approver');S(idEmail(st.approvers[0]));
+        E(decision+' '+expKey(l),caDecide(l.id,{scope:'claim',decision:decision,reason:reason||'',comment:''}));});};
+      const load=function(l,day,time,res,note){on(day,time,function(){S(RM);E('load '+expKey(l),ccLoadExecRecord(l.id,{result:res,source:'Illustrative',note:note||''}));});};
+      const both=function(l,d1,d2){act(l,d1,'11:20','Approve');act(l,d2,'15:40','Approve');};
+      const out=[];
+      /* Loaded */
+      let l=ask(AR,dd(3),'10:05','MEAL',1500,'Late working days during the quarter close');both(l,dd(3),dd(4));load(l,dd(4),'17:10','Recorded');out.push(l);
+      l=ask(RS,dd(4),'09:45','FUEL',2000,'Store audits in Pune this month');both(l,dd(4),dd(5));load(l,dd(5),'16:30','Recorded');out.push(l);
+      l=ask(RK,dd(5),'12:15','TEL',600,'Extra data for the hiring drive calls');both(l,dd(5),dd(6));load(l,dd(6),'11:50','Recorded');out.push(l);
+      /* Declined by the bank */
+      l=ask(NA,dd(5),'14:20','GIFT',3000,'Gifts for the branch staff at Diwali');both(l,dd(6),dd(6));load(l,dd(7),'10:40','Failed','The bank declined the load: the card\'s monthly load limit was reached.');out.push(l);
+      /* Approved, waiting to be loaded */
+      l=ask(AI,dd(7),'09:30','FUEL',3500,'Drives to the Thane and Navi Mumbai stores');both(l,dd(7),dd(8));out.push(l);
+      l=ask(ST,dd(8),'10:10','HLTH',4000,'Eye test and new spectacles');both(l,dd(8),dd(9));out.push(l);
+      /* Rejected by Finance */
+      l=ask(VM,dd(6),'18:05','MEAL',6000,'Client dinners during the vendor meet');act(l,dd(7),'10:15','Approve');act(l,dd(7),'16:45','Reject','Client dinners are claimed as an expense, not loaded to the meal wallet.');out.push(l);
+      /* Sent back: by the manager, and by Finance */
+      l=ask('rahul.verma@novaretail.in',dd(8),'13:40','GIFT',4000,'Gifts for the top sales team');act(l,dd(9),'10:30','Follow-Up','Add the names of the people the gifts are for.');out.push(l);
+      l=ask(IK,dd(8),'15:25','TEL',1200,'International roaming for the Singapore vendor visit');act(l,dd(9),'11:05','Approve');act(l,dd(10),'12:20','Follow-Up','Attach the roaming plan and the travel dates.');out.push(l);
+      /* With Finance */
+      l=ask('sneha.kulkarni@novaretail.in',dd(9),'09:20','FUEL',2500,'Weekly visits to the Baner and Hinjewadi stores');act(l,dd(10),'10:00','Approve');out.push(l);
+      l=ask('aditya.shah@novaretail.in',dd(9),'14:10','MEAL',1800,'Lunches with the new franchise partners');act(l,dd(10),'15:15','Approve');out.push(l);
+      l=ask('divya.krishnan@novaretail.in',dd(10),'11:30','HLTH',5000,'Annual health check-up');act(l,dd(11),'09:50','Approve');out.push(l);
+      /* With the manager */
+      out.push(ask('nisha.gupta@novaretail.in',dd(10),'16:05','MEAL',2000,'Team lunches during the Diwali sale week'));
+      out.push(ask('karthik.reddy@novaretail.in',dd(11),'09:15','FUEL',3000,'Extra store visits across Bengaluru this month'));
+      out.push(ask('pooja.desai@novaretail.in',dd(11),'12:40','TEL',800,'International roaming for the Dubai supplier visit'));
+      out.push(ask('farhan.qureshi@novaretail.in',dd(11),'17:20','GIFT',2500,'Gifts for the store team after the Kurla launch'));
+      return out.map(function(x){const st=caActiveStage(x);return expKey(x)+' '+ccLoadLabel(x)+(st?' @'+st.name:'');}).join(' · ');});
   }).then(function(){
     S(SA);setAppRole('Super Admin');const e=entitiesData.find(function(x){return x.entityId===P.ent;});if(e)seSelectedEntity=e.id;if(typeof appEntityChanged==='function')appEntityChanged();
     window.showToast=T0;presBuilding=false;presHoldAuto=false;window.emsAutoIssueHold=false;return log;

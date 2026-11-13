@@ -11,12 +11,20 @@
 let ccRqaQ='',ccRqaTypeF='',ccRqaProgF='',ccRqaStatusF='';
 const CC_RQA_TYPES=['New Card','Replacement','Wallet Request','Load Request','Company Load','Benefit Load'];
 const CC_RQA_STATES=['Draft','Awaiting Approval','Follow-Up','Enrollment Pending','Enrollment Completed','Awaiting Execution','Processing','Partially Recorded','Recorded','Failed','Rejected','Withdrawn','Cancelled'];
+/* For now (product owner, 13 Nov 2026: "just show the wallet request and loading request, other than that remove it"):
+   the list holds only
+   - Wallet Request: a top-up of a benefit wallet (Meal, Fuel, Gift, Telecom, Health …), raised from Expenses & Advances
+     → Card Load, on the card-load route Manager review → Finance review → Load;
+   - Benefit Load: the monthly Wallet & Benefits loads.
+   New cards, replacements, add-a-wallet requests and Corporate Expense loads are not listed (their records and panels
+   are unchanged). No New Card Request +, no Bulk Files / Benefit Loads strip, no Enrollment Pending box. False = as before. */
+const CC_RQA_TOPUPS_ONLY=true;
 function ccRqaOn(){return typeof ccAdminView!=='function'||ccAdminView();}
 function ccRqaStampMs(s){const t=Date.parse(String(s||'').replace(' | ',' '));return isNaN(t)?0:t;}
 /* One row per request and per load this person may see. */
 function ccRqaItems(){
   const out=[];
-  ccRequests.filter(ccReqVisible).forEach(function(r){
+  if(!CC_RQA_TOPUPS_ONLY)ccRequests.filter(ccReqVisible).forEach(function(r){
     const p=ccProg(r.programmeId),c=typeof ccReqCtlCard==='function'?ccReqCtlCard(r):ccCardOfReq(r);
     const type=r.kind==='wallet request'?'Wallet Request':r.kind==='card replacement'?'Replacement':'New Card';
     out.push({kind:'req',rec:r,id:r.id,key:expKey(r),type:type,typeSub:r.kind==='wallet request'?'':r.cardType,name:r.name,empId:r.empId,
@@ -26,7 +34,8 @@ function ccRqaItems(){
   });
   ccLoads.filter(ccLoadVisible).forEach(function(l){
     const c=ccCard(l.cardId),p=ccProg(l.programmeId),ben=(l.origin&&l.origin.type==='Benefit')||!!l.benefit;
-    out.push({kind:'load',rec:l,id:l.id,key:expKey(l),type:l.selfRequest?'Load Request':ben?'Benefit Load':'Company Load',typeSub:ccOriginText(l).replace(/^Benefit allocation /,'').replace(/^Individual$/,''),
+    if(CC_RQA_TOPUPS_ONLY&&!ben&&l.wallet==='CORP')return;
+    out.push({kind:'load',rec:l,id:l.id,key:expKey(l),type:CC_RQA_TOPUPS_ONLY?(ben?'Benefit Load':'Wallet Request'):l.selfRequest?'Load Request':ben?'Benefit Load':'Company Load',typeSub:ccOriginText(l).replace(/^Benefit allocation /,'').replace(/^Individual$/,''),
       name:l.name,empId:l.empId,whoSub:c?ccMask(c.last4)+' · '+expKey(c):'',details:wbTypeName(l.wallet),detailsSub:p?p.code||p.key:'',
       prog:p?ccProgLabel(p):'',status:ccLoadLabel(l),at:ccRqaStampMs(l.createdAt)});
   });
@@ -72,9 +81,9 @@ function ccRqaListHTML(){
   }),ccEmpty(8,'No request or load matches this filter.'));
   const cnt=function(s){return all.filter(function(x){return x.status===s;}).length;};
   const tile=function(s,tone){return caStat(s,cnt(s),ccRqaStatusF===s,'ccRqaStat(\''+s+'\')',tone);};
-  const tiles=tile('Awaiting Approval')+tile('Follow-Up','wait')+tile('Enrollment Pending','wait')+tile('Awaiting Execution','wait')+tile('Rejected','bad')+tile('Failed','bad');
+  const tiles=tile('Awaiting Approval')+tile('Follow-Up','wait')+(CC_RQA_TOPUPS_ONLY?'':tile('Enrollment Pending','wait'))+tile('Awaiting Execution','wait')+tile('Rejected','bad')+tile('Failed','bad');
   const types=CC_RQA_TYPES.filter(function(t){return all.some(function(x){return x.type===t;});});
-  const states=CC_RQA_STATES.concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
+  const states=(CC_RQA_TOPUPS_ONLY?CC_RQA_STATES.filter(function(s){return all.some(function(x){return x.status===s;});}):CC_RQA_STATES).concat(all.map(function(x){return x.status;}).filter(function(s,i,a){return CC_RQA_STATES.indexOf(s)<0&&a.indexOf(s)===i;}));
   return ccFilterBar(lpSearchField('cra-f-q',ccRqaQ,'Search request, employee, card or wallet','ccRqaApply()')
       +apCS('cra-f-type',types,ccRqaTypeF,'All Types')
       +apCS('cra-f-prog',ccProgs().map(ccProgLabel),ccRqaProgF,'All Programmes')
@@ -110,6 +119,7 @@ function ccRqaOpenLoad(id){
     const v0=ccRqViews;
     ccRqViews=function(){
       const v=v0.apply(this,arguments);if(!ccRqaOn())return v;
+      if(CC_RQA_TOPUPS_ONLY)return [['all','Requests']];   // one view: the strip is not drawn
       const at=v.findIndex(function(x){return x[0]==='crq'||x[0]==='cld';});if(at<0)return v;
       const rest=v.filter(function(x){return x[0]!=='crq'&&x[0]!=='cld';});rest.splice(at,0,['all','Requests']);return rest;
     };
@@ -151,7 +161,7 @@ function ccRqaOpenLoad(id){
     const a0=ccCanAddHere;
     ccCanAddHere=function(){
       if(ccRqaOn()&&(ccPageTab==='requests'||ccPageTab==='loads')&&ccRqView()==='all')
-        return (ccCan('card.request.create')||ccCan('card.request.others'))&&ccProgs().some(function(p){return ccProgActive(p);});
+        return !CC_RQA_TOPUPS_ONLY&&(ccCan('card.request.create')||ccCan('card.request.others'))&&ccProgs().some(function(p){return ccProgActive(p);});
       return a0.apply(this,arguments);
     };
   }
