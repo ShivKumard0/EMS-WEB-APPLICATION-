@@ -28,7 +28,8 @@
     return {date:d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(),time:(h%12||12)+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s+' '+(h>=12?'PM':'AM')};};
   const when=function(iso){const d=new Date(iso),h=d.getHours(),m=d.getMinutes();return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear()+' | '+(h%12||12)+':'+(m<10?'0':'')+m+' '+(h>=12?'PM':'AM');};
   const dhi=function(){return (typeof entitiesData!=='undefined'?entitiesData:[]).find(function(e){return /Dhi Hyperlocal/i.test(e.name);})||null;};
-  const inDhi=function(){const d=dhi();return !!(d&&typeof idEntity==='function'&&idEntity()===d.entityId);};
+  let realEnt=null;   // while a sign-up's Module Control is drawn under its own key: the real idEntity
+  const inDhi=function(){const d=dhi(),f=realEnt||(typeof idEntity==='function'?idEntity:null);return !!(d&&f&&f()===d.entityId);};
 
   /* ── 1 · Sign up ── */
   const val=function(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';};
@@ -316,12 +317,27 @@
     return heroOf(r)+head+form+table;
   }
   /* Module Control: the same screen, kept for this sign-up alone (its own key, never Dhi Hyperlocal's). */
-  const withEnt=function(r,fn){const e0=window.idEntity;window.idEntity=function(){return 'SU-'+r.uid;};try{return fn();}finally{window.idEntity=e0;}};
+  const withEnt=function(r,fn){const e0=window.idEntity,outer=realEnt;realEnt=outer||e0;window.idEntity=function(){return 'SU-'+r.uid;};
+    try{return fn();}finally{window.idEntity=e0;realEnt=outer;}};
   const suOn=function(){const r=typeof page!=='undefined'&&page==='settings'?recOfRow(csSelectedItem):null;return r&&suTab==='module-control'?r:null;};
   ['mcsToggle','mcsSub','mcsSave','mcsDiscard'].forEach(function(n){
     const f0=window[n];if(typeof f0!=='function')return;
     window[n]=function(){const r=suOn(),self=this,args=arguments;return r?withEnt(r,function(){return f0.apply(self,args);}):f0.apply(this,arguments);};
   });
+  /* A sign-up's Module Control starts with every module and sub-module off; the Super Admin switches on what the
+     company gets (product owner, 13 Nov 2026). Dhi Hyperlocal and Nova Retail keep theirs. A sign-up's set still at the
+     untouched all-on start is turned off once; one already changed is kept. */
+  function suMcOff(r){
+    if(typeof mcShowBook==='undefined'||typeof mcTabHTML!=='function')return;
+    const key='SU-'+r.uid;
+    if(!mcShowBook[key])withEnt(r,function(){return mcTabHTML();});   // the screen makes its starting set
+    const b=mcShowBook[key];if(!b||b.suInit)return;
+    const mods=b.mods||{},subs=b.subs||{};
+    const allOn=Object.keys(mods).every(function(k){return mods[k];})&&Object.keys(subs).every(function(k){return Object.keys(subs[k]).every(function(x){return subs[k][x];});});
+    if(allOn){Object.keys(mods).forEach(function(k){mods[k]=false;});Object.keys(subs).forEach(function(k){Object.keys(subs[k]).forEach(function(x){subs[k][x]=false;});});}
+    b.suInit=true;
+    if(typeof presSaveSoon==='function')presSaveSoon();
+  }
   function panelHTML(r){
     if(!TABS.some(function(t){return t[0]===suTab;}))suTab='basic-details';
     const chev=function(d){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="'+(d==='left'?'15 18 9 12 15 6':'9 18 15 12 9 6')+'"/></svg>';};
@@ -334,7 +350,7 @@
     if(SECTIONS[suTab])body=sectionHTML(r,suTab);
     else if(suTab==='attachments')body=heroOf(r)+sectionTitle('Attachments','')+(typeof attachTabHTML==='function'?attachTabHTML('su',r.uid):'');
     else if(suTab==='roles-access')body=rolesHTML(r);
-    else if(suTab==='module-control')body=heroOf(r)+(typeof mcTabHTML==='function'?withEnt(r,function(){return mcTabHTML();}):'');
+    else if(suTab==='module-control'){suMcOff(r);body=heroOf(r)+(typeof mcTabHTML==='function'?withEnt(r,function(){return mcTabHTML();}):'');}
     else if(suTab==='card-setup')body=heroOf(r)+ccsHTML('SU-'+r.uid);
     else{
       const form='<div class="lp-logs-form">'
