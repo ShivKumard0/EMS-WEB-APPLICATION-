@@ -268,14 +268,15 @@ const ccpBook={};
   function walletsHTML(r){
     const ws=walletsOf(r.entity),cur=editing&&draft?draft:r.wallets,c=can(),n=ws.filter(function(w){return cur[w[0]]!==false;}).length;
     let h='<div class="nxc"><div class="lp-sb-view-header"><span class="lp-sb-section-title">Wallets</span>'
-      +(c&&!editing?'<button class="lp-sb-view-edit-btn" onclick="ccpEdit()">'+(typeof SB_PEN!=='undefined'?SB_PEN+' ':'')+'Edit</button>':'<span class="wb-muted">'+n+' of '+ws.length+' on</span>')+'</div>';
+      +(c&&!editing?'<button class="lp-sb-view-edit-btn" onclick="ccpEdit()">'+(typeof SB_PEN!=='undefined'?SB_PEN+' ':'')+'Edit</button>':'<span class="wb-muted">'+n+' of '+ws.length+' active</span>')+'</div>';
     if(!ws.length)return h+'<div class="wb-empty-sm">No wallets are set up in Wallet &amp; Benefits yet.</div></div>';
     h+=ws.map(function(w){
       const on=cur[w[0]]!==false;
+      /* Not editing: Active or Inactive only; Edit: the toggle only (product owner, 13 Nov 2026). */
       return '<div class="nxc-w"><span class="nxc-w-name">'+E(w[1])+'</span>'
-        +(editing?'':badge(on?'ok':'idle',on?'On':'Off'))
-        +'<label class="cs-toggle" title="'+(editing?(on?'Turn off ':'Turn on ')+E(w[1]):(on?'On':'Off'))+'"'+(editing?'':' style="cursor:default"')+'><input type="checkbox" aria-label="'+E(w[1])+'"'+(on?' checked':'')+(editing?'':' disabled')
-          +' onchange="ccpPick(\''+w[0]+'\',this.checked)"><span class="cs-toggle-slider"></span></label></div>';
+        +(editing?'<label class="cs-toggle" title="'+(on?'Make inactive: ':'Make active: ')+E(w[1])+'"><input type="checkbox" aria-label="'+E(w[1])+'"'+(on?' checked':'')
+            +' onchange="ccpPick(\''+w[0]+'\',this.checked)"><span class="cs-toggle-slider"></span></label>'
+          :badge(on?'ok':'idle',on?'Active':'Inactive'))+'</div>';
     }).join('');
     if(editing)h+='<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccpCancel()">Cancel</button><button class="ep-save-btn" onclick="ccpSave()">Save changes</button></div>';
     return h+'</div>';
@@ -285,9 +286,10 @@ const ccpBook={};
     const st=settingsOf(r),cur=sEdit&&sDraft?sDraft:st,c=can();
     const row=function(k,label){
       const on=!!cur[k];
-      return '<div class="nxc-w"><span class="nxc-w-name">'+E(label)+'</span>'+(sEdit?'':badge(on?'ok':'idle',on?'On':'Off'))
-        +'<label class="cs-toggle" title="'+(sEdit?(on?'Turn off ':'Turn on ')+E(label):(on?'On':'Off'))+'"'+(sEdit?'':' style="cursor:default"')+'><input type="checkbox" aria-label="'+E(label)+'"'+(on?' checked':'')+(sEdit?'':' disabled')
-          +' onchange="ccpSetPick(\''+k+'\',this.checked)"><span class="cs-toggle-slider"></span></label></div>';
+      return '<div class="nxc-w"><span class="nxc-w-name">'+E(label)+'</span>'
+        +(sEdit?'<label class="cs-toggle" title="'+(on?'Make inactive: ':'Make active: ')+E(label)+'"><input type="checkbox" aria-label="'+E(label)+'"'+(on?' checked':'')
+            +' onchange="ccpSetPick(\''+k+'\',this.checked)"><span class="cs-toggle-slider"></span></label>'
+          :badge(on?'ok':'idle',on?'Active':'Inactive'))+'</div>';
     };
     let h='<div class="nxc"><div class="lp-sb-view-header"><span class="lp-sb-section-title">Channels</span>'
       +(c&&!sEdit?'<button class="lp-sb-view-edit-btn" onclick="ccpSetEdit()">'+(typeof SB_PEN!=='undefined'?SB_PEN+' ':'')+'Edit</button>':'')+'</div>'
@@ -312,7 +314,7 @@ const ccpBook={};
     if(!d.from||!d.to){showToast('Dates required','error','Set Effective From and Effective To.');return;}
     if(d.to<=d.from){showToast('Check the dates','error','Effective To must be after Effective From.');return;}
     const L={online:'Online',pos:'POS',atm:'ATM',intl:'International Use'},ch=[];
-    Object.keys(L).forEach(function(k){if(!!d[k]!==!!st[k])ch.push(L[k]+' '+(d[k]?'on':'off'));});
+    Object.keys(L).forEach(function(k){if(!!d[k]!==!!st[k])ch.push(L[k]+' '+(d[k]?'active':'inactive'));});
     if(d.from!==st.from)ch.push('Effective From '+dLabel(st.from)+' → '+dLabel(d.from));
     if(d.to!==st.to)ch.push('Effective To '+dLabel(st.to)+' → '+dLabel(d.to));
     if(!ch.length){sEdit=false;sDraft=null;repaint();showToast('No changes','info');return;}
@@ -356,7 +358,7 @@ const ccpBook={};
     if(!changed.length){editing=false;draft=null;repaint();showToast('No changes','info');return;}
     if(!ws.some(function(w){return draft[w[0]]!==false;})){showToast('Keep one wallet on','error','A multiwallet card needs at least one wallet.');return;}
     ws.forEach(function(w){r.wallets[w[0]]=draft[w[0]]!==false;});
-    const text='Wallets updated: '+changed.map(function(w){return w[1]+' '+(r.wallets[w[0]]?'on':'off');}).join(', ')+'.';
+    const text='Wallets updated: '+changed.map(function(w){return w[1]+' '+(r.wallets[w[0]]?'active':'inactive');}).join(', ')+'.';
     log(r,r.status,text);editing=false;draft=null;renderADTPage();
     showToast('Wallets saved','success',r.name+' · '+text.replace('Wallets updated: ',''));
   };
