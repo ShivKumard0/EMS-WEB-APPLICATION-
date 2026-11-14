@@ -39,3 +39,9 @@
 /* The editor in Add / Edit Policy */
 .epol-ed-host{min-height:460px}
 .epol-ed-host .tox-tinymce{border-color:var(--border);border-radius:10px}
+
+/* Benefit policies in the Policies list (js/wb-policies-move.js, 14 Nov 2026): the row's Action menu on the card,
+   above Learn More; the card reads selected while its panel is open. */
+.epol-card.lp-row-selected{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,23,42,.06)}
+.epol-bp-act{margin-top:auto;padding-top:8px;display:flex;justify-content:center}
+.epol-bp-act+.epol-more{margin-top:0}
