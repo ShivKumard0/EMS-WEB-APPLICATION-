@@ -27,6 +27,7 @@
     return st.type==='Reporting Manager'||/manager/i.test(st.name||'')?'Manager':/finance/i.test(st.name||'')?'Finance':'';
   };
   const AT=['Manager','Finance'];
+  const pendAt=function(r){try{const st=caActiveStage(r);return st?(st.approvers||[]).map(function(u){return typeof idName==='function'?idName(u):u;}).join(', ')+(roleOf(r)?' ('+roleOf(r)+')':''):'';}catch(e){return '';}};
   let atF={ea:'',rl:''};
   const picked={ea:new Set(),rl:new Set()};
 
@@ -36,9 +37,12 @@
   const which=function(){return onEA()?'ea':onRL()?'rl':'';};
   const L={
     ea:{table:'table.ea-table',
-      items:function(){return eaRows().filter(eaRowPass).filter(function(x){return x.kind==='exp'||x.kind==='adv';}).map(function(x){return {k:x.kind+':'+x.id,r:x.r,row:(x.kind==='exp'?'exp-row-':'adv-row-')+x.id,key:x.key};});}},
+      items:function(){return eaRows().filter(eaRowPass).filter(function(x){return x.kind==='exp'||x.kind==='adv';}).map(function(x){return {k:x.kind+':'+x.id,r:x.r,row:(x.kind==='exp'?'exp-row-':'adv-row-')+x.id,key:x.key,who:x.who,cat:x.cat,amt:expMoney(x.req,x.cur),
+        info:[['Type',x.type],['Employee',x.who],['Department',x.dept],['Category',x.cat],[x.kind==='exp'?'Title':'Purpose',x.purpose],['Amount',expMoney(x.req,x.cur)],['Requested on',x.date&&typeof cdLabel==='function'?cdLabel(x.date):''],['Pending at',pendAt(x.r)]],
+        lines:x.kind==='exp'?(x.r.lines||[]).map(function(l){return [l.title||'Item',expMoney(parseFloat(l.amount)||0,x.cur)];}):[]};});}},
     rl:{table:'table.cc-rqa-table',
-      items:function(){return ccRqaShown(ccRqaItems()).map(function(x){return {k:x.kind+':'+x.id,r:x.rec,row:(x.kind==='req'?'ccr-row-':'ccl-row-')+x.id,key:x.key};});}}
+      items:function(){return ccRqaShown(ccRqaItems()).map(function(x){return {k:x.kind+':'+x.id,r:x.rec,row:(x.kind==='req'?'ccr-row-':'ccl-row-')+x.id,key:x.key,who:x.name,cat:x.details,amt:x.rec.amount!=null?expMoney(x.rec.amount,x.rec.currency):'',
+        info:[['Type',x.type],['Employee',x.name],['Employee ID',x.empId],['Category',x.details],['Card',x.whoSub],['Amount',x.rec.amount!=null?expMoney(x.rec.amount,x.rec.currency):''],['Reason',x.rec.reason],['Pending at',x.pend||pendAt(x.rec)]],lines:[]};});}}
   };
   const can=function(it){try{return caCanDecide(it.r,me());}catch(e){return false;}};
   /* Only once a filter is applied (product owner, 14 Nov 2026: "when i apply filter and click on search then only show
@@ -82,7 +86,14 @@
     +'.bulk-bar-n{font-size:13px;font-weight:600;color:var(--navy,#0f172a)}.bulk-bar-sp{flex:1}'
     +'.bulk-bar .ep-cancel-btn,.bulk-bar .ep-save-btn{margin:0}'
     +'.bulk-bar-clear{background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:500;color:var(--gray,#6b7280);cursor:pointer}.bulk-bar-clear:hover{text-decoration:underline}'
-    +'.bulk-note{font-size:13px;color:#6b7280;margin:3px 0 0}.bulk-list{margin:12px 0 0;padding:10px 12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#f8fafc;font-size:12.5px;color:var(--navy,#0f172a);max-height:120px;overflow:auto;line-height:1.6}';
+    +'.bulk-note{font-size:13px;color:#6b7280;margin:3px 0 0}.bulk-list{margin:12px 0 0;border:1px solid var(--border,#e5e7eb);border-radius:10px;height:190px;overflow-y:auto;font-size:12.5px;color:var(--navy,#0f172a)}'
+    +'.bulk-it{border-bottom:1px solid #f1f5f9}.bulk-it:last-child{border-bottom:0}'
+    +'.bulk-it-h{display:grid;grid-template-columns:86px minmax(0,1fr) minmax(0,.8fr) auto 14px;gap:10px;align-items:center;padding:9px 12px;cursor:pointer}.bulk-it-h:hover{background:#f8fafc}'
+    +'.bulk-it-h b{font-weight:600}.bulk-it-h span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bulk-it-h .a{font-weight:600;text-align:right}'
+    +'.bulk-it-h svg{width:14px;height:14px;color:#6b7280;transition:transform .15s}.bulk-it.open .bulk-it-h svg{transform:rotate(180deg)}'
+    +'.bulk-it-d{display:none;padding:4px 12px 12px;background:#f8fafc}.bulk-it.open .bulk-it-d{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px}.bulk-it.open .bulk-it-h{background:#f8fafc}'
+    +'.bulk-it-d i{font-style:normal;color:#6b7280}.bulk-it-d u{text-decoration:none;overflow-wrap:anywhere}'
+    +'#bulk-comment{border-radius:8px}';
   let drawing=false;
   function draw(){
     if(drawing)return;
@@ -132,6 +143,7 @@
 
   /* ── The popup: one comment for all ── */
   let ask=null;   // {w, decision, err}
+  const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
   const root=function(){let el=document.getElementById('bulk-modal');if(!el){el=document.createElement('div');el.id='bulk-modal';document.body.appendChild(el);}return el;};
   const chosen=function(w){return selectable(w).filter(function(it){return picked[w].has(it.k);});};
   const stepIn=function(it){const st=caActiveStage(it.r);return !!st&&st.approvers.indexOf(me())<0;};
@@ -140,11 +152,16 @@
     const items=chosen(ask.w),n=items.length,rej=ask.decision==='Reject',need=rej||items.some(stepIn);
     const X='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     root().innerHTML='<div class="ct-modal-overlay" style="z-index:2000" onclick="emsBulkClose()">'
-      +'<div class="ct-modal" style="width:min(520px,95vw)" role="dialog" aria-modal="true" aria-label="'+ask.decision+' selected requests" onclick="event.stopPropagation()">'
+      +'<div class="ct-modal" style="width:min(560px,95vw)" role="dialog" aria-modal="true" aria-label="'+ask.decision+' selected requests" onclick="event.stopPropagation()">'
       +'<div class="ct-modal-hdr" style="align-items:flex-start"><div><span class="ct-modal-title">'+ask.decision+' '+n+' request'+(n===1?'':'s')+'?</span>'
         +'<div class="bulk-note">'+(rej?'Each selected request is rejected with this reason.':'Each selected request moves to its next step, as when it is approved one by one.')+'</div></div>'
         +'<button class="ct-modal-close" onclick="emsBulkClose()" aria-label="Close">'+X+'</button></div>'
-      +'<div class="bulk-list">'+items.map(function(it){return esc(it.key);}).join(', ')+'</div>'
+      +'<div class="bulk-list">'+items.map(function(it){
+          const rows=(it.info||[]).filter(function(p){return p[1];}).map(function(p){return '<i>'+esc(p[0])+'</i><u>'+esc(p[1])+'</u>';}).join('')
+            +(it.lines&&it.lines.length?'<i>Items</i><u>'+it.lines.map(function(l){return esc(l[0])+' · '+esc(l[1]);}).join('<br>')+'</u>':'');
+          return '<div class="bulk-it"><div class="bulk-it-h" title="Show details" onclick="this.parentNode.classList.toggle(&quot;open&quot;)"><b>'+esc(it.key)+'</b><span>'+esc(it.who||'')+'</span><span>'+esc(it.cat||'')+'</span><span class="a">'+esc(it.amt||'')+'</span>'+CHEV+'</div>'
+            +'<div class="bulk-it-d">'+rows+'</div></div>';
+        }).join('')+'</div>'
       +'<div class="ep-form-group" style="margin-top:14px"><label class="ep-form-label">'+(rej?'Reason':'Comment')+(need?' <span class="req">*</span>':'')+'</label>'
         +'<textarea class="ep-form-input" id="bulk-comment" rows="3" style="height:auto;resize:vertical" placeholder="'+(rej?'Why these are rejected':'Written to every selected request')+'"></textarea>'
         +(ask.err?'<div style="font-size:12.5px;color:var(--st-bad-fg,#dc2626);margin-top:6px">'+esc(ask.err)+'</div>':'')+'</div>'
@@ -159,7 +176,7 @@
     if(!ask)return;
     const w=ask.w,decision=ask.decision,items=chosen(w),t=document.getElementById('bulk-comment'),comment=String(t?t.value:'').trim();
     if(!comment&&(decision==='Reject'||items.some(stepIn))){
-      ask.text='';ask.err=decision==='Reject'?'Enter the reason for rejecting.':'Enter a comment: you are deciding in another approver\'s place.';paint();return;
+      ask.text=comment;ask.err=decision==='Reject'?'Enter the reason for rejecting.':'Enter a comment: you are deciding in another approver\'s place.';paint();return;
     }
     ask=null;paint();
     let done=0;const failed=[];
