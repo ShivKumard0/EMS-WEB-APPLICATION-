@@ -18,7 +18,7 @@ function emsMfEnt(){const n=typeof presNova==='function'?presNova():null;return 
 function emsRoutesMgrFin(){
   const ent=emsMfEnt();if(!ent||typeof caWorkflows==='undefined'||typeof caStageDef!=='function')return 0;
   const uid=function(e){return (typeof idUserByEmail==='function'?idUserByEmail(e)||{}:{}).userId||'';};
-  const ks=uid('karan.shah@novaretail.in'),ai=uid('ananya.iyer@novaretail.in');
+  const ks=uid('karan.shah@opendhi.in'),ai=uid('ananya.iyer@opendhi.in');
   /* Finance's fallback: Karan; on the budget routes Ananya Iyer (Budget Committee), because a budget step never goes to
      someone who approved an earlier one - when Rohan raises a budget item himself, Karan has approved it as his manager. */
   const fb=function(w){return /^(Budget|Financial Year Close)/.test(caWfKindOf(w))&&ai?ai:ks;};
@@ -67,7 +67,7 @@ function emsMfTrim(rt,r){
    or submitted himself, not as an earlier step's approver. So he is a valid fallback for any step, and may decide any
    step himself - as the step's approver or in another approver's place - logged under his name. Everyone else keeps
    the rule that whoever raises a request does not approve it; every other company is unchanged. */
-function emsMfAdmin(){return (typeof idUserByEmail==='function'?idUserByEmail('karan.shah@novaretail.in')||{}:{}).userId||'';}
+function emsMfAdmin(){return (typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in')||{}:{}).userId||'';}
 function emsMfAdminFree(r,who){
   const ent=emsMfEnt(),ks=emsMfAdmin();
   if(!r||!ent||!ks||(who&&who!==ks))return false;

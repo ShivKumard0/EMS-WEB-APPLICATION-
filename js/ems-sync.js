@@ -24,7 +24,7 @@
   const BASE=String(CFG.url).replace(/\/+$/,'');
   const LS={copy:'ems-sync-web-copy',pub:'ems-sync-web-pub',done:'ems-sync-web-done',lead:'ems-sync-web-lead'};
   const TAB=Math.random().toString(36).slice(2);
-  const PHONE=['kabir.joshi','arjun.rao','ritu.sen','rohan.mehta','ananya.iyer','neel.arora'].map(function(n){return n+'@novaretail.in';});
+  const PHONE=['kabir.joshi','arjun.rao','ritu.sen','rohan.mehta','ananya.iyer','neel.arora'].map(function(n){return n+'@opendhi.in';});
   const TICK=4000;
   const ls=function(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}};
   const lsSet=function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};

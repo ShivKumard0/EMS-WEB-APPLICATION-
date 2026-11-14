@@ -16,7 +16,7 @@
     const ent=typeof emsMfEnt==='function'?emsMfEnt():'';
     if(!ent||typeof caWorkflows==='undefined'||typeof idUserByEmail!=='function')return 0;
     const uid=function(e){return (idUserByEmail(e)||{}).userId||'';};
-    const rs=uid('ritu.sen@novaretail.in'),ks=uid('karan.shah@novaretail.in');
+    const rs=uid('ritu.sen@opendhi.in'),ks=uid('karan.shah@opendhi.in');
     if(!rs)return 0;
     const at=typeof stampNow==='function'?(function(){const s=stampNow();return s.date+' | '+s.time;})():'';
     let n=0;
@@ -39,7 +39,7 @@
   function rightToApproveLoads(){
     const ent=typeof emsMfEnt==='function'?emsMfEnt():'';
     if(!ent||typeof rbacWorkspacesData==='undefined'||typeof wsTpl!=='function')return false;
-    const rs=(idUserByEmail('ritu.sen@novaretail.in')||{}).userId;if(!rs)return false;
+    const rs=(idUserByEmail('ritu.sen@opendhi.in')||{}).userId;if(!rs)return false;
     const w=rbacWorkspacesData.find(function(x){return x.entityId===ent&&x.status!=='Deleted';});
     if(!w||w.mfRituLoads)return false;
     w.mfRituLoads=true;

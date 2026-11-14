@@ -12,7 +12,7 @@
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
   const nova=function(){return typeof emsMfEnt==='function'?emsMfEnt():'';};
-  const admin=function(){return ((typeof idUserByEmail==='function'&&idUserByEmail('karan.shah@novaretail.in'))||{}).userId||'';};
+  const admin=function(){return ((typeof idUserByEmail==='function'&&idUserByEmail('karan.shah@opendhi.in'))||{}).userId||'';};
   /* Not while the presentation prepares its data: it records its own loads step by step. */
   const building=function(){return typeof presBuilding!=='undefined'&&presBuilding;};
   function putOn(l,A){

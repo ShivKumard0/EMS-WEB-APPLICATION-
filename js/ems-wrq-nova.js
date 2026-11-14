@@ -11,7 +11,7 @@
   const OFF=['TEL','GIFT'];
   const nova=function(){return typeof emsMfEnt==='function'?emsMfEnt():'';};
   function arjunCard(){
-    const u=typeof idUserByEmail==='function'?idUserByEmail('arjun.rao@novaretail.in'):null;
+    const u=typeof idUserByEmail==='function'?idUserByEmail('arjun.rao@opendhi.in'):null;
     if(!u||!u.eid||typeof ccCardsOfEmp!=='function')return null;
     return ccCardsOfEmp(u.eid).find(function(c){return c.entity===nova()&&c.status==='Active';})||null;
   }

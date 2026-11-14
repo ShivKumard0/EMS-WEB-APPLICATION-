@@ -24,8 +24,10 @@ const PRES_SHOWN='Opendhi';
 /* The card's shown name (product owner, 14 Nov 2026: "change the card name as well OpenDhi x RBL"): the card programme
    (prepared as Nova Multi Wallet Card, CPG-103) and the card itself (Corporate Cards → Cards). Codes stay. */
 const PRES_CARD='OpenDhi x RBL';
-/* Bumped when a rename is added: a copy renamed by an earlier version is renamed once more. */
-const PRES_SHOWN_V=2;
+/* Bumped when a rename is added: a copy renamed by an earlier version is renamed once more. 3: every other "Nova" too -
+   funding accounts, codes (NOVA-MULTI → OPENDHI-MULTI …) and e-mail addresses (@novaretail.in → @opendhi.in), product
+   owner, 14 Nov 2026: "replace every nova with Opendhi everywhere". */
+const PRES_SHOWN_V=3;
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
 /* Screen state, caches and values rebuilt from other records are never kept. */
@@ -162,61 +164,61 @@ if(PRES_ON){
 /* ── The prepared company: built through the application's own functions ─ */
 const PRES_PEOPLE=[
   /* code, first, last, email, department, designation, manager email, gender, date of birth */
-  ['Karan','Shah','karan.shah@novaretail.in','Administration','General Manager','','Male','1982-03-11'],
-  ['Riya','Kapoor','riya.kapoor@novaretail.in','Human Resources','HR Manager','karan.shah@novaretail.in','Female','1988-07-19'],
-  ['Rohan','Mehta','rohan.mehta@novaretail.in','Finance','Finance Manager','karan.shah@novaretail.in','Male','1986-01-24'],
-  ['Neel','Arora','neel.arora@novaretail.in','Finance','Finance Executive','rohan.mehta@novaretail.in','Male','1994-05-02'],
-  ['Vivek','Menon','vivek.menon@novaretail.in','Finance','Finance Controller','karan.shah@novaretail.in','Male','1984-10-08'],
-  ['Ritu','Sen','ritu.sen@novaretail.in','Sales','Sales Manager','karan.shah@novaretail.in','Female','1987-12-15'],
-  ['Kabir','Joshi','kabir.joshi@novaretail.in','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1997-02-27'],
-  ['Arjun','Rao','arjun.rao@novaretail.in','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1995-08-30'],
-  ['Ananya','Iyer','ananya.iyer@novaretail.in','Operations','Operations Manager','karan.shah@novaretail.in','Female','1989-04-17'],
-  ['Meghna','Pillai','meghna.pillai@novaretail.in','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1996-11-21'],
-  ['Sara','Thomas','sara.thomas@novaretail.in','Compliance','Compliance Officer','karan.shah@novaretail.in','Female','1990-06-05'],
-  ['Imran','Khan','imran.khan@novaretail.in','Administration','IT Manager','karan.shah@novaretail.in','Male','1991-09-13'],
+  ['Karan','Shah','karan.shah@opendhi.in','Administration','General Manager','','Male','1982-03-11'],
+  ['Riya','Kapoor','riya.kapoor@opendhi.in','Human Resources','HR Manager','karan.shah@opendhi.in','Female','1988-07-19'],
+  ['Rohan','Mehta','rohan.mehta@opendhi.in','Finance','Finance Manager','karan.shah@opendhi.in','Male','1986-01-24'],
+  ['Neel','Arora','neel.arora@opendhi.in','Finance','Finance Executive','rohan.mehta@opendhi.in','Male','1994-05-02'],
+  ['Vivek','Menon','vivek.menon@opendhi.in','Finance','Finance Controller','karan.shah@opendhi.in','Male','1984-10-08'],
+  ['Ritu','Sen','ritu.sen@opendhi.in','Sales','Sales Manager','karan.shah@opendhi.in','Female','1987-12-15'],
+  ['Kabir','Joshi','kabir.joshi@opendhi.in','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1997-02-27'],
+  ['Arjun','Rao','arjun.rao@opendhi.in','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1995-08-30'],
+  ['Ananya','Iyer','ananya.iyer@opendhi.in','Operations','Operations Manager','karan.shah@opendhi.in','Female','1989-04-17'],
+  ['Meghna','Pillai','meghna.pillai@opendhi.in','Operations','Operations Executive','ananya.iyer@opendhi.in','Female','1996-11-21'],
+  ['Sara','Thomas','sara.thomas@opendhi.in','Compliance','Compliance Officer','karan.shah@opendhi.in','Female','1990-06-05'],
+  ['Imran','Khan','imran.khan@opendhi.in','Administration','IT Manager','karan.shah@opendhi.in','Male','1991-09-13'],
   /* More of Nova's store and office staff (product owner, 11 Nov 2026), so Corporate Cards lists a realistic set of cards. */
-  ['Rahul','Verma','rahul.verma@novaretail.in','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1996-03-14'],
-  ['Sneha','Kulkarni','sneha.kulkarni@novaretail.in','Operations','Store Manager','ananya.iyer@novaretail.in','Female','1990-09-22'],
-  ['Aditya','Shah','aditya.shah@novaretail.in','Sales','Area Sales Manager','ritu.sen@novaretail.in','Male','1988-11-05'],
-  ['Pooja','Desai','pooja.desai@novaretail.in','Operations','Visual Merchandiser','ananya.iyer@novaretail.in','Female','1995-01-30'],
-  ['Farhan','Qureshi','farhan.qureshi@novaretail.in','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1998-06-18'],
-  ['Divya','Krishnan','divya.krishnan@novaretail.in','Finance','Finance Executive','vivek.menon@novaretail.in','Female','1993-08-09'],
-  ['Karthik','Reddy','karthik.reddy@novaretail.in','Operations','Store Manager','ananya.iyer@novaretail.in','Male','1989-12-02'],
-  ['Nisha','Gupta','nisha.gupta@novaretail.in','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1997-04-25'],
+  ['Rahul','Verma','rahul.verma@opendhi.in','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1996-03-14'],
+  ['Sneha','Kulkarni','sneha.kulkarni@opendhi.in','Operations','Store Manager','ananya.iyer@opendhi.in','Female','1990-09-22'],
+  ['Aditya','Shah','aditya.shah@opendhi.in','Sales','Area Sales Manager','ritu.sen@opendhi.in','Male','1988-11-05'],
+  ['Pooja','Desai','pooja.desai@opendhi.in','Operations','Visual Merchandiser','ananya.iyer@opendhi.in','Female','1995-01-30'],
+  ['Farhan','Qureshi','farhan.qureshi@opendhi.in','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1998-06-18'],
+  ['Divya','Krishnan','divya.krishnan@opendhi.in','Finance','Finance Executive','vivek.menon@opendhi.in','Female','1993-08-09'],
+  ['Karthik','Reddy','karthik.reddy@opendhi.in','Operations','Store Manager','ananya.iyer@opendhi.in','Male','1989-12-02'],
+  ['Nisha','Gupta','nisha.gupta@opendhi.in','Human Resources','HR Executive','riya.kapoor@opendhi.in','Female','1997-04-25'],
   /* The Product, Procurement, IT Support and Admin teams (product owner, 12 Nov 2026). */
-  ['Nikhil','Bansal','nikhil.bansal@novaretail.in','Product','Product Manager','karan.shah@novaretail.in','Male','1990-02-14'],
-  ['Shreya','Malhotra','shreya.malhotra@novaretail.in','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1996-07-09'],
-  ['Manish','Agarwal','manish.agarwal@novaretail.in','Procurement','Procurement Manager','karan.shah@novaretail.in','Male','1987-05-21'],
-  ['Kavya','Nair','kavya.nair@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Female','1995-10-03'],
-  ['Rohit','Saxena','rohit.saxena@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1997-01-16'],
-  ['Deepa','Rawat','deepa.rawat@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Female','1994-03-27'],
+  ['Nikhil','Bansal','nikhil.bansal@opendhi.in','Product','Product Manager','karan.shah@opendhi.in','Male','1990-02-14'],
+  ['Shreya','Malhotra','shreya.malhotra@opendhi.in','Product','Product Analyst','nikhil.bansal@opendhi.in','Female','1996-07-09'],
+  ['Manish','Agarwal','manish.agarwal@opendhi.in','Procurement','Procurement Manager','karan.shah@opendhi.in','Male','1987-05-21'],
+  ['Kavya','Nair','kavya.nair@opendhi.in','Procurement','Procurement Executive','manish.agarwal@opendhi.in','Female','1995-10-03'],
+  ['Rohit','Saxena','rohit.saxena@opendhi.in','Administration','IT Support Engineer','imran.khan@opendhi.in','Male','1997-01-16'],
+  ['Deepa','Rawat','deepa.rawat@opendhi.in','Administration','Admin Executive','karan.shah@opendhi.in','Female','1994-03-27'],
   /* Five to six people in every team (product owner, 12 Nov 2026). */
-  ['Sanjay','Kumar','sanjay.kumar@novaretail.in','Administration','Office Administrator','karan.shah@novaretail.in','Male','1985-08-19'],
-  ['Lakshmi','Narayan','lakshmi.narayan@novaretail.in','Administration','Facilities Executive','karan.shah@novaretail.in','Female','1992-02-07'],
-  ['Mohit','Jain','mohit.jain@novaretail.in','Administration','Admin Executive','karan.shah@novaretail.in','Male','1996-12-01'],
-  ['Anjali','Mishra','anjali.mishra@novaretail.in','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1995-06-23'],
-  ['Rajesh','Pandey','rajesh.pandey@novaretail.in','Human Resources','Talent Acquisition Executive','riya.kapoor@novaretail.in','Male','1993-03-15'],
-  ['Priya','Nambiar','priya.nambiar@novaretail.in','Human Resources','HR Business Partner','riya.kapoor@novaretail.in','Female','1989-10-11'],
-  ['Suresh','Babu','suresh.babu@novaretail.in','Finance','Accounts Executive','rohan.mehta@novaretail.in','Male','1994-07-29'],
-  ['Meera','Raghavan','meera.raghavan@novaretail.in','Finance','Accounts Executive','rohan.mehta@novaretail.in','Female','1996-01-17'],
-  ['Vikas','Yadav','vikas.yadav@novaretail.in','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1995-04-08'],
-  ['Ritika','Singh','ritika.singh@novaretail.in','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1997-09-26'],
-  ['Arvind','Sharma','arvind.sharma@novaretail.in','Operations','Logistics Coordinator','ananya.iyer@novaretail.in','Male','1991-05-12'],
-  ['Ravi','Teja','ravi.teja@novaretail.in','Operations','Store Associate','sneha.kulkarni@novaretail.in','Male','1998-11-03'],
-  ['Fatima','Shaikh','fatima.shaikh@novaretail.in','Operations','Store Associate','karthik.reddy@novaretail.in','Female','1999-02-20'],
-  ['Aman','Khurana','aman.khurana@novaretail.in','Product','Category Manager','nikhil.bansal@novaretail.in','Male','1988-06-30'],
-  ['Neha','Bhatia','neha.bhatia@novaretail.in','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1997-03-08'],
-  ['Tarun','Mehra','tarun.mehra@novaretail.in','Product','Merchandise Planner','nikhil.bansal@novaretail.in','Male','1993-12-14'],
-  ['Gaurav','Sethi','gaurav.sethi@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1994-09-05'],
-  ['Shalini','Deshmukh','shalini.deshmukh@novaretail.in','Procurement','Vendor Manager','manish.agarwal@novaretail.in','Female','1990-07-22'],
-  ['Harish','Bhat','harish.bhat@novaretail.in','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1996-04-18'],
-  ['Ajay','Thakur','ajay.thakur@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1997-08-27'],
-  ['Swati','Patil','swati.patil@novaretail.in','Administration','System Administrator','imran.khan@novaretail.in','Female','1992-11-09'],
-  ['Nitin','Chauhan','nitin.chauhan@novaretail.in','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1998-05-14'],
-  ['Deepak','Sinha','deepak.sinha@novaretail.in','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Male','1993-01-26'],
-  ['Ishita','Bose','ishita.bose@novaretail.in','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Female','1996-10-02'],
-  ['Arun','Prakash','arun.prakash@novaretail.in','Compliance','Internal Auditor','sara.thomas@novaretail.in','Male','1987-02-16'],
-  ['Megha','Dutta','megha.dutta@novaretail.in','Compliance','Risk Analyst','sara.thomas@novaretail.in','Female','1994-06-07']
+  ['Sanjay','Kumar','sanjay.kumar@opendhi.in','Administration','Office Administrator','karan.shah@opendhi.in','Male','1985-08-19'],
+  ['Lakshmi','Narayan','lakshmi.narayan@opendhi.in','Administration','Facilities Executive','karan.shah@opendhi.in','Female','1992-02-07'],
+  ['Mohit','Jain','mohit.jain@opendhi.in','Administration','Admin Executive','karan.shah@opendhi.in','Male','1996-12-01'],
+  ['Anjali','Mishra','anjali.mishra@opendhi.in','Human Resources','HR Executive','riya.kapoor@opendhi.in','Female','1995-06-23'],
+  ['Rajesh','Pandey','rajesh.pandey@opendhi.in','Human Resources','Talent Acquisition Executive','riya.kapoor@opendhi.in','Male','1993-03-15'],
+  ['Priya','Nambiar','priya.nambiar@opendhi.in','Human Resources','HR Business Partner','riya.kapoor@opendhi.in','Female','1989-10-11'],
+  ['Suresh','Babu','suresh.babu@opendhi.in','Finance','Accounts Executive','rohan.mehta@opendhi.in','Male','1994-07-29'],
+  ['Meera','Raghavan','meera.raghavan@opendhi.in','Finance','Accounts Executive','rohan.mehta@opendhi.in','Female','1996-01-17'],
+  ['Vikas','Yadav','vikas.yadav@opendhi.in','Operations','Operations Executive','ananya.iyer@opendhi.in','Male','1995-04-08'],
+  ['Ritika','Singh','ritika.singh@opendhi.in','Operations','Operations Executive','ananya.iyer@opendhi.in','Female','1997-09-26'],
+  ['Arvind','Sharma','arvind.sharma@opendhi.in','Operations','Logistics Coordinator','ananya.iyer@opendhi.in','Male','1991-05-12'],
+  ['Ravi','Teja','ravi.teja@opendhi.in','Operations','Store Associate','sneha.kulkarni@opendhi.in','Male','1998-11-03'],
+  ['Fatima','Shaikh','fatima.shaikh@opendhi.in','Operations','Store Associate','karthik.reddy@opendhi.in','Female','1999-02-20'],
+  ['Aman','Khurana','aman.khurana@opendhi.in','Product','Category Manager','nikhil.bansal@opendhi.in','Male','1988-06-30'],
+  ['Neha','Bhatia','neha.bhatia@opendhi.in','Product','Product Analyst','nikhil.bansal@opendhi.in','Female','1997-03-08'],
+  ['Tarun','Mehra','tarun.mehra@opendhi.in','Product','Merchandise Planner','nikhil.bansal@opendhi.in','Male','1993-12-14'],
+  ['Gaurav','Sethi','gaurav.sethi@opendhi.in','Procurement','Procurement Executive','manish.agarwal@opendhi.in','Male','1994-09-05'],
+  ['Shalini','Deshmukh','shalini.deshmukh@opendhi.in','Procurement','Vendor Manager','manish.agarwal@opendhi.in','Female','1990-07-22'],
+  ['Harish','Bhat','harish.bhat@opendhi.in','Procurement','Procurement Executive','manish.agarwal@opendhi.in','Male','1996-04-18'],
+  ['Ajay','Thakur','ajay.thakur@opendhi.in','Administration','IT Support Engineer','imran.khan@opendhi.in','Male','1997-08-27'],
+  ['Swati','Patil','swati.patil@opendhi.in','Administration','System Administrator','imran.khan@opendhi.in','Female','1992-11-09'],
+  ['Nitin','Chauhan','nitin.chauhan@opendhi.in','Administration','IT Support Engineer','imran.khan@opendhi.in','Male','1998-05-14'],
+  ['Deepak','Sinha','deepak.sinha@opendhi.in','Compliance','Compliance Analyst','sara.thomas@opendhi.in','Male','1993-01-26'],
+  ['Ishita','Bose','ishita.bose@opendhi.in','Compliance','Compliance Analyst','sara.thomas@opendhi.in','Female','1996-10-02'],
+  ['Arun','Prakash','arun.prakash@opendhi.in','Compliance','Internal Auditor','sara.thomas@opendhi.in','Male','1987-02-16'],
+  ['Megha','Dutta','megha.dutta@opendhi.in','Compliance','Risk Analyst','sara.thomas@opendhi.in','Female','1994-06-07']
 ];
 /* Nova's department teams, filled by designation (product owner, 12 Nov 2026). They carry no access of their own:
    approvals stay with the approval teams. */
@@ -252,8 +254,8 @@ function presBuildBaseline(){
   const U=function(email){return idUserByEmail(email).userId;};
   const emp=function(email){return idEmpAll().find(function(e){return String(e.email).toLowerCase()===email;});};
   const decide=function(r,label){let g=0;while(r.wf&&r.wf.open&&g++<6){const st=caActiveStage(r);if(!st||!st.approvers.length)throw new Error(label+': no approver');S(idEmail(st.approvers[0]));E(label+' stage '+st.n,caDecide(r.id,{scope:'claim',decision:'Approve',comment:''}));}};
-  const today=wbToday(),SA='shaun@testemp.com',KS='karan.shah@novaretail.in',RK='riya.kapoor@novaretail.in',RM='rohan.mehta@novaretail.in',NA='neel.arora@novaretail.in',
-    VM='vivek.menon@novaretail.in',RS='ritu.sen@novaretail.in',KJ='kabir.joshi@novaretail.in',AR='arjun.rao@novaretail.in',AI='ananya.iyer@novaretail.in',MP='meghna.pillai@novaretail.in',ST='sara.thomas@novaretail.in',IK='imran.khan@novaretail.in';
+  const today=wbToday(),SA='shaun@testemp.com',KS='karan.shah@opendhi.in',RK='riya.kapoor@opendhi.in',RM='rohan.mehta@opendhi.in',NA='neel.arora@opendhi.in',
+    VM='vivek.menon@opendhi.in',RS='ritu.sen@opendhi.in',KJ='kabir.joshi@opendhi.in',AR='arjun.rao@opendhi.in',AI='ananya.iyer@opendhi.in',MP='meghna.pillai@opendhi.in',ST='sara.thomas@opendhi.in',IK='imran.khan@opendhi.in';
   const P={};
   const file=function(o){navigatePage('expenses');expSetPageTab('all');startAddExpense();expDraft.title=o.title;expDraft.category=o.category;expDraft.just={};expDraft.lines=(o.lines||[]).slice();expDraft.line=o.line;
     let n=expensesData.length,g=0;do{renderADTPage();document.querySelectorAll('[data-epjust]').forEach(function(el){el.value=o.just||'Business need';});const dj=document.getElementById('exp-e-dupjust');if(dj)dj.value='Separate business expense';submitAddExpense(true);}while(expensesData.length===n&&g++<2);
@@ -287,7 +289,7 @@ function presBuildBaseline(){
     set:Object.assign({perTxn:'',daily:'',monthly:'',annual:'',allowedCats:[],blockedCats:[],channels:{Online:true,POS:true,ATM:false},international:'Allow',mccAllow:'',mccBlock:'',countryAllow:'',countryBlock:''},set)}));};
   return Promise.resolve().then(function(){
     /* 1 · OpenDhi onboards the company */
-    step('company',function(){S(SA);setAppRole('Super Admin');navigatePage('settings');ncStart();setIn('nc-name',PRES_COMPANY);setIn('nc-store','Nova Retail');setIn('nc-pass','NovaRetail@2026');setIn('nc-pass2','NovaRetail@2026');ncSave();P.ent=idEntity();if(idEntityName(P.ent)!==PRES_COMPANY)throw new Error(lastT);return P.ent;});
+    step('company',function(){S(SA);setAppRole('Super Admin');navigatePage('settings');ncStart();setIn('nc-name',PRES_COMPANY);setIn('nc-store','Nova Retail');setIn('nc-pass','Opendhi@2026');setIn('nc-pass2','Opendhi@2026');ncSave();P.ent=idEntity();if(idEntityName(P.ent)!==PRES_COMPANY)throw new Error(lastT);return P.ent;});
     /* Company Structure is its own page (Administration → Company Structure, js/company-structure.js), 12 Nov 2026. */
     step('structure',function(){navigatePage('company-structure');
       [['departments','Administration','ADM'],['departments','Human Resources','HRD'],['departments','Finance','FIN'],['departments','Sales','SAL'],['departments','Operations','OPS'],['departments','Compliance','CMP'],
@@ -340,7 +342,7 @@ function presBuildBaseline(){
       /* Imprest is not used (product owner, 12 Nov 2026): its team goes, and the workspace's history does not name it. */
       w.teams=w.teams.filter(function(t){return !/imprest/i.test(t.name);});
       w.teams.forEach(function(t){if(ren[t.name])t.name=ren[t.name];
-        (PRES_TEAM_MORE[t.name]||[]).forEach(function(n){const u=U(n+'@novaretail.in');if(u&&t.members.indexOf(u)<0){t.members.push(u);wsNote(w,idName(u)+' added to '+t.name+'.');}});});
+        (PRES_TEAM_MORE[t.name]||[]).forEach(function(n){const u=U(n+'@opendhi.in');if(u&&t.members.indexOf(u)<0){t.members.push(u);wsNote(w,idName(u)+' added to '+t.name+'.');}});});
       (w.logs||[]).forEach(function(l){let a=String(l.action||'').replace(/,?\s*Imprest Custodians/g,'');Object.keys(ren).forEach(function(k){a=a.split(k).join(ren[k]);});l.action=a;});
       PRES_TEAMS.forEach(function(x){
         const m=PRES_PEOPLE.filter(function(p){return x[1].indexOf(p[4])>=0;}).map(function(p){return U(p[2]);});
@@ -350,7 +352,7 @@ function presBuildBaseline(){
       const EMT=[['ritu.sen','Reporting Manager'],['ananya.iyer','Reporting Manager'],['aditya.shah','Approver 1'],['nikhil.bansal','Approver 2'],
         ['rohan.mehta','Finance Approver'],['vivek.menon','Finance Approver'],['neel.arora','Verifier 1'],['karan.shah','Manager']];
       const emt={id:wsTeamNext++,name:'Expense Management Team',tpl:null,members:[],desig:{}};
-      EMT.forEach(function(x){const u=U(x[0]+'@novaretail.in');if(u){emt.members.push(u);emt.desig[u]=x[1];}});
+      EMT.forEach(function(x){const u=U(x[0]+'@opendhi.in');if(u){emt.members.push(u);emt.desig[u]=x[1];}});
       w.teams.push(emt);wsNote(w,'Team Expense Management Team added with '+emt.members.length+' members.');
       /* Access for three department teams (product owner, 12 Nov 2026): the Admin Team everything a company administrator
          has; the Finance Team every finance right; the Compliance Team the Compliance Hub and every compliance review and
@@ -724,14 +726,14 @@ function presBuildBaseline(){
         [ST,{title:'Ms',occupation:'Compliance Officer',addr1:'B-503, Orchid Heights',addr2:'Andheri West',city:'Mumbai',pincode:'400058'},'6618','ABCPT5530K'],
         [IK,{title:'Mr',occupation:'IT Manager',addr1:'301, Al Noor Apartments',addr2:'Kurla West',city:'Mumbai',pincode:'400070'},'4471','ABCPK4719M'],
         [RK,{title:'Ms',occupation:'HR Manager',addr1:'9, Sea Glimpse',addr2:'Bandra West',city:'Mumbai',pincode:'400050'},'9035','ABCPK8051R'],
-        ['rahul.verma@novaretail.in',{title:'Mr',occupation:'Sales Executive',addr1:'A-208, Sunshine Residency',addr2:'Goregaon East',city:'Mumbai',pincode:'400063'},'3384','ABCPV1146C'],
-        ['sneha.kulkarni@novaretail.in',{title:'Ms',occupation:'Store Manager',addr1:'Flat 7, Shubham Apartments',addr2:'Baner',city:'Pune',state:'Maharashtra',pincode:'411045'},'7752','ABCPK2963E'],
-        ['aditya.shah@novaretail.in',{title:'Mr',occupation:'Area Sales Manager',addr1:'1202, Raheja Classique',addr2:'Juhu',city:'Mumbai',pincode:'400049'},'1069','ABCPS7782L'],
-        ['pooja.desai@novaretail.in',{title:'Ms',occupation:'Visual Merchandiser',addr1:'4, Parle Colony',addr2:'Vile Parle West',city:'Mumbai',pincode:'400056'},'5590','ABCPD3395N'],
-        ['farhan.qureshi@novaretail.in',{title:'Mr',occupation:'Sales Executive',addr1:'18, Noor Manzil',addr2:'Kurla East',city:'Mumbai',pincode:'400024'},'8217','ABCPQ6408P'],
-        ['divya.krishnan@novaretail.in',{title:'Ms',occupation:'Finance Executive',addr1:'D-45, Lake Homes',addr2:'Powai',city:'Mumbai',pincode:'400076'},'6403','ABCPK9172S'],
-        ['karthik.reddy@novaretail.in',{title:'Mr',occupation:'Store Manager',addr1:'221, 5th Cross, Koramangala',addr2:'4th Block',city:'Bengaluru',state:'Karnataka',pincode:'560034'},'2958','ABCPR4826T'],
-        ['nisha.gupta@novaretail.in',{title:'Ms',occupation:'HR Executive',addr1:'B-12, Evershine Nagar',addr2:'Malad West',city:'Mumbai',pincode:'400064'},'4136','ABCPG5517V']];
+        ['rahul.verma@opendhi.in',{title:'Mr',occupation:'Sales Executive',addr1:'A-208, Sunshine Residency',addr2:'Goregaon East',city:'Mumbai',pincode:'400063'},'3384','ABCPV1146C'],
+        ['sneha.kulkarni@opendhi.in',{title:'Ms',occupation:'Store Manager',addr1:'Flat 7, Shubham Apartments',addr2:'Baner',city:'Pune',state:'Maharashtra',pincode:'411045'},'7752','ABCPK2963E'],
+        ['aditya.shah@opendhi.in',{title:'Mr',occupation:'Area Sales Manager',addr1:'1202, Raheja Classique',addr2:'Juhu',city:'Mumbai',pincode:'400049'},'1069','ABCPS7782L'],
+        ['pooja.desai@opendhi.in',{title:'Ms',occupation:'Visual Merchandiser',addr1:'4, Parle Colony',addr2:'Vile Parle West',city:'Mumbai',pincode:'400056'},'5590','ABCPD3395N'],
+        ['farhan.qureshi@opendhi.in',{title:'Mr',occupation:'Sales Executive',addr1:'18, Noor Manzil',addr2:'Kurla East',city:'Mumbai',pincode:'400024'},'8217','ABCPQ6408P'],
+        ['divya.krishnan@opendhi.in',{title:'Ms',occupation:'Finance Executive',addr1:'D-45, Lake Homes',addr2:'Powai',city:'Mumbai',pincode:'400076'},'6403','ABCPK9172S'],
+        ['karthik.reddy@opendhi.in',{title:'Mr',occupation:'Store Manager',addr1:'221, 5th Cross, Koramangala',addr2:'4th Block',city:'Bengaluru',state:'Karnataka',pincode:'560034'},'2958','ABCPR4826T'],
+        ['nisha.gupta@opendhi.in',{title:'Ms',occupation:'HR Executive',addr1:'B-12, Evershine Nagar',addr2:'Malad West',city:'Mumbai',pincode:'400064'},'4136','ABCPG5517V']];
       /* 1 · Card details, checked by HR */
       const ppl=H.map(function(h,i){const e=emp(h[0]);
         const V=Object.assign({nameOnCard:String(e.name).toUpperCase(),pan:h[3],annualIncome:/Manager|Controller|Officer/.test(h[1].occupation)?'Rs. 10 L to 25 L':'Rs. 5 L to 10 L',sourceOfIncome:'Salaried',state:'Maharashtra'},h[1]);
@@ -764,14 +766,14 @@ function presBuildBaseline(){
         [ST,[[2,'13:00','MEAL','Haldiram\'s',220,'5812','Lunch'],[4,'08:30','FUEL','Shell - Andheri',1500,'5541','Fuel'],[6,'17:45','GIFT','Croma Electronics',3499,'5732','Festival gift'],[8,'13:15','MEAL','Subway',260,'5814','Lunch']]],
         [IK,[[3,'11:20','TEL','Airtel Postpaid',999,'4814','Mobile bill','E-commerce'],[4,'20:30','MEAL','Domino\'s Pizza',420,'5814','Dinner','E-commerce'],[7,'09:05','FUEL','BPCL - Powai',1800,'5541','Fuel'],[8,'16:50','GIFT','Amazon.in',4299,'5999','Festival gift','E-commerce']]],
         [RK,[[2,'10:15','MEAL','Starbucks Coffee',340,'5814','Coffee'],[5,'18:10','GIFT','Tanishq',4800,'5944','Festival gift'],[6,'19:40','TEL','Jio Postpaid',799,'4814','Mobile bill','E-commerce'],[9,'08:55','FUEL','Indian Oil - Bandra',1000,'5541','Fuel']]],
-        ['rahul.verma@novaretail.in',[[2,'13:30','MEAL','Swiggy',260,'5812','Lunch','E-commerce'],[4,'09:15','FUEL','HP Petrol Pump - Goregaon',1200,'5541','Fuel'],[6,'18:00','TEL','Airtel Postpaid',599,'4814','Mobile bill','E-commerce']]],
-        ['sneha.kulkarni@novaretail.in',[[3,'13:45','MEAL','Vaishali Restaurant',380,'5812','Lunch'],[5,'08:50','FUEL','Indian Oil - Baner',1500,'5541','Fuel'],[8,'20:10','GIFT','Amazon.in',1999,'5999','Festival gift','E-commerce']]],
-        ['aditya.shah@novaretail.in',[[2,'09:40','MEAL','Chaayos',190,'5814','Breakfast'],[4,'21:00','TEL','Jio Postpaid',799,'4814','Mobile bill','E-commerce'],[7,'08:20','FUEL','Shell - Juhu',2200,'5541','Fuel']]],
-        ['pooja.desai@novaretail.in',[[3,'13:05','MEAL','Zomato',450,'5812','Lunch','E-commerce'],[6,'17:30','GIFT','Lifestyle Stores',2800,'5651','Festival gift'],[8,'09:10','FUEL','BPCL - Vile Parle',900,'5541','Fuel']]],
-        ['farhan.qureshi@novaretail.in',[[2,'08:40','FUEL','HP Petrol Pump - Kurla',1000,'5541','Fuel'],[5,'13:25','MEAL','Subway',240,'5814','Lunch'],[7,'19:15','TEL','Airtel Postpaid',449,'4814','Mobile bill','E-commerce']]],
-        ['divya.krishnan@novaretail.in',[[3,'13:10','MEAL','Haldiram\'s',210,'5812','Lunch'],[6,'18:30','GIFT','Tanishq',4500,'5944','Festival gift'],[8,'20:45','TEL','Jio Postpaid',599,'4814','Mobile bill','E-commerce']]],
-        ['karthik.reddy@novaretail.in',[[2,'08:30','FUEL','Indian Oil - Koramangala',1800,'5541','Fuel'],[4,'13:15','MEAL','MTR Restaurant',320,'5812','Lunch'],[7,'18:50','GIFT','Croma Electronics',2499,'5732','Festival gift']]],
-        ['nisha.gupta@novaretail.in',[[3,'09:50','MEAL','Starbucks Coffee',290,'5814','Coffee'],[5,'20:20','TEL','Jio Postpaid',599,'4814','Mobile bill','E-commerce'],[9,'08:35','FUEL','Shell - Malad',800,'5541','Fuel']]]];
+        ['rahul.verma@opendhi.in',[[2,'13:30','MEAL','Swiggy',260,'5812','Lunch','E-commerce'],[4,'09:15','FUEL','HP Petrol Pump - Goregaon',1200,'5541','Fuel'],[6,'18:00','TEL','Airtel Postpaid',599,'4814','Mobile bill','E-commerce']]],
+        ['sneha.kulkarni@opendhi.in',[[3,'13:45','MEAL','Vaishali Restaurant',380,'5812','Lunch'],[5,'08:50','FUEL','Indian Oil - Baner',1500,'5541','Fuel'],[8,'20:10','GIFT','Amazon.in',1999,'5999','Festival gift','E-commerce']]],
+        ['aditya.shah@opendhi.in',[[2,'09:40','MEAL','Chaayos',190,'5814','Breakfast'],[4,'21:00','TEL','Jio Postpaid',799,'4814','Mobile bill','E-commerce'],[7,'08:20','FUEL','Shell - Juhu',2200,'5541','Fuel']]],
+        ['pooja.desai@opendhi.in',[[3,'13:05','MEAL','Zomato',450,'5812','Lunch','E-commerce'],[6,'17:30','GIFT','Lifestyle Stores',2800,'5651','Festival gift'],[8,'09:10','FUEL','BPCL - Vile Parle',900,'5541','Fuel']]],
+        ['farhan.qureshi@opendhi.in',[[2,'08:40','FUEL','HP Petrol Pump - Kurla',1000,'5541','Fuel'],[5,'13:25','MEAL','Subway',240,'5814','Lunch'],[7,'19:15','TEL','Airtel Postpaid',449,'4814','Mobile bill','E-commerce']]],
+        ['divya.krishnan@opendhi.in',[[3,'13:10','MEAL','Haldiram\'s',210,'5812','Lunch'],[6,'18:30','GIFT','Tanishq',4500,'5944','Festival gift'],[8,'20:45','TEL','Jio Postpaid',599,'4814','Mobile bill','E-commerce']]],
+        ['karthik.reddy@opendhi.in',[[2,'08:30','FUEL','Indian Oil - Koramangala',1800,'5541','Fuel'],[4,'13:15','MEAL','MTR Restaurant',320,'5812','Lunch'],[7,'18:50','GIFT','Croma Electronics',2499,'5732','Festival gift']]],
+        ['nisha.gupta@opendhi.in',[[3,'09:50','MEAL','Starbucks Coffee',290,'5814','Coffee'],[5,'20:20','TEL','Jio Postpaid',599,'4814','Mobile bill','E-commerce'],[9,'08:35','FUEL','Shell - Malad',800,'5541','Fuel']]]];
       const made={};P2.forEach(function(x){const c=card(x[0]);made[x[0]]=x[1].map(function(y){return pay(c,dd(y[0]),y[1],y[2],y[3],y[4],y[5],y[6],y[7]);});});
       /* 6 · Two disputes, each raised by the cardholder and under Rohan's review */
       const dsp=function(email,t,day,time,reason,desc,ev,amount,aDay,aTime){
@@ -803,17 +805,17 @@ function presBuildBaseline(){
       /* Rejected by Finance */
       l=ask(VM,dd(6),'18:05','MEAL',6000,'Client dinners during the vendor meet');act(l,dd(7),'10:15','Approve');act(l,dd(7),'16:45','Reject','Client dinners are claimed as an expense, not loaded to the meal wallet.');out.push(l);
       /* Sent back: by the manager, and by Finance */
-      l=ask('rahul.verma@novaretail.in',dd(8),'13:40','GIFT',4000,'Gifts for the top sales team');act(l,dd(9),'10:30','Follow-Up','Add the names of the people the gifts are for.');out.push(l);
+      l=ask('rahul.verma@opendhi.in',dd(8),'13:40','GIFT',4000,'Gifts for the top sales team');act(l,dd(9),'10:30','Follow-Up','Add the names of the people the gifts are for.');out.push(l);
       l=ask(IK,dd(8),'15:25','TEL',1200,'International roaming for the Singapore vendor visit');act(l,dd(9),'11:05','Approve');act(l,dd(10),'12:20','Follow-Up','Attach the roaming plan and the travel dates.');out.push(l);
       /* With Finance */
-      l=ask('sneha.kulkarni@novaretail.in',dd(9),'09:20','FUEL',2500,'Weekly visits to the Baner and Hinjewadi stores');act(l,dd(10),'10:00','Approve');out.push(l);
-      l=ask('aditya.shah@novaretail.in',dd(9),'14:10','MEAL',1800,'Lunches with the new franchise partners');act(l,dd(10),'15:15','Approve');out.push(l);
-      l=ask('divya.krishnan@novaretail.in',dd(10),'11:30','HLTH',5000,'Annual health check-up');act(l,dd(11),'09:50','Approve');out.push(l);
+      l=ask('sneha.kulkarni@opendhi.in',dd(9),'09:20','FUEL',2500,'Weekly visits to the Baner and Hinjewadi stores');act(l,dd(10),'10:00','Approve');out.push(l);
+      l=ask('aditya.shah@opendhi.in',dd(9),'14:10','MEAL',1800,'Lunches with the new franchise partners');act(l,dd(10),'15:15','Approve');out.push(l);
+      l=ask('divya.krishnan@opendhi.in',dd(10),'11:30','HLTH',5000,'Annual health check-up');act(l,dd(11),'09:50','Approve');out.push(l);
       /* With the manager */
-      out.push(ask('nisha.gupta@novaretail.in',dd(10),'16:05','MEAL',2000,'Team lunches during the Diwali sale week'));
-      out.push(ask('karthik.reddy@novaretail.in',dd(11),'09:15','FUEL',3000,'Extra store visits across Bengaluru this month'));
-      out.push(ask('pooja.desai@novaretail.in',dd(11),'12:40','TEL',800,'International roaming for the Dubai supplier visit'));
-      out.push(ask('farhan.qureshi@novaretail.in',dd(11),'17:20','GIFT',2500,'Gifts for the store team after the Kurla launch'));
+      out.push(ask('nisha.gupta@opendhi.in',dd(10),'16:05','MEAL',2000,'Team lunches during the Diwali sale week'));
+      out.push(ask('karthik.reddy@opendhi.in',dd(11),'09:15','FUEL',3000,'Extra store visits across Bengaluru this month'));
+      out.push(ask('pooja.desai@opendhi.in',dd(11),'12:40','TEL',800,'International roaming for the Dubai supplier visit'));
+      out.push(ask('farhan.qureshi@opendhi.in',dd(11),'17:20','GIFT',2500,'Gifts for the store team after the Kurla launch'));
       return out.map(function(x){const st=caActiveStage(x);return expKey(x)+' '+ccLoadLabel(x)+(st?' @'+st.name:'');}).join(' · ');});
   }).then(function(){
     S(SA);setAppRole('Super Admin');const e=entitiesData.find(function(x){return x.entityId===P.ent;});if(e)seSelectedEntity=e.id;if(typeof appEntityChanged==='function')appEntityChanged();
@@ -887,11 +889,11 @@ function presShowName(){
   const n=presNova();if(!n||n.presShown===PRES_SHOWN_V)return false;
   const RULES=[[/\b([Aa]) (Nova Multi Wallet Card|NOVA X RBL Multiwallet Card)/g,'$1n '+PRES_CARD],
     [/Nova Multi Wallet Card|NOVA X RBL Multiwallet Card/g,PRES_CARD],[/\bNova card\b/g,PRES_CARD+' card'],
-    [/Nova Retail Pvt Ltd|Nova Retail/g,PRES_SHOWN]];
+    [/Nova Retail Pvt Ltd|Nova Retail/g,PRES_SHOWN],[/@novaretail\.in/gi,'@opendhi.in'],[/\bNOVA-/g,'OPENDHI-'],[/\bNova\b/g,PRES_SHOWN]];
   const fix=function(x){RULES.forEach(function(r){x=x.replace(r[0],r[1]);});return x;},seen=new Set();
   const walk=function(v,d){
     if(!v||typeof v!=='object'||v.nodeType||seen.has(v)||d>14)return;seen.add(v);
-    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(/Nova|NOVA/.test(x))v[k]=fix(x);}else walk(x,d+1);});
+    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(/nova/i.test(x))v[k]=fix(x);}else walk(x,d+1);});
   };
   presCandidates().forEach(function(name){try{walk(presGet(name),0);}catch(e){}});
   if(n.initials==='NR')n.initials=(PRES_SHOWN[0]+(PRES_SHOWN[1]||'')).toUpperCase();
@@ -933,14 +935,14 @@ function presMarkClients(){(typeof entitiesData!=='undefined'?entitiesData:[]).f
   if(!e.presPaySet&&typeof mcStateOf==='function'){mcStateOf(e.entityId).payments=true;e.presPaySet=true;}});}
 const PRES_SWITCH=[
   ['OpenDhi Super Admin',PRES_START],
-  ['Company Admin','karan.shah@novaretail.in'],
-  ['Employee','kabir.joshi@novaretail.in'],
-  ['Employee (Cardholder)','arjun.rao@novaretail.in'],
-  ['Reporting Manager','ritu.sen@novaretail.in'],
-  ['Finance Admin','rohan.mehta@novaretail.in'],
-  ['Card Approver','ananya.iyer@novaretail.in'],
-  ['Card / Funding Verifier','neel.arora@novaretail.in'],
-  ['Compliance','sara.thomas@novaretail.in']
+  ['Company Admin','karan.shah@opendhi.in'],
+  ['Employee','kabir.joshi@opendhi.in'],
+  ['Employee (Cardholder)','arjun.rao@opendhi.in'],
+  ['Reporting Manager','ritu.sen@opendhi.in'],
+  ['Finance Admin','rohan.mehta@opendhi.in'],
+  ['Card Approver','ananya.iyer@opendhi.in'],
+  ['Card / Funding Verifier','neel.arora@opendhi.in'],
+  ['Compliance','sara.thomas@opendhi.in']
 ];
 /* Start as the OpenDhi Super Admin in OpenDhi's own environment (its home
    company); Nova Retail is reached through Switch Entity, as a client. */
@@ -1035,34 +1037,34 @@ if(PRES_ON){
    Other companies keep the standard sample.
    first, last, department, designation, reporting manager, gender, date of birth, work location */
 const PRES_JOINERS=[
-  ['Tanvi','Desai','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1998-03-14','Bengaluru Branch'],
-  ['Rahul','Nair','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1996-07-22','Pune Branch'],
-  ['Aditi','Kulkarni','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1997-11-05','Hyderabad'],
-  ['Nikhil','Verma','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1995-02-18','Bengaluru Branch'],
-  ['Pooja','Reddy','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1997-06-09','Pune Branch'],
-  ['Ishaan','Malhotra','Finance','Finance Executive','rohan.mehta@novaretail.in','Male','1996-12-01','Hyderabad'],
-  ['Kavya','Menon','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1999-01-27','Bengaluru Branch'],
-  ['Arnav','Gupta','Operations','Operations Executive','ananya.iyer@novaretail.in','Male','1995-10-11','Pune Branch'],
-  ['Neha','Bhatt','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1998-08-30','Hyderabad'],
-  ['Simran','Kaur','Human Resources','HR Executive','riya.kapoor@novaretail.in','Female','1998-05-19','Hyderabad'],
-  ['Varun','Chopra','Operations','Store Associate','sneha.kulkarni@novaretail.in','Male','1999-08-11','Pune Branch'],
-  ['Ayesha','Siddiqui','Product','Product Analyst','nikhil.bansal@novaretail.in','Female','1997-12-06','Hyderabad'],
-  ['Kunal','Bhardwaj','Administration','IT Support Engineer','imran.khan@novaretail.in','Male','1998-02-23','Hyderabad'],
-  ['Roshni','Das','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Female','1996-09-17','Bengaluru Branch'],
-  ['Yash','Tiwari','Compliance','Compliance Analyst','sara.thomas@novaretail.in','Male','1997-04-02','Hyderabad'],
-  ['Pallavi','Sawant','Administration','Admin Executive','karan.shah@novaretail.in','Female','1995-11-28','Hyderabad'],
-  ['Abhishek','Rathore','Finance','Accounts Executive','rohan.mehta@novaretail.in','Male','1996-06-14','Hyderabad'],
-  ['Sakshi','Bajaj','Human Resources','Talent Acquisition Executive','riya.kapoor@novaretail.in','Female','1998-10-21','Hyderabad'],
-  ['Manoj','Hegde','Operations','Store Associate','karthik.reddy@novaretail.in','Male','1997-07-07','Bengaluru Branch'],
-  ['Tanya','Ghosh','Product','Merchandise Planner','nikhil.bansal@novaretail.in','Female','1995-03-30','Hyderabad'],
-  ['Siddharth','Rane','Administration','System Administrator','imran.khan@novaretail.in','Male','1994-12-09','Hyderabad'],
-  ['Bhavna','Chawla','Sales','Sales Executive','ritu.sen@novaretail.in','Female','1998-01-15','Bengaluru Branch'],
-  ['Prateek','Jha','Operations','Logistics Coordinator','ananya.iyer@novaretail.in','Male','1996-08-24','Pune Branch'],
-  ['Anushka','Mathur','Finance','Finance Executive','rohan.mehta@novaretail.in','Female','1997-05-12','Hyderabad'],
-  ['Dev','Kapadia','Procurement','Procurement Executive','manish.agarwal@novaretail.in','Male','1995-02-04','Hyderabad'],
-  ['Zoya','Mirza','Compliance','Risk Analyst','sara.thomas@novaretail.in','Female','1996-11-13','Hyderabad'],
-  ['Harsh','Vardhan','Sales','Sales Executive','ritu.sen@novaretail.in','Male','1999-04-26','Bengaluru Branch'],
-  ['Komal','Bedi','Operations','Operations Executive','ananya.iyer@novaretail.in','Female','1998-07-31','Pune Branch']
+  ['Tanvi','Desai','Sales','Sales Executive','ritu.sen@opendhi.in','Female','1998-03-14','Bengaluru Branch'],
+  ['Rahul','Nair','Operations','Operations Executive','ananya.iyer@opendhi.in','Male','1996-07-22','Pune Branch'],
+  ['Aditi','Kulkarni','Finance','Finance Executive','rohan.mehta@opendhi.in','Female','1997-11-05','Hyderabad'],
+  ['Nikhil','Verma','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1995-02-18','Bengaluru Branch'],
+  ['Pooja','Reddy','Operations','Operations Executive','ananya.iyer@opendhi.in','Female','1997-06-09','Pune Branch'],
+  ['Ishaan','Malhotra','Finance','Finance Executive','rohan.mehta@opendhi.in','Male','1996-12-01','Hyderabad'],
+  ['Kavya','Menon','Sales','Sales Executive','ritu.sen@opendhi.in','Female','1999-01-27','Bengaluru Branch'],
+  ['Arnav','Gupta','Operations','Operations Executive','ananya.iyer@opendhi.in','Male','1995-10-11','Pune Branch'],
+  ['Neha','Bhatt','Finance','Finance Executive','rohan.mehta@opendhi.in','Female','1998-08-30','Hyderabad'],
+  ['Simran','Kaur','Human Resources','HR Executive','riya.kapoor@opendhi.in','Female','1998-05-19','Hyderabad'],
+  ['Varun','Chopra','Operations','Store Associate','sneha.kulkarni@opendhi.in','Male','1999-08-11','Pune Branch'],
+  ['Ayesha','Siddiqui','Product','Product Analyst','nikhil.bansal@opendhi.in','Female','1997-12-06','Hyderabad'],
+  ['Kunal','Bhardwaj','Administration','IT Support Engineer','imran.khan@opendhi.in','Male','1998-02-23','Hyderabad'],
+  ['Roshni','Das','Procurement','Procurement Executive','manish.agarwal@opendhi.in','Female','1996-09-17','Bengaluru Branch'],
+  ['Yash','Tiwari','Compliance','Compliance Analyst','sara.thomas@opendhi.in','Male','1997-04-02','Hyderabad'],
+  ['Pallavi','Sawant','Administration','Admin Executive','karan.shah@opendhi.in','Female','1995-11-28','Hyderabad'],
+  ['Abhishek','Rathore','Finance','Accounts Executive','rohan.mehta@opendhi.in','Male','1996-06-14','Hyderabad'],
+  ['Sakshi','Bajaj','Human Resources','Talent Acquisition Executive','riya.kapoor@opendhi.in','Female','1998-10-21','Hyderabad'],
+  ['Manoj','Hegde','Operations','Store Associate','karthik.reddy@opendhi.in','Male','1997-07-07','Bengaluru Branch'],
+  ['Tanya','Ghosh','Product','Merchandise Planner','nikhil.bansal@opendhi.in','Female','1995-03-30','Hyderabad'],
+  ['Siddharth','Rane','Administration','System Administrator','imran.khan@opendhi.in','Male','1994-12-09','Hyderabad'],
+  ['Bhavna','Chawla','Sales','Sales Executive','ritu.sen@opendhi.in','Female','1998-01-15','Bengaluru Branch'],
+  ['Prateek','Jha','Operations','Logistics Coordinator','ananya.iyer@opendhi.in','Male','1996-08-24','Pune Branch'],
+  ['Anushka','Mathur','Finance','Finance Executive','rohan.mehta@opendhi.in','Female','1997-05-12','Hyderabad'],
+  ['Dev','Kapadia','Procurement','Procurement Executive','manish.agarwal@opendhi.in','Male','1995-02-04','Hyderabad'],
+  ['Zoya','Mirza','Compliance','Risk Analyst','sara.thomas@opendhi.in','Female','1996-11-13','Hyderabad'],
+  ['Harsh','Vardhan','Sales','Sales Executive','ritu.sen@opendhi.in','Male','1999-04-26','Bengaluru Branch'],
+  ['Komal','Bedi','Operations','Operations Executive','ananya.iyer@opendhi.in','Female','1998-07-31','Pune Branch']
 ];
 function presSampleRows(){
   const nova=presNova();if(!nova||idEntity()!==nova.entityId||typeof embSampleRows!=='function')return null;
@@ -1072,7 +1074,7 @@ function presSampleRows(){
   const teamOf=function(desig){const t=PRES_TEAMS.find(function(x){return x[1].indexOf(desig)>=0;});return t?t[0]:'';};
   PRES_JOINERS.forEach(function(p,i){
     if(out.length>=14)return;
-    const email=(p[0]+'.'+p[1]).toLowerCase()+'@novaretail.in';
+    const email=(p[0]+'.'+p[1]).toLowerCase()+'@opendhi.in';
     if(typeof eaEmailOwner==='function'&&eaEmailOwner(email,nova.entityId))return;
     out.push(Object.assign({},base,{fname:p[0],lname:p[1],email:email,phone:'98200002'+String(10+i),dept:p[2],designation:p[3],manager:p[4],gender:p[5],dob:p[6],doj:doj,
       location:embPick(locs,p[7])||base.location,team:teamOf(p[3])}));
@@ -1098,8 +1100,8 @@ function presEnsureBranches(){
   var PRES_BRANCHES=[['Hyderabad','NR-HYD','Nova Retail Pvt Ltd, Road No. 12, Banjara Hills, Hyderabad 500034, India',17.4126,78.4482],
     ['Bengaluru Branch','NR-BLR','Nova Retail Pvt Ltd, 100 Feet Road, Indiranagar, Bengaluru 560038, India',12.9784,77.6408],
     ['Pune Branch','NR-PUN','Nova Retail Pvt Ltd, Baner Road, Baner, Pune 411045, India',18.559,73.7868]];
-  var PRES_BRANCH_OF={'ritu.sen@novaretail.in':'Bengaluru Branch','kabir.joshi@novaretail.in':'Bengaluru Branch','arjun.rao@novaretail.in':'Bengaluru Branch',
-    'ananya.iyer@novaretail.in':'Pune Branch','meghna.pillai@novaretail.in':'Pune Branch','neel.arora@novaretail.in':'Pune Branch'};
+  var PRES_BRANCH_OF={'ritu.sen@opendhi.in':'Bengaluru Branch','kabir.joshi@opendhi.in':'Bengaluru Branch','arjun.rao@opendhi.in':'Bengaluru Branch',
+    'ananya.iyer@opendhi.in':'Pune Branch','meghna.pillai@opendhi.in':'Pune Branch','neel.arora@opendhi.in':'Pune Branch'};
 
   const nova=presNova();if(!nova||typeof emsBranchBook!=='function')return;
   const book=emsBranchBook(nova.entityId);if(!book)return;

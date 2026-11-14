@@ -14,7 +14,7 @@
     c.noCheckDone=true;
     if(!c.control)return;
     c.control=false;
-    const s=typeof stampNow==='function'?stampNow():{date:'',time:''},ks=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@novaretail.in'):null;
+    const s=typeof stampNow==='function'?stampNow():{date:'',time:''},ks=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null;
     (c.logs=c.logs||[]).unshift({date:s.date,time:s.time,user:ks?caN(ks.userId):'Karan Shah',userId:ks?ks.userId:'',
       action:'Budget Control: On → Off. Reason: Requests are not checked against budgets - no budget check or justification on claims, advances or card requests.'});
     if(typeof presSaveSoon==='function')presSaveSoon();
