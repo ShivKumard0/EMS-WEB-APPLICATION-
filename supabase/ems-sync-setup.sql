@@ -72,10 +72,11 @@ create policy "ems heartbeat read"   on public.ems_heartbeat for select to anon 
 create policy "ems heartbeat add"    on public.ems_heartbeat for insert to anon with check (true);
 create policy "ems heartbeat change" on public.ems_heartbeat for update to anon using (true) with check (true);
 
--- 4 · Receipts and documents from the phone (opened from the web app's line items). Images and PDFs, up to 10 MB.
+-- 4 · Files shared between the apps: receipts, advance documents and claim attachments (any type), up to 10 MB each.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('ems-files', 'ems-files', true, 10485760, array['image/jpeg','image/png','application/pdf'])
+values ('ems-files', 'ems-files', true, 10485760, null)
 on conflict (id) do nothing;
+update storage.buckets set allowed_mime_types = null, file_size_limit = 10485760, public = true where id = 'ems-files';
 drop policy if exists "ems files upload" on storage.objects;
 create policy "ems files upload" on storage.objects for insert to anon with check (bucket_id = 'ems-files');
 

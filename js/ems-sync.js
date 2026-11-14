@@ -267,8 +267,11 @@
 
   /* ── What the phone shows ── */
   const strip=function(o){return JSON.parse(JSON.stringify(o==null?null:o));};
+  const shareable=function(u){return u&&/^https?:/i.test(String(u))?String(u):'';};
+  const attsOut=function(r){return (r.attachments||[]).filter(function(a){return shareable(a.url);})
+    .map(function(a){return {name:a.name,url:a.url,type:a.type||'',size:a.size||'',by:a.by||'',date:a.date||''};});};
   function lineOut(r,l){
-    return {id:l.id,title:l.title,amount:l.amount,category:l.category||r.category,subCat:l.subCat,start:l.start,end:l.end,proof:l.proof,proofUrl:l.proofUrl||'',
+    return {id:l.id,title:l.title,amount:l.amount,category:l.category||r.category,subCat:l.subCat,start:l.start,end:l.end,proof:l.proof,proofUrl:shareable(l.proofUrl),
       comments:l.comments||'',cols:strip(l.cols||{}),status:typeof expLineShown==='function'?expLineShown(r,l):(l.status||'Pending'),approved:l.approved==null?null:l.approved,
       paidBy:l.paidBy||'',merchant:l.merchant||'',invoice:l.invoice||'',advanceId:l.advanceId||'',cardId:l.cardId||'',reason:l.reason||''};
   }
@@ -300,7 +303,7 @@
     const x={kind:'exp',r:r,status:r.status,pay:r.pay?r.pay.status:(eaApproved(r.status)?EA_NA:caPayStatus(r)),set:EA_NA,who:r.name};
     return Object.assign(common(r),flowOf(x),{wid:'exp:'+r.id,kind:'expense',appType:r.appType,
       approvedAmt:typeof caApprovedTotal==='function'&&eaApproved(r.status)?caApprovedTotal(r):null,
-      lines:r.lines.map(function(l){return lineOut(r,l);}),pay:strip(r.pay||null)});
+      lines:r.lines.map(function(l){return lineOut(r,l);}),attachments:attsOut(r),pay:strip(r.pay||null)});
   }
   function advOut(r){
     const b=advBal(r),dead=['Draft','Rejected','Withdrawn','Cancelled'].indexOf(r.status)>=0;
@@ -310,7 +313,7 @@
     if(b.accepted)ledger.push({type:'Utilization',amount:b.accepted});
     if(b.returns)ledger.push({type:'Return',amount:b.returns});
     return Object.assign(common(r),flowOf(x),{wid:'adv:'+r.id,kind:'advance',purpose:r.purpose||'',requiredBy:r.requiredBy||'',periodFrom:r.periodFrom||'',
-      periodTo:r.periodTo||'',notes:r.notes||'',proof:r.proof||'',proofUrl:r.proofUrl||'',amount:caTotal(r),approvedAmt:b.approved||null,
+      periodTo:r.periodTo||'',notes:r.notes||'',proof:r.proof||'',proofUrl:shareable(r.proofUrl),amount:caTotal(r),approvedAmt:b.approved||null,
       bal:strip(b),ledger:ledger,lines:(r.lines||[]).map(function(l){return lineOut(r,l);})});
   }
   function rows(){
@@ -392,4 +395,109 @@
     document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')tick();});
   });
   window.emsSyncNow=tick;
+
+  /* ── Files attached on the web: into the same file store as the phone's (product owner, 14 Nov 2026: "store and transfer
+     attachments from phone to web and vice versa") ──
+     In Nova Retail, a file picked on the web is kept as before (its name, and for an item's Expense Proof a link that
+     lasts while the page is open) and is also uploaded; once uploaded, the record keeps the shared link, so the file
+     opens on the web after a reload and on the phone. Covers an item's Expense Proof, an advance's Supporting Document
+     and the files on a claim's Attachments tab. A file that cannot be uploaded (no connection) stays as it was before. */
+  const BUCKET='ems-files';
+  const novaHere=function(){const n=nova();return !!n&&typeof idEntity==='function'&&idEntity()===n.entityId;};
+  async function uploadFile(file,folder){
+    const safe=String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(-80);
+    const path=folder+'/'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)+'/'+safe;
+    const url=BASE+'/storage/v1/object/'+BUCKET+'/'+path;
+    const go=function(bearer){const h={apikey:CFG.key,'Content-Type':file.type||'application/octet-stream'};if(bearer)h.Authorization='Bearer '+CFG.key;return fetch(url,{method:'POST',headers:h,body:file});};
+    let r=await go(false);
+    if(!r.ok&&[400,401,403].indexOf(r.status)>=0){const r2=await go(true);if(r2.ok)r=r2;}
+    if(!r.ok)throw new Error('upload '+r.status);
+    return BASE+'/storage/v1/object/public/'+BUCKET+'/'+path;
+  }
+  const saved=function(){if(typeof presSaveSoon==='function')presSaveSoon();};
+  const fileOf=function(input){return input&&input.files&&input.files[0]?input.files[0]:null;};
+  /* An item's Expense Proof: the page's temporary link is swapped for the shared one wherever it is by then. */
+  if(typeof expPickProof==='function'){
+    const p0=expPickProof;
+    expPickProof=function(input){
+      const f=fileOf(input);
+      const out=p0.apply(this,arguments);
+      const t=typeof expDraft!=='undefined'&&expDraft?(expModalOpen?expDraft.line:expDraft):null,tmp=t&&t.proofUrl;
+      if(f&&novaHere()&&tmp&&/^blob:/.test(tmp)&&f.size<=10*1024*1024){
+        uploadFile(f,'web/receipts').then(function(u){
+          const swap=function(l){if(l&&l.proofUrl===tmp)l.proofUrl=u;};
+          if(typeof expDraft!=='undefined'&&expDraft){swap(expDraft);swap(expDraft.line);(expDraft.lines||[]).forEach(swap);}
+          expensesData.forEach(function(r){(r.lines||[]).forEach(swap);});
+          saved();
+        }).catch(function(e){if(window.console)console.warn('[ems-sync] receipt not uploaded',e&&e.message||e);});
+      }
+      return out;
+    };
+  }
+  /* An advance's Supporting Document: the form keeps the link, and the advance it is saved on gets it. */
+  let advLinks={};   // file name → shared link, for the advance being written
+  if(typeof advPickProof==='function'){
+    const a0=advPickProof;
+    advPickProof=function(input){
+      const f=fileOf(input);
+      const out=a0.apply(this,arguments);
+      if(f&&novaHere()&&typeof advForm!=='undefined'&&advForm&&advForm.proof===f.name&&f.size<=10*1024*1024){
+        const key=f.name,editing=advForm.id;
+        uploadFile(f,'web/docs').then(function(u){
+          advLinks[key]=u;
+          if(advForm&&advForm.proof===key)advForm.proofUrl=u;
+          const r=editing!=null?advRec(editing):advLinks.__last&&advRec(advLinks.__last);
+          if(r&&r.proof===key&&!shareable(r.proofUrl))r.proofUrl=u;
+          saved();
+        }).catch(function(e){if(window.console)console.warn('[ems-sync] document not uploaded',e&&e.message||e);});
+      }
+      return out;
+    };
+  }
+  ['advCreate','advUpdate'].forEach(function(n){
+    const f0=window[n];if(typeof f0!=='function')return;
+    window[n]=function(){
+      const res=f0.apply(this,arguments);
+      const r=n==='advCreate'?(res&&res.rec):(res?null:advRec(arguments[0]));
+      if(r&&r.proof){if(n==='advCreate')advLinks.__last=r.id;const u=advLinks[r.proof];if(u&&!shareable(r.proofUrl))r.proofUrl=u;}
+      return res;
+    };
+  });
+  /* The panel: the Supporting Document opens when there is a shared link. */
+  if(typeof advBasicHTML==='function'){
+    const b0=advBasicHTML;
+    advBasicHTML=function(r){
+      const out=b0.apply(this,arguments),u=r&&shareable(r.proofUrl);
+      if(!u)return out;
+      return out.replace(/(Supporting Document<\/div><div class="lp-sb-field-value">)([^<]+)(<\/div>)/,
+        function(m,a,name,c){return a+'<a href="'+attrSafe(u)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">'+name+'</a>'+c;});
+    };
+  }
+  /* A claim's Attachments tab: each new file is uploaded and opens from its shared link. */
+  if(typeof attachCommit==='function'){
+    const c0=attachCommit;
+    attachCommit=function(scope,id,fileList){
+      const rec=scope==='exp'&&typeof attachRec==='function'?attachRec('exp',id):null,n0=rec?rec.attachments.length:0;
+      const files=fileList?Array.prototype.slice.call(fileList):[];
+      const out=c0.apply(this,arguments);
+      if(rec&&novaHere()&&rec.attachments.length>n0){
+        rec.attachments.slice(0,rec.attachments.length-n0).forEach(function(att){
+          const f=files.find(function(x){return x.name===att.name;});
+          if(!f||f.size>10*1024*1024)return;
+          uploadFile(f,'web/attachments').then(function(u){att.url=u;saved();})
+            .catch(function(e){if(window.console)console.warn('[ems-sync] attachment not uploaded',e&&e.message||e);});
+        });
+      }
+      return out;
+    };
+  }
+  if(typeof attachOpen==='function'){
+    const o0=attachOpen;
+    attachOpen=function(name){
+      const r=typeof page!=='undefined'&&page==='expenses'&&typeof expSelectedId!=='undefined'&&expSelectedId!=null&&typeof expRec==='function'?expRec(expSelectedId):null;
+      const a=r&&(r.attachments||[]).find(function(x){return x.name===name&&shareable(x.url);});
+      if(a){window.open(a.url,'_blank','noopener');return;}
+      return o0.apply(this,arguments);
+    };
+  }
 })();
