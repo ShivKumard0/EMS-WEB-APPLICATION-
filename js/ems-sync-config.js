@@ -4,6 +4,6 @@
    Left empty, the sync is off and the web app works exactly as before. The mobile app has the same two values in
    its own js/sync-config.js. */
 window.EMS_SYNC_CONFIG={
-  url:'',
-  key:''
+  url:'https://comjdziyxazjlzcrdxym.supabase.co',
+  key:'sb_publishable_9Y6yEdXGLk8EMGYYHp1gXQ_ScnQ8E_m'
 };
