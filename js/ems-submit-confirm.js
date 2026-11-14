@@ -6,7 +6,8 @@
    - The wallet column shows only in a company that uses wallets (Wallet & Benefits has an active wallet).
    - Category → wallet: Meal Allowance → Meal, Fuel Reimbursement → Fuel, Telephone & Internet → Telecom; Travel
      Reimbursement, Accommodation, Team Outing, Office Events and Office Stationery → Corporate Expense; Books & Learning
-     has no wallet. A wallet the employee's card does not carry reads "Not on your card".
+     has no wallet. Each reads as "Meal wallet · 506 INR available"; a wallet the employee's card does not carry reads
+     "not on the card".
    - The form's own checks run first, so the summary opens only for a claim that can be submitted.
    - Not shown while the presentation prepares its data, nor for claims the mobile app sends (js/ems-sync.js): the
      employee already confirmed those on the phone.
@@ -32,9 +33,9 @@
     const cards=(typeof ccCardsOfEmp==='function'?ccCardsOfEmp(eid):[]).filter(function(c){
       return c.entity===e&&!(typeof ccCardEnded==='function'&&ccCardEnded(c));});
     const card=cards.find(function(c){return (typeof ccCardWallets==='function'?ccCardWallets(c):[]).indexOf(code)>=0;});
-    if(!card)return {text:walletName(code)+' · Not on your card',muted:true};
+    if(!card)return {text:walletName(code)+' wallet · not on the card',muted:true};
     const w=(typeof emsLedgerWallets==='function'?emsLedgerWallets(eid):{})[code];
-    return {text:walletName(code)+' · '+money(w?w.available:0,card.currency)};
+    return {text:walletName(code)+' wallet · '+money(w?w.available:0,card.currency)+' available'};
   }
   window.emsWalletCell=walletCell;
   /* ── The popup ── */
