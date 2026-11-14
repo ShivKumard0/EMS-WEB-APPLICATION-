@@ -26,40 +26,69 @@
     return typeof wbWallets!=='undefined'&&wbWallets.some(function(w){return w.entity===e&&w.status==='Active';});
   };
   const walletName=function(code){return typeof wbTypeName==='function'?wbTypeName(code):code;};
-  /* {text, tone} for one category of one employee. */
-  function walletCell(eid,category){
-    if(!Object.prototype.hasOwnProperty.call(CAT_WALLET,category)||!CAT_WALLET[category])return {text:'No wallet',muted:true};
-    const code=CAT_WALLET[category],e=ent();
+  /* One category of one employee: {key, name, state ok | off (not on the card) | none (no wallet), available, cur, text}. */
+  function walletInfo(eid,category){
+    const code=Object.prototype.hasOwnProperty.call(CAT_WALLET,category)?CAT_WALLET[category]:'';
+    if(!code)return {key:'none:'+category,name:category||'Other',state:'none',text:'No wallet',muted:true};
+    const e=ent();
     const cards=(typeof ccCardsOfEmp==='function'?ccCardsOfEmp(eid):[]).filter(function(c){
       return c.entity===e&&!(typeof ccCardEnded==='function'&&ccCardEnded(c));});
     const card=cards.find(function(c){return (typeof ccCardWallets==='function'?ccCardWallets(c):[]).indexOf(code)>=0;});
-    if(!card)return {text:walletName(code)+' wallet · not on the card',muted:true};
-    const w=(typeof emsLedgerWallets==='function'?emsLedgerWallets(eid):{})[code];
-    return {text:walletName(code)+' wallet · '+money(w?w.available:0,card.currency)+' available'};
+    if(!card)return {key:code,name:walletName(code)+' wallet',state:'off',text:walletName(code)+' wallet · not on the card',muted:true};
+    const w=(typeof emsLedgerWallets==='function'?emsLedgerWallets(eid):{})[code],av=w?w.available:0;
+    return {key:code,name:walletName(code)+' wallet',state:'ok',available:av,cur:card.currency,text:walletName(code)+' wallet · '+money(av,card.currency)+' available'};
   }
+  function walletCell(eid,category){const x=walletInfo(eid,category);return {text:x.text,muted:!!x.muted};}
   window.emsWalletCell=walletCell;
   /* ── The popup ── */
   let C=null;   // {eid, name, cur, items:[{title, category, subCat, amount}], go}
   const root=function(){let el=document.getElementById('ems-subconf-root');if(!el){el=document.createElement('div');el.id='ems-subconf-root';document.body.appendChild(el);}return el;};
   const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   /* A confirmation step (product owner, 14 Nov 2026: "make it like a confirmation … a little bit pop"): a tick, the
-     question, a summary strip with the total, the items, and each wallet balance as a green badge - all in the app's own
-     colours (the status badge tones) and parts (modal, table, buttons). */
+     question, a summary strip with the total, the items, and - in a section of its own ("a proper box partition") - one
+     box per wallet the claim touches: its available balance and the items it is for. All in the app's own colours (the
+     status tones) and parts (modal, table, buttons). */
   const TICK='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
   const WAL='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2h11"/><circle cx="16" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
+  const WAL16=WAL.replace('width="13" height="13"','width="17" height="17"');
   const CAP='font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#6b7280';
   function html(){
     const wal=usesWallets(),total=C.items.reduce(function(s,l){return s+(parseFloat(l.amount)||0);},0);
     const who=(typeof idEmpName==='function'&&C.eid?idEmpName(C.eid):'')||C.name||'';
     const rows=C.items.map(function(l){
-      const cat=l.category||'',w=wal?walletCell(C.eid,cat):null;
+      const cat=l.category||'';
       return '<tr>'
         +'<td class="csag-td"><div class="lp-c-main">'+esc(l.title||'Item')+'</div></td>'
         +'<td class="csag-td">'+esc(cat+(l.subCat?' / '+l.subCat:''))+'</td>'
         +'<td class="csag-td" style="text-align:right;white-space:nowrap;font-weight:600">'+money(parseFloat(l.amount)||0,C.cur)+'</td>'
-        +(wal?'<td class="csag-td"><span class="lp-status-badge tone-'+(w.muted?'idle':'ok')+'" style="margin-left:0;display:inline-flex;align-items:center;gap:6px">'+(w.muted?'':WAL)+esc(w.text)+'</span></td>':'')
         +'</tr>';
     }).join('');
+    /* Wallet Balance: one box per wallet (items of the same wallet together), then categories without a wallet. */
+    let wbox='';
+    if(wal){
+      const groups=[];
+      C.items.forEach(function(l){
+        const x=walletInfo(C.eid,l.category||'');
+        let g=groups.find(function(y){return y.key===x.key;});
+        if(!g){g=Object.assign({items:[],sum:0},x);groups.push(g);}
+        g.items.push(l.title||'Item');g.sum+=parseFloat(l.amount)||0;
+      });
+      groups.sort(function(a,b){return (a.state!=='ok')-(b.state!=='ok');});
+      const box=function(g){
+        const ok=g.state==='ok';
+        return '<div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff">'
+          +'<span style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;'
+            +(ok?'background:var(--st-ok-bg,#dcfce7);border:1px solid var(--st-ok-bd,#86efac);color:var(--st-ok-fg,#16a34a)':'background:#f1f5f9;border:1px solid var(--border,#e5e7eb);color:#64748b')+'">'+WAL16+'</span>'
+          +'<div style="min-width:0;flex:1">'
+            +'<div style="font-size:13px;font-weight:600;color:var(--navy,#0f172a)">'+esc(g.name)+'</div>'
+            +(ok?'<div style="margin-top:2px"><span style="font-size:20px;line-height:26px;font-weight:700;color:var(--st-ok-fg,#16a34a)">'+money(g.available,g.cur)+'</span> <span style="font-size:12px;color:#6b7280">available</span></div>'
+              :'<div style="font-size:13px;line-height:20px;color:#6b7280;margin-top:4px">'+(g.state==='off'?'Not on the card':'No wallet for this category')+'</div>')
+            +'<div style="font-size:12px;color:#6b7280;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(g.items.join(', '))+'">For: '+esc(g.items.join(', '))+' · '+money(g.sum,C.cur)+'</div>'
+          +'</div></div>';
+      };
+      wbox='<div style="'+CAP+';margin:18px 0 8px">Wallet Balance</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:4px">'+groups.map(box).join('')+'</div>';
+    }
     const n=C.items.length;
     return '<div class="ct-modal-overlay" style="z-index:2000" onclick="emsSubConfClose()">'
       +'<div class="ct-modal" style="width:min(860px,95vw)" role="dialog" aria-modal="true" aria-label="Confirm submission" onclick="event.stopPropagation()">'
@@ -73,7 +102,8 @@
         +'<div style="text-align:right"><div style="'+CAP+'">Total claim amount</div><div style="font-size:22px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:2px">'+money(total,C.cur)+'</div></div>'
       +'</div>'
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Item</th><th>Category / Sub Category</th><th style="text-align:right">Amount</th>'
-        +(wal?'<th>Wallet Balance</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+        +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +wbox
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="emsSubConfClose()">Cancel</button>'
         +'<button class="ep-save-btn" onclick="emsSubConfGo()">Yes, Submit</button></div></div>'
       +'</div></div>';
