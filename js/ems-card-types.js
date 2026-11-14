@@ -118,7 +118,7 @@ function emsAutoIssueCreate(p,eid,rows,el){
   ccLog(r,'Approved','Card issued automatically: '+e.name+' is entitled to '+basis+' this month, paid into the '+wallets+' wallet. '+p.name+' issues its cards automatically; no request or approval is needed.',A);
   r.track='Enrollment Pending';r.enr=ccEnrNew(r,p);
   ccLog(r,'Enrollment Pending','Enrollment '+r.enr.key+' is pending'+(p.provider?' with '+ccProviderName(p.provider)+' (KYC by the provider)':'')+'. No card has been issued yet.',A);
-  ccNotify([idUserOfEmp(e.eid)],expKey(r)+': a '+p.name+' is being issued to you for your '+basis+(basis.indexOf(' and ')>=0?' benefits.':' benefit.'),r,'auto-issue');
+  ccNotify([idUserOfEmp(e.eid)],expKey(r)+': '+(/^[aeiou]/i.test(p.name)?'an ':'a ')+p.name+' is being issued to you for your '+basis+(basis.indexOf(' and ')>=0?' benefits.':' benefit.'),r,'auto-issue');
   ccNotify(ccPeopleWith('card.enrollment.manage',p.entity),expKey(r)+': '+p.name+' for '+e.name+' was issued automatically. Send the enrollment to the provider.',r,'auto-issue-admin');
   return r;
 }

@@ -359,16 +359,16 @@ function epolSeedNova(){
       +'<h2>Who it applies to</h2><p>Every employee of Opendhi, at our stores, warehouses and offices.</p>'
       +'<h2>Raising a claim</h2><ul><li>Raise the claim in <strong>Expenses &amp; Advances</strong> within <strong>30 days</strong> of the spend.</li><li>Attach a receipt or tax invoice for every item. A GST invoice is needed for any single bill of ₹2,000 or more.</li><li>One claim can hold several items; give each item its own Expense Type and date.</li></ul>'
       +'<h2>Approval and payment</h2><p>Your reporting manager reviews the claim first, then Finance. An item outside this policy may be rejected or sent back for follow-up with a note. Approved claims are paid to your salary account on file in the next reimbursement run.</p>'
-      +'<h2>Not reimbursed</h2><ul><li>Alcohol, tobacco and personal entertainment</li><li>Traffic fines and late-payment charges</li><li>Anything already paid with your Nova card or settled against an advance</li></ul>'],
+      +'<h2>Not reimbursed</h2><ul><li>Alcohol, tobacco and personal entertainment</li><li>Traffic fines and late-payment charges</li><li>Anything already paid with your OpenDhi x RBL card or settled against an advance</li></ul>'],
     ['Travel & Accommodation','Travel Reimbursement',-55,
       '<h2>Booking travel</h2><ul><li>Book economy class for flights and AC 2-tier or chair car for trains.</li><li>Book at least 7 days ahead where the trip is known, and keep the booking confirmation.</li><li>Use app-based cabs or the company travel desk for airport and station transfers.</li></ul>'
       +'<h2>Hotels</h2><p>Stay at a hotel within the limit set for your grade in Capping Limit. Shared stays with colleagues on the same trip are encouraged.</p>'
       +'<h2>Claiming</h2><p>Claim tickets, hotel and local travel on one claim after the trip, with the itinerary attached. If you took a travel advance, settle it on the same claim.</p>'],
     ['Meal Allowance','Meal Allowance',-48,
-      '<h2>Your monthly allowance</h2><p>Each month <strong>₹2,200</strong> is loaded to the <strong>Meal</strong> wallet on your Nova card. Pay for meals with the card at restaurants and food outlets; the amount comes from the Meal wallet.</p>'
+      '<h2>Your monthly allowance</h2><p>Each month <strong>₹2,200</strong> is loaded to the <strong>Meal</strong> wallet on your OpenDhi x RBL card. Pay for meals with the card at restaurants and food outlets; the amount comes from the Meal wallet.</p>'
       +'<h2>Rules</h2><ul><li>The Meal wallet works only at food merchants.</li><li>Unused balance stays on the wallet until the end of the financial year.</li><li>Team meals with clients are claimed as an expense with the attendees named, not paid from the Meal wallet.</li></ul>'],
     ['Fuel & Local Conveyance','Fuel Reimbursement',-41,
-      '<h2>Fuel</h2><p>Field staff who use their own vehicle for store visits receive <strong>₹3,000</strong> a month on the <strong>Fuel</strong> wallet of their Nova card, usable at fuel stations only.</p>'
+      '<h2>Fuel</h2><p>Field staff who use their own vehicle for store visits receive <strong>₹3,000</strong> a month on the <strong>Fuel</strong> wallet of their OpenDhi x RBL card, usable at fuel stations only.</p>'
       +'<h2>Local conveyance</h2><ul><li>Auto and cab fares for official visits are claimed as an expense with the route and purpose.</li><li>Keep app receipts; for an auto without a receipt, note the route in Description.</li><li>Travel between home and your usual workplace is not claimed.</li></ul>'],
     ['Travel Advance & Settlement','Travel Advance',-34,
       '<h2>Requesting an advance</h2><p>Request a travel advance from <strong>Expenses &amp; Advances</strong> at least 2 days before the trip, with the dates, purpose and expected costs. Your manager and Finance approve it, and Finance pays it to your salary account.</p>'

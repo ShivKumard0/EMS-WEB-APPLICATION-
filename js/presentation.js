@@ -21,6 +21,11 @@ const PRES_COMPANY='Nova Retail Pvt Ltd';
    with Opendhi"). The set-up still prepares it as PRES_COMPANY - its ID (nova-retail-pvt-ltd, ENT-00422) stays the same in
    every browser - and presShowName() then renames it, in a new set-up and in a copy kept from before. */
 const PRES_SHOWN='Opendhi';
+/* The card's shown name (product owner, 14 Nov 2026: "change the card name as well OpenDhi x RBL"): the card programme
+   (prepared as Nova Multi Wallet Card, CPG-103) and the card itself (Corporate Cards → Cards). Codes stay. */
+const PRES_CARD='OpenDhi x RBL';
+/* Bumped when a rename is added: a copy renamed by an earlier version is renamed once more. */
+const PRES_SHOWN_V=2;
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
 /* Screen state, caches and values rebuilt from other records are never kept. */
@@ -874,18 +879,23 @@ function presNova(){
   const L=typeof entitiesData!=='undefined'?entitiesData:[],id=PRES_COMPANY.toLowerCase().replace(/[^a-z0-9]+/g,'-');
   return L.find(function(e){return e.name===PRES_COMPANY;})||L.find(function(e){return e.id===id&&e.name===PRES_SHOWN;})||null;
 }
-/* The prepared company under its shown name: every kept record that names it (the company and its workspace, Entity
-   Name, branch addresses, logs, the bulk upload's file name, policy text) reads PRES_SHOWN. Runs once per browser: when
-   the company already has the shown name there is nothing to do. IDs, e-mail addresses and card names are untouched. */
+/* The prepared company and its card under their shown names: every kept record that names them (the company and its
+   workspace, Entity Name, branch addresses, the card programme and the card, requests, notifications, logs, the bulk
+   upload's file name, policy text) reads PRES_SHOWN / PRES_CARD. Runs once per browser and version (PRES_SHOWN_V, kept
+   on the company record). IDs, codes, e-mail addresses and funding account names are untouched. */
 function presShowName(){
-  const n=presNova();if(!n||n.name===PRES_SHOWN)return false;
-  const RX=/Nova Retail Pvt Ltd|Nova Retail/g,seen=new Set();
+  const n=presNova();if(!n||n.presShown===PRES_SHOWN_V)return false;
+  const RULES=[[/\b([Aa]) (Nova Multi Wallet Card|NOVA X RBL Multiwallet Card)/g,'$1n '+PRES_CARD],
+    [/Nova Multi Wallet Card|NOVA X RBL Multiwallet Card/g,PRES_CARD],[/\bNova card\b/g,PRES_CARD+' card'],
+    [/Nova Retail Pvt Ltd|Nova Retail/g,PRES_SHOWN]];
+  const fix=function(x){RULES.forEach(function(r){x=x.replace(r[0],r[1]);});return x;},seen=new Set();
   const walk=function(v,d){
     if(!v||typeof v!=='object'||v.nodeType||seen.has(v)||d>14)return;seen.add(v);
-    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(x.indexOf('Nova Retail')>=0)v[k]=x.replace(RX,PRES_SHOWN);}else walk(x,d+1);});
+    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(/Nova|NOVA/.test(x))v[k]=fix(x);}else walk(x,d+1);});
   };
   presCandidates().forEach(function(name){try{walk(presGet(name),0);}catch(e){}});
   if(n.initials==='NR')n.initials=(PRES_SHOWN[0]+(PRES_SHOWN[1]||'')).toUpperCase();
+  n.presShown=PRES_SHOWN_V;
   if(typeof emsClearCache==='function')emsClearCache();
   return true;
 }
