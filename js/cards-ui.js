@@ -2628,7 +2628,7 @@ function ccTxnPageHTML(){
       +'<td><div class="lp-c-plain">'+ccE(wbTypeName(t.wallet))+'</div><div class="lp-c-sub">'+ccE(t.walletClass)+'</div></td>'
       +'<td><div class="lp-c-plain ax-c-trunc">'+ccE(t.merchant)+'</div><div class="lp-c-sub">'+ccE([t.mcc,t.country,t.channel].filter(Boolean).join(' · '))+'</div></td>'
       +'<td class="exp-c-amt">'+ccE(expMoney(t.amount,t.currency))+(t.currency!==t.billCurrency?'<div class="lp-c-sub">billed '+ccE(expMoney(t.billAmount,t.billCurrency))+'</div>':'')+'</td>'
-      +'<td>'+ccTxnShownBadge(t)+'<div class="lp-c-sub">'+ccE(t.reconStatus)+'</div></td>'
+      +'<td>'+ccTxnShownBadge(t)+'</td>'   // the status alone, no line under it (product owner, 14 Nov 2026); Reconciliation stays in the panel
       /* Actions (product owner, 10 Nov 2026): the ☰ opens the transaction's panel, as a click on the row does. The checks
          the old Verification column listed stay in the panel and in the tiles (Awaiting Verification, Eligibility Exceptions…). */
       +'<td onclick="event.stopPropagation()"><button type="button" class="ct-dots-btn" title="View Details" aria-label="View '+attrSafe(expKey(t))+'" onclick="ccTxnOpen('+t.id+')">'+(typeof EMS_DOTS!=='undefined'?EMS_DOTS:'&#9776;')+'</button></td></tr>';
