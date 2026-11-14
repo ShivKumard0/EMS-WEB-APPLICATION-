@@ -2,7 +2,7 @@
    "in expense and management and in request and loads i want to apply the filter and then … a select checkbox on the
    left side of the line items, and on the top select all, and then i can [decide] multiple, or all at once."
    On Expenses & Advances and on Corporate Cards → Requests & Loads:
-   - A checkbox at the left of every row the signed-in person can decide now - Ritu her pending rows, Rohan his, the
+   - Once a filter is applied (Search, or a status tile): a checkbox at the left of every row the signed-in person can decide now - Ritu her pending rows, Rohan his, the
      Company Admin and Super Admin every pending row (the same rule as one approval: caCanDecide). The checkbox in the
      heading selects every such row matching the filter, on every page.
    - With rows selected, a bar offers Approve and Reject; a popup takes one comment for all (needed to reject, and when
@@ -41,7 +41,13 @@
       items:function(){return ccRqaShown(ccRqaItems()).map(function(x){return {k:x.kind+':'+x.id,r:x.rec,row:(x.kind==='req'?'ccr-row-':'ccl-row-')+x.id,key:x.key};});}}
   };
   const can=function(it){try{return caCanDecide(it.r,me());}catch(e){return false;}};
-  const selectable=function(w){try{return L[w].items().filter(can);}catch(e){return [];}};
+  /* Only once a filter is applied (product owner, 14 Nov 2026: "when i apply filter and click on search then only show
+     the selecting option"): with no filter the lists show no checkboxes. */
+  const filtered=function(w){
+    try{return w==='ea'?[eaQ,eaTypeF,eaApprF,eaPayF,eaSetF,eaWhoF,eaFrom,eaTo,eaCatF,eaDeptF,atF.ea].some(Boolean)
+      :[ccRqaQ,ccRqaTypeF,ccRqaProgF,ccRqaStatusF,atF.rl].some(Boolean);}catch(e){return false;}
+  };
+  const selectable=function(w){try{return filtered(w)?L[w].items().filter(can):[];}catch(e){return [];}};
 
   /* ── Pending At filter (admins): part of each list's own filter ── */
   if(typeof eaRowPass==='function'){
