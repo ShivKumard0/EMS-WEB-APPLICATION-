@@ -18,7 +18,7 @@
           mask-image:linear-gradient(to right,#000 0%,#000 22%,rgba(0,0,0,.45) 42%,transparent 62%)}
 /* ── Brand panel ── */
 .lg-hero{position:relative;align-self:stretch;display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 80px);color:#fff}
-.lg-logo{position:absolute;top:0;left:0;height:44px;width:auto;filter:brightness(0) invert(1)}
+.lg-logo{position:absolute;top:0;left:0;height:56px;width:auto}   /* ONC logo, light version: white lettering, the mark in its colours (14 Nov 2026) */
 .lg-hero-txt h1{margin:0;font-size:clamp(34px,4.2vw,52px);font-weight:800;line-height:1.08;letter-spacing:-.5px}
 .lg-hero-txt p{margin:22px 0 0;max-width:400px;font-size:16px;line-height:1.6;color:rgba(255,255,255,.72)}
 
