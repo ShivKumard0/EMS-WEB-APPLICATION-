@@ -42,6 +42,15 @@
     document.getElementById('tb-emp-bulk-btn').style.display=list&&canBulk?'':'none';
     document.getElementById('tb-emp-export-btn').style.display=list?'':'none';
   }
+  /* 3 · The status tiles without Offboarding (product owner, 14 Nov 2026: "remove offboarding from the top"): Pending,
+     Onboarding, Active and Inactive, each counting the employees in that status - a new employee (added or bulk
+     uploaded) is Pending, Mark Active moves one from Pending to Active. */
+  if(typeof empStatTilesHTML==='function'){
+    const t0=empStatTilesHTML;
+    empStatTilesHTML=function(){
+      return t0.apply(this,arguments).replace(/<div class="listing-stat[^"]*" onclick="[^"]*__offboarding__[^"]*">[\s\S]*?<\/div><\/div>/,'');
+    };
+  }
   if(typeof renderADTPage==='function'){
     const r0=renderADTPage;
     renderADTPage=function(){const out=r0.apply(this,arguments);try{update();}catch(e){}return out;};
