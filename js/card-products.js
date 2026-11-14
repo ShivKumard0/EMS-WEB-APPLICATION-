@@ -46,7 +46,7 @@ const ccpBook={};
     ccpBook[e]={id:1001,entity:e,code:'CPR-1001',name:'NOVA X RBL Multiwallet Card',bank:'RBL Bank',network:'RuPay',type:'Prepaid · Multi-wallet',
       form:'Physical and Virtual',currency:'INR',kyc:'Full KYC (Aadhaar and PAN)',validity:'5 years from issue',fee:'Nil',launched:'01 Apr 2026',status:'Active',wallets:ws,
       logs:[
-        {date:'05 Apr 2026',time:'11:20:14 AM',user:'Karan Shah',status:'Active',action:'Activated with RBL Bank: cards can be issued to Nova Retail employees.'},
+        {date:'05 Apr 2026',time:'11:20:14 AM',user:'Karan Shah',status:'Active',action:'Activated with RBL Bank: cards can be issued to Opendhi employees.'},
         {date:'02 Apr 2026',time:'03:42:08 PM',user:'Rohan Mehta',status:'Approved',action:'Approved by Finance: fees, load limits and the funding account checked.'},
         {date:'01 Apr 2026',time:'10:05:37 AM',user:'Karan Shah',status:'Draft',action:'Card created: NOVA X RBL Multiwallet Card with RBL Bank (RuPay, prepaid multi-wallet); wallets '+names+' switched on.'}]};
     if(typeof presSaveSoon==='function')presSaveSoon();

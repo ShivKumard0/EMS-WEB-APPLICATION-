@@ -17,6 +17,10 @@ const PRES_KEY='adt-presentation-v1';
 /* The prepared data's version: a copy saved from an older version is rebuilt once, so new prepared records reach every browser without a manual reset. Change it whenever the prepared data changes. */
 const PRES_DATA_VERSION='2026-11-13.2';
 const PRES_COMPANY='Nova Retail Pvt Ltd';
+/* The name shown for the prepared company (product owner, 14 Nov 2026: "wherever Nova Retail Pvt Ltd is written replace it
+   with Opendhi"). The set-up still prepares it as PRES_COMPANY - its ID (nova-retail-pvt-ltd, ENT-00422) stays the same in
+   every browser - and presShowName() then renames it, in a new set-up and in a copy kept from before. */
+const PRES_SHOWN='Opendhi';
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
 /* Screen state, caches and values rebuilt from other records are never kept. */
@@ -96,12 +100,12 @@ function presTabHTML(){
   if(!presCanReset())return '<div class="wb-empty-sm">Managed by OpenDhi.</div>';
   let s=null;try{s=JSON.parse(localStorage.getItem(PRES_KEY)||'null');}catch(e){}
   return '<div class="lp-sb-view-header"><span class="lp-sb-section-title">Presentation Data</span></div>'
-    +'<div class="wb-note"><div class="wb-note-sub">Kept in this browser'+(s&&s.savedAt?' · last saved '+sbEsc(new Date(s.savedAt).toLocaleString('en-IN')):'')+'. Reset rebuilds '+sbEsc(PRES_COMPANY)+' and removes everything created since.</div></div>'
+    +'<div class="wb-note"><div class="wb-note-sub">Kept in this browser'+(s&&s.savedAt?' · last saved '+sbEsc(new Date(s.savedAt).toLocaleString('en-IN')):'')+'. Reset rebuilds '+sbEsc(PRES_SHOWN)+' and removes everything created since.</div></div>'
     +'<div class="ca-actions" style="margin-top:12px"><button class="ep-save-btn" onclick="presResetClick()">Reset Presentation Data</button></div>';
 }
 function presResetClick(){
   if(!presCanReset()){showToast('Not permitted','error','Only an OpenDhi Super Admin resets presentation data.');return;}
-  if(!window.confirm('Reset presentation data? Everything created since the last reset is removed and '+PRES_COMPANY+' is prepared again.'))return;
+  if(!window.confirm('Reset presentation data? Everything created since the last reset is removed and '+PRES_SHOWN+' is prepared again.'))return;
   try{localStorage.removeItem(PRES_KEY);}catch(e){}
   location.reload();
 }
@@ -817,16 +821,17 @@ if(PRES_ON){
   presInitial=presSnapshot();
   PRES_BASE_ENTS=(typeof entitiesData!=='undefined'?entitiesData:[]).map(function(e){return e.entityId;});
   const restored=presRestore();
+  if(restored&&presShowName())presSaveSoon();
   /* Save after every screen update (debounced) and when the page is left. */
   if(typeof renderADTPage==='function'){const r0=renderADTPage;renderADTPage=function(){const out=r0.apply(this,arguments);presSaveSoon();presRememberEntity();return out;};}
   window.addEventListener('beforeunload',presSave);
   if(!restored){
     const shade=document.createElement('div');shade.id='pres-preparing';
     shade.setAttribute('style','position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font:600 15px/1.4 inherit;color:#334155');
-    shade.textContent='Preparing '+PRES_COMPANY+'…';
+    shade.textContent='Preparing '+PRES_SHOWN+'…';
     (document.body||document.documentElement).appendChild(shade);
     /* After the page has loaded: every module has finished its own start-up (RBAC templates included). */
-    window.PRES_READY=new Promise(function(res){window.addEventListener('load',function(){setTimeout(function(){/* The set-up works through the screens: the app view is shown first, also in a tab that was left signed in (it may still be on the sign-in view), product owner, 12 Nov 2026. */if(typeof showView==='function'&&typeof view!=='undefined'&&view!=='adt')showView('adt');presBuildBaseline().then(function(log){window.PRES_LOG=log;presEnsureBranches();presTidy();/* A set-up that stopped part-way is not kept: the next visit prepares the company again. */if(log.some(function(x){return /^STOPPED/.test(x);})){presInitial=null;if(typeof console!=='undefined')console.error('Presentation set-up stopped:',log.slice(-2));/* Once per tab, the page is loaded again and the company prepared again (a file the server did not deliver, for example). */let tried='';try{tried=sessionStorage.getItem('adt-pres-retry')||'';}catch(e){}if(!tried){try{sessionStorage.setItem('adt-pres-retry','1');}catch(e){}location.reload();return;}}else{try{sessionStorage.removeItem('adt-pres-retry');}catch(e){}presSave();}shade.remove();
+    window.PRES_READY=new Promise(function(res){window.addEventListener('load',function(){setTimeout(function(){/* The set-up works through the screens: the app view is shown first, also in a tab that was left signed in (it may still be on the sign-in view), product owner, 12 Nov 2026. */if(typeof showView==='function'&&typeof view!=='undefined'&&view!=='adt')showView('adt');presBuildBaseline().then(function(log){window.PRES_LOG=log;presEnsureBranches();presTidy();presShowName();/* A set-up that stopped part-way is not kept: the next visit prepares the company again. */if(log.some(function(x){return /^STOPPED/.test(x);})){presInitial=null;if(typeof console!=='undefined')console.error('Presentation set-up stopped:',log.slice(-2));/* Once per tab, the page is loaded again and the company prepared again (a file the server did not deliver, for example). */let tried='';try{tried=sessionStorage.getItem('adt-pres-retry')||'';}catch(e){}if(!tried){try{sessionStorage.setItem('adt-pres-retry','1');}catch(e){}location.reload();return;}}else{try{sessionStorage.removeItem('adt-pres-retry');}catch(e){}presSave();}shade.remove();
       presStart();if(typeof lgEnter==='function')lgEnter();else if(typeof renderADTPage==='function')renderADTPage();res(log);});},0);});});
   }else window.PRES_READY=Promise.resolve(['restored']);
 }
@@ -865,7 +870,25 @@ function presRecallSession(){
   idSessionUser=s;idAuthUser=a&&idUser(a)?a:s;
   return true;
 }
-function presNova(){return (typeof entitiesData!=='undefined'?entitiesData:[]).find(function(e){return e.name===PRES_COMPANY;})||null;}
+function presNova(){
+  const L=typeof entitiesData!=='undefined'?entitiesData:[],id=PRES_COMPANY.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  return L.find(function(e){return e.name===PRES_COMPANY;})||L.find(function(e){return e.id===id&&e.name===PRES_SHOWN;})||null;
+}
+/* The prepared company under its shown name: every kept record that names it (the company and its workspace, Entity
+   Name, branch addresses, logs, the bulk upload's file name, policy text) reads PRES_SHOWN. Runs once per browser: when
+   the company already has the shown name there is nothing to do. IDs, e-mail addresses and card names are untouched. */
+function presShowName(){
+  const n=presNova();if(!n||n.name===PRES_SHOWN)return false;
+  const RX=/Nova Retail Pvt Ltd|Nova Retail/g,seen=new Set();
+  const walk=function(v,d){
+    if(!v||typeof v!=='object'||v.nodeType||seen.has(v)||d>14)return;seen.add(v);
+    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(x.indexOf('Nova Retail')>=0)v[k]=x.replace(RX,PRES_SHOWN);}else walk(x,d+1);});
+  };
+  presCandidates().forEach(function(name){try{walk(presGet(name),0);}catch(e){}});
+  if(n.initials==='NR')n.initials=(PRES_SHOWN[0]+(PRES_SHOWN[1]||'')).toUpperCase();
+  if(typeof emsClearCache==='function')emsClearCache();
+  return true;
+}
 /* Bulk upload is shown live in every presentation: on each reload, employees
    created by a live upload in Nova Retail - and the upload itself - are
    removed, so the same file can be uploaded again. Everything else stays. */

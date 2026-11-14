@@ -49,7 +49,7 @@
   window.addEventListener('beforeunload',function(){const x=ls(LS.lead,null);if(x&&x.tab===TAB)try{localStorage.removeItem(LS.lead);}catch(e){}});
 
   /* ── Nova Retail, people ── */
-  const nova=function(){return (typeof entitiesData!=='undefined'?entitiesData:[]).find(function(e){return /Nova Retail/i.test(e.name);})||null;};
+  const nova=function(){return (typeof presNova==='function'?presNova():null)||(typeof entitiesData!=='undefined'?entitiesData:[]).find(function(e){return /Nova Retail/i.test(e.name);})||null;};
   const phoneUids=function(){return PHONE.map(function(m){const u=idUserByEmail(m);return u?u.userId:'';}).filter(Boolean);};
   /* Read in Nova Retail without changing who is signed in. */
   function inNova(fn){

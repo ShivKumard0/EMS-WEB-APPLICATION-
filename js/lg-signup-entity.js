@@ -12,11 +12,12 @@
      ID (display only). Its panel: Basic Details (blank where sign up did not ask) and Logs (Active / Inactive with a
      comment, dated and timed). No company, user or access is created; Nova Retail, Dhi Hyperlocal and every other
      record are unchanged.
-   - Company Settings shows Dhi Hyperlocal's own row as "Nova Retail Pvt Ltd" (that list and its panel only).
+   - Company Settings shows Dhi Hyperlocal's own row as "Opendhi" (that list and its panel only; renamed from Nova Retail
+     Pvt Ltd, product owner, 14 Nov 2026).
    Kept in this browser under its own key; Reset presentation data clears it. */
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
-  const KEY='adt-pres-signups',SHOWN_AS='Nova Retail Pvt Ltd';
+  const KEY='adt-pres-signups',SHOWN_AS='Opendhi';   // product owner, 14 Nov 2026: "Rename the Nova Retail Pvt Ltd to Opendhi"
   const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const esc=function(s){return typeof sbEsc==='function'?sbEsc(s):String(s==null?'':s);};
   let recs=[];try{recs=JSON.parse(localStorage.getItem(KEY)||'[]')||[];}catch(e){recs=[];}

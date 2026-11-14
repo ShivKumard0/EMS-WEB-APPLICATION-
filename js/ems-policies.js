@@ -355,8 +355,8 @@ function epolSeedNova(){
   const day=function(k){return typeof wbAddDays==='function'?wbAddDays(today,k):today;};
   const P=[
     ['Expense Claims - General Rules','General',-62,
-      '<h2>Purpose</h2><p>This policy explains how Nova Retail employees claim back money they spend on company business, and how those claims are approved and paid.</p>'
-      +'<h2>Who it applies to</h2><p>Every employee of Nova Retail Pvt Ltd, at our stores, warehouses and offices.</p>'
+      '<h2>Purpose</h2><p>This policy explains how Opendhi employees claim back money they spend on company business, and how those claims are approved and paid.</p>'
+      +'<h2>Who it applies to</h2><p>Every employee of Opendhi, at our stores, warehouses and offices.</p>'
       +'<h2>Raising a claim</h2><ul><li>Raise the claim in <strong>Expenses &amp; Advances</strong> within <strong>30 days</strong> of the spend.</li><li>Attach a receipt or tax invoice for every item. A GST invoice is needed for any single bill of ₹2,000 or more.</li><li>One claim can hold several items; give each item its own Expense Type and date.</li></ul>'
       +'<h2>Approval and payment</h2><p>Your reporting manager reviews the claim first, then Finance. An item outside this policy may be rejected or sent back for follow-up with a note. Approved claims are paid to your salary account on file in the next reimbursement run.</p>'
       +'<h2>Not reimbursed</h2><ul><li>Alcohol, tobacco and personal entertainment</li><li>Traffic fines and late-payment charges</li><li>Anything already paid with your Nova card or settled against an advance</li></ul>'],
