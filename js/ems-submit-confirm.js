@@ -42,26 +42,40 @@
   let C=null;   // {eid, name, cur, items:[{title, category, subCat, amount}], go}
   const root=function(){let el=document.getElementById('ems-subconf-root');if(!el){el=document.createElement('div');el.id='ems-subconf-root';document.body.appendChild(el);}return el;};
   const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  /* A confirmation step (product owner, 14 Nov 2026: "make it like a confirmation … a little bit pop"): a tick, the
+     question, a summary strip with the total, the items, and each wallet balance as a green badge - all in the app's own
+     colours (the status badge tones) and parts (modal, table, buttons). */
+  const TICK='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const WAL='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a2 2 0 0 1 2-2h11"/><circle cx="16" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>';
+  const CAP='font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#6b7280';
   function html(){
     const wal=usesWallets(),total=C.items.reduce(function(s,l){return s+(parseFloat(l.amount)||0);},0);
+    const who=(typeof idEmpName==='function'&&C.eid?idEmpName(C.eid):'')||C.name||'';
     const rows=C.items.map(function(l){
       const cat=l.category||'',w=wal?walletCell(C.eid,cat):null;
       return '<tr>'
         +'<td class="csag-td"><div class="lp-c-main">'+esc(l.title||'Item')+'</div></td>'
         +'<td class="csag-td">'+esc(cat+(l.subCat?' / '+l.subCat:''))+'</td>'
-        +'<td class="csag-td" style="text-align:right;white-space:nowrap">'+money(parseFloat(l.amount)||0,C.cur)+'</td>'
-        +(wal?'<td class="csag-td" style="white-space:nowrap'+(w.muted?';color:var(--muted-fg,#64748b)':'')+'">'+esc(w.text)+'</td>':'')
+        +'<td class="csag-td" style="text-align:right;white-space:nowrap;font-weight:600">'+money(parseFloat(l.amount)||0,C.cur)+'</td>'
+        +(wal?'<td class="csag-td"><span class="lp-status-badge tone-'+(w.muted?'idle':'ok')+'" style="margin-left:0;display:inline-flex;align-items:center;gap:6px">'+(w.muted?'':WAL)+esc(w.text)+'</span></td>':'')
         +'</tr>';
     }).join('');
     const n=C.items.length;
     return '<div class="ct-modal-overlay" style="z-index:2000" onclick="emsSubConfClose()">'
-      +'<div class="ct-modal" style="width:min(820px,95vw)" role="dialog" aria-modal="true" aria-label="Confirm submission" onclick="event.stopPropagation()">'
-      +'<div class="ct-modal-hdr"><span class="ct-modal-title">Are you sure you want to submit?</span><button class="ct-modal-close" onclick="emsSubConfClose()" aria-label="Close">'+X+'</button></div>'
-      +'<p class="ct-modal-sub">'+esc('Expense Claim · '+n+' item'+(n===1?'':'s')+' · '+money(total,C.cur)+(C.name?' · '+C.name:''))+'</p>'
+      +'<div class="ct-modal" style="width:min(860px,95vw)" role="dialog" aria-modal="true" aria-label="Confirm submission" onclick="event.stopPropagation()">'
+      +'<div class="ct-modal-hdr" style="align-items:flex-start"><div style="display:flex;align-items:center;gap:14px">'
+        +'<span style="width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--st-ok-bg,#dcfce7);border:1px solid var(--st-ok-bd,#86efac);color:var(--st-ok-fg,#16a34a)">'+TICK+'</span>'
+        +'<div><span class="ct-modal-title">Are you sure you want to submit?</span>'
+        +'<div style="font-size:13px;color:#6b7280;margin-top:3px">Check the items below. Once submitted, the claim goes for approval.</div></div></div>'
+        +'<button class="ct-modal-close" onclick="emsSubConfClose()" aria-label="Close">'+X+'</button></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 16px;margin:16px 0 14px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#f8fafc">'
+        +'<div><div style="'+CAP+'">Expense Claim</div><div style="font-size:13.5px;color:var(--navy,#0f172a);margin-top:4px">'+esc(n+' item'+(n===1?'':'s')+(who?' · '+who:''))+'</div></div>'
+        +'<div style="text-align:right"><div style="'+CAP+'">Total claim amount</div><div style="font-size:22px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:2px">'+money(total,C.cur)+'</div></div>'
+      +'</div>'
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Item</th><th>Category / Sub Category</th><th style="text-align:right">Amount</th>'
         +(wal?'<th>Wallet Balance</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="emsSubConfClose()">Cancel</button>'
-        +'<button class="ep-save-btn" onclick="emsSubConfGo()">Submit</button></div></div>'
+        +'<button class="ep-save-btn" onclick="emsSubConfGo()">Yes, Submit</button></div></div>'
       +'</div></div>';
   }
   const paint=function(){root().innerHTML=C?html():'';};
