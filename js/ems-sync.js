@@ -213,11 +213,43 @@
       date:p.date||wbToday(),ref:String(p.ref||'').trim(),extRef:'',evidence:'',remarks:'Recorded on the mobile app'+(p.method?' ('+p.method+')':'')+'.'});
     return err?{ok:false,error:err}:ok(r);
   }
+  /* ── The cardholder's card actions from the phone's My cards (product owner, 14 Nov 2026: connect Hold card, Lost or
+     stolen and Replace to the web). Each runs the web's own step for the person on the phone - the same checks, logs,
+     notifications and approval route as the card's buttons here. ── */
+  function cardOf(p){const c=typeof ccCard==='function'?ccCard(Number(p.cardId)):null;return c&&c.entity===ccEnt()?c:null;}
+  const noCard={ok:false,error:'This card is no longer on the web.'};
+  function cardHold(p){
+    const c=cardOf(p);if(!c)return noCard;
+    const err=ccHoldPlace(c.id,String(p.reason||'').trim());
+    return err?{ok:false,error:err}:{ok:true,ref:expKey(c),status:'On hold'};
+  }
+  function cardRelease(p){
+    const c=cardOf(p);if(!c)return noCard;
+    const reason=String(p.reason||'').trim(),direct=ccPCan(ccNow(),'card.lifecycle.manage');
+    const err=direct?ccHoldRelease(c.id,reason):ccHoldReleaseRequest(c.id,reason);
+    return err?{ok:false,error:err}:{ok:true,ref:expKey(c),released:direct};
+  }
+  function cardLost(p){
+    const c=cardOf(p);if(!c)return noCard;
+    const err=ccReportLost(c.id,{reason:p.reason,note:String(p.note||'').trim()});
+    return err?{ok:false,error:err}:{ok:true,ref:expKey(c),status:'Reported '+String(p.reason||'').toLowerCase()};
+  }
+  function cardReplace(p){
+    const c=cardOf(p);if(!c)return noCard;
+    const res=ccRepCreate({cardId:c.id,reason:p.reason,purpose:String(p.purpose||'').trim(),cardType:p.cardType||c.type,deliveryMode:p.deliveryMode||'',
+      deliveryText:String(p.deliveryText||'').trim(),comments:String(p.comments||'').trim()},true);
+    if(!res||res.error)return {ok:false,error:(res&&res.error)||'The web app did not accept the replacement request.'};
+    const st=caActiveStage(res.rec);
+    return {ok:true,ref:expKey(c),repl:expKey(res.rec),status:res.rec.status,at:st?caNs(st.approvers):''};
+  }
   const DO={'claim.submit':function(c){return submitClaim(c.id,c.payload||{});},'advance.submit':function(c){return submitAdvance(c.id,c.payload||{});},
+    'card.hold':function(c){return cardHold(c.payload||{});},'card.releaseHold':function(c){return cardRelease(c.payload||{});},
+    'card.reportLost':function(c){return cardLost(c.payload||{});},'card.replace':function(c){return cardReplace(c.payload||{});},
     'approval.decide':function(c){return decide(c.payload||{});},'request.withdraw':function(c){return withdraw(c.payload||{});},
     'request.respond':function(c){return respond(c.payload||{});},'advance.return':function(c){return advReturn(c.payload||{});}};
   const SAY={'claim.submit':'submitted','advance.submit':'requested','approval.decide':'',
-    'request.withdraw':'withdrew','request.respond':'answered the Follow-Up on','advance.return':'recorded a return on'};
+    'request.withdraw':'withdrew','request.respond':'answered the Follow-Up on','advance.return':'recorded a return on',
+    'card.hold':'put on hold','card.releaseHold':'asked to release the hold on','card.reportLost':'reported lost or stolen','card.replace':'requested a replacement for'};
   function apply(c){
     const by=c.by_uid||'';
     if(!DO[c.type])return {ok:false,error:'The web app does not know this action.'};
@@ -332,16 +364,26 @@
       const names={};wal.concat(['CORP','MEAL','FUEL','GIFT','TEL','REIMB']).forEach(function(c){names[c]=typeof wbTypeName==='function'?wbTypeName(c):c;});
       out['meta:lists']={cats:EXP_CATEGORIES.slice(),subcats:strip(EXP_SUBCATS),
         advTypes:advTypesHere(true).filter(function(t){return t.model==='One-Time';}).map(function(t){return t.name;}),
-        walletNames:names,usesWallets:wal.length>0,today:wbToday()};
+        walletNames:names,usesWallets:wal.length>0,today:wbToday(),
+        cardLost:typeof CC_LOST_REASONS!=='undefined'?CC_LOST_REASONS.slice():[],cardRepl:typeof CC_REPL_REASONS!=='undefined'?CC_REPL_REASONS.slice():[],
+        cardDelivery:typeof CC_DELIVERY!=='undefined'?CC_DELIVERY.slice():[]};
       expensesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['exp:'+r.id]=expOut(r);});
       advancesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['adv:'+r.id]=advOut(r);});
       people.forEach(function(p){
-        const cards=ccCardsOfEmp(p.eid).filter(function(c){return c.entity===E&&!(typeof ccCardEnded==='function'&&ccCardEnded(c));});
-        if(!cards.length)return;
+        const mine=ccCardsOfEmp(p.eid).filter(function(c){return c.entity===E;});
+        const cards=mine.filter(function(c){return !(typeof ccCardEnded==='function'&&ccCardEnded(c));});
+        if(!mine.length)return;
         const w=emsLedgerWallets(p.eid),codes=[];
         cards.forEach(function(c){ccCardWallets(c).forEach(function(k){if(codes.indexOf(k)<0)codes.push(k);});});
         const ws={};codes.forEach(function(k){const x=w[k]||{};ws[k]={name:names[k]||k,loaded:x.loaded||0,spent:x.spent||0,refunded:x.refunded||0,available:x.available||0};});
-        out['wallets:'+p.eid]={eid:p.eid,cards:cards.map(function(c){return {id:c.id,wallets:ccCardWallets(c),currency:c.currency||'INR'};}),wallets:ws};
+        /* Each card as the web has it: status, hold and an open replacement (the phone's My cards reads these). */
+        const state=mine.map(function(c){
+          const g=ccProg(c.programmeId),rp=typeof ccOpenReplacementOf==='function'?ccOpenReplacementOf(c.id):null,st=rp&&typeof caActiveStage==='function'?caActiveStage(rp):null;
+          return {id:c.id,key:expKey(c),last4:c.last4||'',type:c.type||'',status:c.status,forms:g?g.forms.slice():[],
+            hold:c.hold&&c.hold.active?{type:c.hold.type,reason:c.hold.reason||'',release:!!c.hold.releaseRequest}:null,
+            repl:rp?{key:expKey(rp),status:rp.status,at:st&&rp.status==='Awaiting Approval'?caNs(st.approvers):''}:null};
+        });
+        out['wallets:'+p.eid]={eid:p.eid,cards:cards.map(function(c){return {id:c.id,wallets:ccCardWallets(c),currency:c.currency||'INR'};}),wallets:ws,state:state};
       });
       out['meta:index']={copy:COPY,ids:Object.keys(out).filter(function(k){return /^(exp|adv|wallets):/.test(k);}).sort()};
       return out;
