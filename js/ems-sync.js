@@ -329,7 +329,7 @@
       const names={};wal.concat(['CORP','MEAL','FUEL','GIFT','TEL','REIMB']).forEach(function(c){names[c]=typeof wbTypeName==='function'?wbTypeName(c):c;});
       out['meta:lists']={cats:EXP_CATEGORIES.slice(),subcats:strip(EXP_SUBCATS),
         advTypes:advTypesHere(true).filter(function(t){return t.model==='One-Time';}).map(function(t){return t.name;}),
-        catWallet:strip(window.EMS_CAT_WALLET||{}),walletNames:names,usesWallets:wal.length>0,today:wbToday()};
+        walletNames:names,usesWallets:wal.length>0,today:wbToday()};
       expensesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['exp:'+r.id]=expOut(r);});
       advancesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['adv:'+r.id]=advOut(r);});
       people.forEach(function(p){
