@@ -45,9 +45,37 @@
       +'</div>'
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Item</th><th>Category / Sub Category</th><th style="text-align:right">Amount</th>'
         +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +capsHTML()
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="emsSubConfClose()">Cancel</button>'
         +'<button class="ep-save-btn" onclick="emsSubConfGo()">Yes, Submit</button></div></div>'
       +'</div></div>';
+  }
+  /* Capping Limit (product owner, 15 Nov 2026: "tell this much you have spent 3000, policy is 4000 so you are remaining
+     with 1000 left ... in well structured tabular format"): for every limit this claim falls under - the limit and its
+     period, what is already used in that period (approved claims and claims still in approval), this claim, and what
+     is left after it. Read from the Capping Limit engine (js/capping-limit.js epEvaluate); nothing is changed. */
+  function caps(){
+    if(!C||!C.ctx||typeof epEvaluate!=='function')return [];
+    try{return (epEvaluate(C.ctx).results||[]).filter(function(x){return x&&x.limit>0&&x.result!=='Not evaluated';});}catch(e){return [];}
+  }
+  function capsHTML(){
+    const list=caps();if(!list.length)return '';
+    const num='text-align:right;white-space:nowrap';
+    const rows=list.map(function(x){
+      const used=(Number(x.consumed)||0)+(Number(x.reserved)||0),now=Number(x.proposed)||0,left=x.limit-used-now,cur=x.currency||C.cur;
+      const cat=(x.r&&x.r.category)||'',sub=(x.r&&x.r.subCat)||'';
+      return '<tr>'
+        +'<td class="csag-td"><div class="lp-c-main">'+esc(cat+(sub?' / '+sub:''))+'</div></td>'
+        +'<td class="csag-td" style="white-space:nowrap">'+esc(x.period==='Per Claim'?'Per claim':x.period+(x.bucket?' · '+x.bucket:''))+'</td>'
+        +'<td class="csag-td" style="'+num+'">'+money(x.limit,cur)+'</td>'
+        +'<td class="csag-td" style="'+num+'">'+money(used,cur)+'</td>'
+        +'<td class="csag-td" style="'+num+'">'+money(now,cur)+'</td>'
+        +'<td class="csag-td" style="'+num+';font-weight:600;color:'+(left<0?'var(--st-bad-fg,#dc2626)':'var(--navy,#0f172a)')+'">'+(left<0?'Over by '+money(-left,cur):money(left,cur))+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div style="'+CAP+';margin:18px 0 8px">Capping Limit</div>'
+      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Category</th><th>Period</th><th style="text-align:right">Limit</th>'
+      +'<th style="text-align:right">Spent So Far</th><th style="text-align:right">This Claim</th><th style="text-align:right">Remaining</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+'<div style="height:14px"></div>';
   }
   const paint=function(){root().innerHTML=C?html():'';};
   function open(o){C=o;paint();}
@@ -80,7 +108,7 @@
         const g=epGate({eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},d.just);
         if(g)return s0.apply(self,args);   // the form says what is wrong
       }
-      open({eid:d.eid,name:d.claimFor==='Others'?(d.name||''):'',cur:d.currency||'INR',
+      open({eid:d.eid,name:d.claimFor==='Others'?(d.name||''):'',cur:d.currency||'INR',ctx:{eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},
         items:items.map(function(l){return {title:l.title,category:l.category||d.category,subCat:l.subCat,amount:l.amount};}),
         go:function(){pass=true;try{s0.apply(self,args);}finally{pass=false;}}});
     };
@@ -93,7 +121,7 @@
       const r=typeof expRec==='function'?expRec(Number(id)):null;
       if(pass||skip()||to!=='Awaiting Approval'||!r||r.status!=='Draft'||(typeof caCanSubmit==='function'&&!caCanSubmit(r)))return m0.apply(this,arguments);
       const self=this,args=arguments;
-      open({eid:r.employeeEid,name:r.claimFor==='Others'?(r.name||''):'',cur:r.currency||'INR',
+      open({eid:r.employeeEid,name:r.claimFor==='Others'?(r.name||''):'',cur:r.currency||'INR',ctx:{eid:r.employeeEid,name:r.name,category:r.category,currency:r.currency,lines:r.lines,claimId:r.id},
         items:r.lines.map(function(l){return {title:l.title,category:l.category||r.category,subCat:l.subCat,amount:l.amount};}),
         go:function(){pass=true;try{m0.apply(self,args);}finally{pass=false;}}});
     };
