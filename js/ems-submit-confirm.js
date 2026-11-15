@@ -61,21 +61,23 @@
   function capsHTML(){
     const list=caps();if(!list.length)return '';
     const num='text-align:right;white-space:nowrap';
+    /* Limits that apply to each request have no period and nothing spent before: Limit · This Claim · Remaining. */
+    const each=list.every(function(x){return x.period==='Per Claim';});
     const rows=list.map(function(x){
       const used=(Number(x.consumed)||0)+(Number(x.reserved)||0),now=Number(x.proposed)||0,left=x.limit-used-now,cur=x.currency||C.cur;
       const cat=(x.r&&x.r.category)||'',sub=(x.r&&x.r.subCat)||'';
       return '<tr>'
         +'<td class="csag-td"><div class="lp-c-main">'+esc(cat+(sub?' / '+sub:''))+'</div></td>'
-        +'<td class="csag-td" style="white-space:nowrap">'+esc(x.period==='Per Claim'?'Per claim':x.period+(x.bucket?' · '+x.bucket:''))+'</td>'
+        +(each?'':'<td class="csag-td" style="white-space:nowrap">'+esc(x.period==='Per Claim'?'Per claim':x.period+(x.bucket?' · '+x.bucket:''))+'</td>')
         +'<td class="csag-td" style="'+num+'">'+money(x.limit,cur)+'</td>'
-        +'<td class="csag-td" style="'+num+'">'+money(used,cur)+'</td>'
+        +(each?'':'<td class="csag-td" style="'+num+'">'+money(used,cur)+'</td>')
         +'<td class="csag-td" style="'+num+'">'+money(now,cur)+'</td>'
-        +'<td class="csag-td" style="'+num+';font-weight:600;color:'+(left<0?'var(--st-bad-fg,#dc2626)':'var(--navy,#0f172a)')+'">'+(left<0?'Over by '+money(-left,cur):money(left,cur))+'</td>'
+        +'<td class="csag-td" style="'+num+';font-weight:600;color:'+(left<0?'var(--st-bad-fg,#dc2626)':'var(--navy,#0f172a)')+'">'+(left<0?'Exceeded by '+money(-left,cur):money(left,cur))+'</td>'
         +'</tr>';
     }).join('');
-    return '<div style="'+CAP+';margin:18px 0 8px">Capping Limit</div>'
-      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Category</th><th>Period</th><th style="text-align:right">Limit</th>'
-      +'<th style="text-align:right">Spent So Far</th><th style="text-align:right">This Claim</th><th style="text-align:right">Remaining</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+'<div style="height:14px"></div>';
+    return '<div style="'+CAP+';margin:18px 0 8px">Capping Limit'+(each?' · per request':'')+'</div>'
+      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Category</th>'+(each?'':'<th>Period</th>')+'<th style="text-align:right">Limit</th>'
+      +(each?'':'<th style="text-align:right">Spent So Far</th>')+'<th style="text-align:right">This Claim</th><th style="text-align:right">Remaining</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+'<div style="height:14px"></div>';
   }
   /* A limit this claim goes over: the form's own policy box (limit, used, reserved, available, this claim, over by)
      with its Policy justification, asked here. Only from the New Request form (C.ask). */
