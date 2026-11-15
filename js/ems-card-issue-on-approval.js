@@ -50,4 +50,30 @@
       return out;
     };
   });
+  /* Once, for a new card approved before this rule (product owner: "i have already approved from the web so make the
+     sync"): a request approved after the employee's lost or stolen card was disabled, still waiting at Enrollment
+     Pending, is issued and activated the same way - so it reaches the phone too. Other approved requests are left as
+     they are. */
+  const afterLost=function(r){
+    return typeof ccCardsOfEmp==='function'&&ccCardsOfEmp(r.employeeEid).some(function(c){
+      return c.programmeId===r.programmeId&&c.status==='Closed'&&(c.csr||[]).some(function(x){return x.kind==='lost';});});
+  };
+  function backfill(){
+    const ent=nova();if(!ent||typeof ccRequests==='undefined'||typeof entitiesData==='undefined')return 0;
+    const n=entitiesData.find(function(e){return e.entityId===ent;});if(!n)return 0;
+    const due=ccRequests.filter(function(r){
+      return r.entity===ent&&(r.kind==='card request'||r.kind==='card replacement')&&r.mode!=='Automatic'&&r.status==='Approved'
+        &&ccReqTrack(r)==='Enrollment Pending'&&r.enr&&r.enr.status==='Pending'&&afterLost(r);});
+    if(!due.length)return 0;
+    const was=seSelectedEntity;seSelectedEntity=n.id;if(typeof emsClearCache==='function')emsClearCache();
+    let done=0;
+    try{
+      const A=Object.assign({},ccNow(),{who:admin(),actual:''});
+      due.forEach(function(r){const e=issue(r,A);if(e){if(window.console)console.warn('[card on approval]',expKey(r),e);}else done++;});
+    }finally{seSelectedEntity=was;if(typeof emsClearCache==='function')emsClearCache();}
+    if(done&&typeof presSaveSoon==='function')presSaveSoon();
+    return done;
+  }
+  window.emsCardIssueBackfill=backfill;
+  Promise.resolve(window.PRES_READY).then(function(){try{backfill();}catch(e){if(window.console)console.warn('[card on approval]',e);}});
 })();
