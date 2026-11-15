@@ -235,20 +235,18 @@
       const sp=spentLast(c,m),credited=!!it,pm=mLabel(prevOf(m)).split(' ')[0];
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Wallets · '+E(mLabel(m))+'</span><span class="wb-muted">'+Object.keys(it?it.wallets:pl).length+' of '+types.length+' loaded each month</span></div>'
         +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
-        +'<th class="bpx-num">Balance'+(credited?'':' Now')+'</th><th class="bpx-num">'+(credited?'Credited':'To Load')+'</th>'+(credited?'':'<th class="bpx-num">After Load</th>')+'<th>Status</th></tr></thead><tbody>'
+        +'<th class="bpx-num">'+(credited?'Credited':'To Load')+'</th><th class="bpx-num">Balance</th><th>Status</th></tr></thead><tbody>'
         +types.map(function(t){
           const x=typeof ecbEntry==='function'?ecbEntry(c.employeeEid,t):null,isOn=onCard.indexOf(t)>=0&&!!(x&&x.on);
           const now=it?it.wallets[t]:pl[t],was=lm?lm[t]:null,diff=!it&&was!=null&&now!=null&&was!==now,b0=(bal[t]&&bal[t].available)||0;
-          const willLoad=!credited&&st==='Ready'&&now!=null;
           return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div></td>'
             +'<td class="csag-td bpx-num">'+(was!=null?money(was):'—')+'</td>'
             +'<td class="csag-td bpx-num">'+(was!=null&&sp[t]!=null?money(sp[t]):'—')+'</td>'
-            +'<td class="csag-td bpx-num"'+(credited?' style="font-weight:600"':'')+'>'+money(b0)+'</td>'
             +'<td class="csag-td bpx-num"'+(diff?' style="font-weight:600"':'')+'>'+(now!=null?money(now):'—')+(diff?' <span class="lp-c-sub">'+(now>was?'▲':'▼')+'</span>':'')+'</td>'
-            +(credited?'':'<td class="csag-td bpx-num" style="font-weight:600">'+(willLoad?money(b0+now):'—')+'</td>')
+            +'<td class="csag-td bpx-num" style="font-weight:600">'+money(b0)+'</td>'
             +'<td class="csag-td">'+badge(isOn?'ok':'idle',isOn?'On':'Off')+'</td></tr>';
         }).join('')+'</tbody></table></div>'
-        +'<div class="ea-hint" style="margin-top:10px">'+(credited?'The balance includes this month\'s load.':st==='Ready'?'After Load is the balance now plus this month\'s load.':'This card is not loaded this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
+        +'<div class="ea-hint" style="margin-top:10px">'+(credited?'The balance includes this month\'s load.':st==='Ready'?'The balance goes up by the To Load amount once the load is submitted.':'This card is not loaded this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
     }else if(tab==='logs'){
       body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
     }else if(tab==='workflow'){
