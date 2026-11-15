@@ -939,10 +939,9 @@ const PRES_SWITCH=[
   ['Employee','kabir.joshi@opendhi.in'],
   ['Employee (Cardholder)','arjun.rao@opendhi.in'],
   ['Reporting Manager','ritu.sen@opendhi.in'],
-  ['Finance Admin','rohan.mehta@opendhi.in'],
-  ['Card Approver','ananya.iyer@opendhi.in'],
-  ['Card / Funding Verifier','neel.arora@opendhi.in'],
-  ['Compliance','sara.thomas@opendhi.in']
+  ['Finance Admin','rohan.mehta@opendhi.in']
+  /* Card Approver, Card / Funding Verifier and Compliance are no longer offered (product owner, 15 Nov 2026): every
+     approval is Manager then Finance Admin, and the Company Admin can decide any step. Those people are unchanged. */
 ];
 /* Start as the OpenDhi Super Admin in OpenDhi's own environment (its home
    company); Nova Retail is reached through Switch Entity, as a client. */
