@@ -45,7 +45,7 @@
       +'</div>'
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Item</th><th>Category / Sub Category</th><th style="text-align:right">Amount</th>'
         +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
-      +capsHTML()
+      +capsHTML()+policyHTML()
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="emsSubConfClose()">Cancel</button>'
         +'<button class="ep-save-btn" onclick="emsSubConfGo()">Yes, Submit</button></div></div>'
       +'</div></div>';
@@ -77,10 +77,38 @@
       +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Category</th><th>Period</th><th style="text-align:right">Limit</th>'
       +'<th style="text-align:right">Spent So Far</th><th style="text-align:right">This Claim</th><th style="text-align:right">Remaining</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+'<div style="height:14px"></div>';
   }
+  /* A limit this claim goes over: the form's own policy box (limit, used, reserved, available, this claim, over by)
+     with its Policy justification, asked here. Only from the New Request form (C.ask). */
+  function policyHTML(){
+    if(!C||!C.ask||!C.ctx||typeof epFormBlockHTML!=='function')return '';
+    let out='';
+    try{
+      const box=document.createElement('div');box.innerHTML=epFormBlockHTML(C.ctx,C.just,false);
+      const ev=box.querySelector('.ep-eval');if(!ev)return '';
+      Array.prototype.slice.call(ev.children).forEach(function(row){if(!row.querySelector('.ep-just'))row.remove();});
+      if(!ev.children.length)return '';
+      out='<div style="margin:0 0 14px">'+ev.outerHTML+'</div>';
+    }catch(e){return '';}
+    return out;
+  }
   const paint=function(){root().innerHTML=C?html():'';};
   function open(o){C=o;paint();}
   window.emsSubConfClose=function(){C=null;paint();};
-  window.emsSubConfGo=function(){const go=C&&C.go;C=null;paint();if(go)go();};
+  window.emsSubConfGo=function(){
+    if(C&&C.ask){
+      const boxes=Array.prototype.slice.call(root().querySelectorAll('[data-epjust]'));
+      const empty=boxes.filter(function(t){return !t.value.trim();});
+      boxes.forEach(function(t){t.classList.toggle('is-invalid',!t.value.trim());});
+      if(empty.length){if(typeof showToast==='function')showToast('Policy justification is required','error','Say why the claim goes over the limit, then submit.');empty[0].focus();return;}
+      /* Kept exactly where the form keeps it: the claim's justification for that limit. */
+      boxes.forEach(function(t){
+        const k=t.getAttribute('data-epjust'),v=t.value.trim();
+        if(typeof expDraft!=='undefined'&&expDraft){expDraft.just=expDraft.just||{};expDraft.just[k]=v;}
+        document.querySelectorAll('[data-epjust]').forEach(function(f){if(f!==t&&f.getAttribute('data-epjust')===k)f.value=v;});
+      });
+    }
+    const go=C&&C.go;C=null;paint();if(go)go();
+  };
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&C)window.emsSubConfClose();});
   /* ── 1 · Submit for Approval in the New Request form ── */
   if(typeof submitAddExpense==='function'){
@@ -105,10 +133,18 @@
       const bad=items.find(function(l){return (EXP_SUBCATS[l.category||d.category]||[]).indexOf(l.subCat)<0;});
       if(bad)return s0.apply(self,args);   // the form says what is wrong
       if(typeof epGate==='function'){
-        const g=epGate({eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},d.just);
-        if(g)return s0.apply(self,args);   // the form says what is wrong
+        const cx={eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null};
+        const g=epGate(cx,d.just);
+        /* Over a Warning limit with no justification yet: the popup shows the limit and asks for it (product owner,
+           15 Nov 2026: "show this in the confirmation window on clicking submit for approval"). Anything else that
+           stops the claim - a blocking limit, a split, a missing rate - is still said by the form. */
+        if(g){
+          const all={};
+          try{(epEvaluate(cx).results||[]).forEach(function(x){if(x.justify)all[x.key]='-';});}catch(e){}
+          if(!Object.keys(all).length||epGate(cx,Object.assign({},all,d.just&&Object.keys(d.just).reduce(function(o,k){if(String(d.just[k]||'').trim())o[k]=d.just[k];return o;},{}))))return s0.apply(self,args);
+        }
       }
-      open({eid:d.eid,name:d.claimFor==='Others'?(d.name||''):'',cur:d.currency||'INR',ctx:{eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},
+      open({eid:d.eid,name:d.claimFor==='Others'?(d.name||''):'',cur:d.currency||'INR',ctx:{eid:d.eid,name:d.name,category:d.category,currency:d.currency,lines:items,claimId:null},just:d.just||{},ask:true,
         items:items.map(function(l){return {title:l.title,category:l.category||d.category,subCat:l.subCat,amount:l.amount};}),
         go:function(){pass=true;try{s0.apply(self,args);}finally{pass=false;}}});
     };
