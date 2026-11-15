@@ -312,6 +312,9 @@ const ccpBook={};
     return {b:Array.isArray(x.b)?x.b.filter(function(v){return b.indexOf(v)>=0;}):b.slice(),d:Array.isArray(x.d)?x.d.filter(function(v){return d.indexOf(v)>=0;}):d.slice()};};
   const reachText=function(list,all){return !list.length?'None':list.length===all.length?'All':list.join(', ');};
   function reachHTML(r,code){
+    /* Product owner, 15 Nov 2026: "i want to just on or off the wallet" here - branches and departments are set in
+       Wallet & Benefits → the wallet → Wallet Config (js/wb-wallet-config.js). */
+    return '';
     const b=reachBranches(r),d=reachDepts();if(!b.length&&!d.length)return '';
     const cur=reachOf(r,code,editing&&draft?draft.__reach:null);
     if(!editing)return '<div class="nxc-reach-line">Branches: '+E(reachText(cur.b,b))+' · Departments: '+E(reachText(cur.d,d))+'</div>';
