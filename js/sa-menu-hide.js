@@ -35,12 +35,16 @@
     else if(role()==='Company Admin')cardOff=['card-statements'];
     else if(role()==='Reporting Manager'&&inNova())expOff=['budgets'];
     else if(role()==='Finance Admin'&&inNova()){expOff=['budgets'];cardOff=['card-statements'];}
-    if(!rbacOff&&!cardOff.length&&!expOff.length)return out;
+    /* Opendhi, every role: no Workspaces and no Templates in the side panel (product owner, 15 Nov 2026: "in open dhi
+       entity hide workspace and templates from the side panel"). Menu only, like the rest of this file. */
+    const allOff=inNova()?['rbac-workspaces','rbac-templates']:[];
+    if(!rbacOff&&!cardOff.length&&!expOff.length&&!allOff.length)return out;
     const OFF={'Corporate Cards':cardOff,'Expense Management':expOff};
     return out.filter(function(g){return !(rbacOff&&g&&g.dropdown==='RBAC');}).map(function(g){
-      const off=g&&OFF[g.dropdown];
-      if(!off||!off.length||!g.children)return g;
+      if(!g||!g.children)return g;
+      const off=(OFF[g.dropdown]||[]).concat(allOff);
+      if(!off.length||!g.children.some(function(c){return off.indexOf(c.id)>=0;}))return g;
       return Object.assign({},g,{children:g.children.filter(function(c){return off.indexOf(c.id)<0;})});
-    });
+    }).filter(function(g){return !(g&&g.dropdown&&g.children&&!g.children.length);});
   };
 })();
