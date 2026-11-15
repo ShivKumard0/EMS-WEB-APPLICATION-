@@ -13,7 +13,7 @@
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
   if(typeof sidebarItems==='undefined'||typeof renderPageContent!=='function')return;
-  const PG='ems-reports',TITLE='Reports & Analytics';
+  const PG='ems-reports',TITLE='Reports';
   const E=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const ent=function(){return typeof idEntity==='function'?idEntity():'';};
   const entRec=function(){return typeof entitiesData!=='undefined'?entitiesData.find(function(e){return e.entityId===ent();})||null:null;};
