@@ -171,57 +171,140 @@
     };
   }
 
-  /* ── 5 · The Action menu: Block card, then Disable card (Update Status, with a comment) ── */
-  function decide(id){
-    const x=find(id);if(!x)return;
-    const r=x.r,c=x.c,v=typeof getCSValue==='function'?getCSValue('csr-log-status-sel'):'';
-    const inp=document.getElementById('csr-log-comment-inp'),note=String(inp?inp.value:'').trim();
-    if(['Blocked','Disabled'].indexOf(v)<0)return;
-    if(!note){showToast('Add a comment','error');return;}
+  /* ── 5 · Block card, then Disable card: from the row's Action menu (Update Status popup) or the panel's Logs ── */
+  const MOVES={Blocked:{label:'Block card',to:'Blocked'},Disabled:{label:'Disable card',to:'Disabled'}};
+  const movesOf=function(r){
+    const x=find(r.id);if(!x||r.kind!=='lost'||r.status!=='Pending'||!canAct())return [];
+    if(x.c.status==='Blocked')return ['Disabled'];
+    return ccCardEnded(x.c)?[]:['Blocked'];
+  };
+  /* The move itself: the engine's own provider outcome, then the request's log. Returns an error or ''. */
+  function act(id,v,note){
+    const x=find(id);if(!x)return 'This request is no longer here.';
+    const r=x.r,c=x.c;
+    if(movesOf(r).indexOf(v)<0)return 'This step is not available now.';
+    if(!note)return 'Add a comment.';
     const A=ccNow(),res=ccOutcomeRecord('lifecycle',c.id,{value:v==='Blocked'?'Blocked':'Closed',source:CC_DEMO,note:note},A);
-    if(res&&res.error){showToast('Not done','error',res.error);return;}
+    if(res&&res.error)return res.error;
     if(v==='Blocked'){r.step='Disable';log(r,A,'Pending','Card '+ccCardLabel(c)+' blocked by '+who(A)+': '+note+'. Next: disable the card.');}
     else{r.step='';r.status='Approved';log(r,A,'Approved','Card '+ccCardLabel(c)+' disabled by '+who(A)+': '+note+'. '+ccHolderName(c)+' can now ask for a new card.');}
     save();
-    showToast('Done','success',keyOf(r)+': card '+(v==='Blocked'?'blocked':'disabled')+'.');
+    return '';
+  }
+  /* The row's Update Status popup (js/row-logs.js) */
+  function decide(id){
+    const x=find(id);if(!x)return;
+    const v=typeof getCSValue==='function'?getCSValue('csr-log-status-sel'):'';
+    const inp=document.getElementById('csr-log-comment-inp'),note=String(inp?inp.value:'').trim();
+    if(!MOVES[v])return;
+    const err=act(id,v,note);
+    if(err){showToast('Not done','error',err);return;}
+    showToast('Done','success',keyOf(x.r)+': card '+(v==='Blocked'?'blocked':'disabled')+'.');
   }
   if(typeof rlRegister==='function')rlRegister('cardsafety',{pre:'csr',recordLabel:'Request',
     rec:function(id){const x=find(id);return x?x.r:null;},
     status:function(r){return r.status;},
-    moves:function(r){
-      const x=find(r.id);if(!x||r.kind!=='lost'||r.status!=='Pending'||!canAct())return [];
-      if(x.c.status==='Blocked')return ['Disabled'];
-      return ccCardEnded(x.c)?[]:['Blocked'];
-    },
-    label:function(v){return {Blocked:'Block card',Disabled:'Disable card'}[v]||v;},
+    moves:movesOf,
+    label:function(v){return MOVES[v]?MOVES[v].label:v;},
     save:decide,
     count:function(r){return (r.logs||[]).length;},
     open:function(id){window.emsCsrOpen(id);},
-    logs:function(id){window.emsCsrOpen(id);},
+    logs:function(id){window.emsCsrOpen(id,'logs');},
     sub:function(r){const x=find(r.id);return keyOf(r)+(x?' · '+ccE(ccHolderName(x.c))+' · '+ccE(ccCardLabel(x.c)):'');}});
 
-  /* ── 6 · The request's details and log ── */
-  const X='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-  const root=function(){let el=document.getElementById('csr-modal');if(!el){el=document.createElement('div');el.id='csr-modal';document.body.appendChild(el);}return el;};
-  window.emsCsrClose=function(){root().innerHTML='';};
-  window.emsCsrOpen=function(id){
-    const x=find(id);if(!x)return;
-    const r=x.r,c=x.c,lost=r.kind==='lost',w=emsCardWord(c);
-    const row=function(k,v){return v?'<tr><td style="width:34%;color:var(--gray,#6b7280)">'+k+'</td><td>'+v+'</td></tr>':'';};
-    const d=new Date(r.at),on=isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-    const logs=(r.logs||[]).map(function(l){return '<tr><td style="white-space:nowrap">'+ccE(l.date)+'<div class="lp-c-sub">'+ccE(l.time)+'</div></td><td>'+ccE(l.user)+'</td><td>'+axBadge(CC_RQA_TONE[l.status]||statusTone(l.status),l.status)+'</td><td>'+ccE(l.action)+'</td></tr>';}).join('');
-    root().innerHTML='<div class="ct-modal-overlay" style="z-index:2000" onclick="emsCsrClose()">'
-      +'<div class="ct-modal" style="width:min(640px,95vw)" role="dialog" aria-modal="true" onclick="event.stopPropagation()">'
-      +'<div class="ct-modal-hdr"><span class="ct-modal-title">'+ccE(keyOf(r))+' · '+(lost?'Lost or Stolen':'Card Hold')+'</span><button class="ct-modal-close" onclick="emsCsrClose()" aria-label="Close">'+X+'</button></div>'
-      +'<div class="sb-hist-wrap" style="margin-top:12px"><table class="ax-hist sb-hist"><tbody>'
-        +row('Employee',ccE(ccHolderName(c)))+row('Card',ccE(ccCardLabel(c)))+row('Card Status',axBadge(statusTone(w),w))
-        +row(lost?'Reported On':'Held On',ccE(on))+row(lost?'What Happened':'Reason',ccE(r.reason))+row('Details',ccE(r.note))
-        +row('Request Status',axBadge(CC_RQA_TONE[r.status]||statusTone(r.status),r.status)+(lost&&r.status==='Pending'?' <span class="ax-sub">Next: '+ccE(STEP[r.step]||STEP.Block)+' · '+ccE(adminName())+'</span>':''))
-      +'</tbody></table></div>'
-      +'<div class="lp-sb-view-header" style="margin-top:16px"><span class="lp-sb-section-title">Logs</span></div>'
-      +'<div class="att-table-wrap"><table class="att-table"><thead><tr><th>Date</th><th>By</th><th>Status</th><th>Action</th></tr></thead><tbody>'+logs+'</tbody></table></div>'
-      +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="emsCsrClose()">Close</button></div></div>'
-      +'</div></div>';
+  /* ── 6 · The side panel, as every other row's: Details · Logs ── */
+  let csrSel=null,csrTab='details',csrAct=null;   // csrAct: the step picked in Logs {id, label, to, note}
+  const TABS=[{id:'details',label:'Details'},{id:'logs',label:'Logs'}];
+  const ico=function(k){return typeof AX_ICO!=='undefined'&&AX_ICO[k]?AX_ICO[k]:'';};
+  function detailsHTML(x){
+    const r=x.r,c=x.c,lost=r.kind==='lost',w=emsCardWord(c),d=new Date(r.at);
+    const on=isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const hero=typeof sbHero==='function'?sbHero({icon:typeof CC_ICO!=='undefined'&&CC_ICO.hero?CC_ICO.hero:'',name:ccE(keyOf(r)),meta:[lost?'Lost or Stolen':'Card Hold',ccE(ccHolderName(c))],
+      status:axBadge(CC_RQA_TONE[r.status]||statusTone(r.status),r.status)}):'';
+    return hero+'<div class="lp-sb-detail-grid">'
+      +axField(ico('fUser'),'Employee',ccE(ccHolderName(c)))
+      +axField(ico('fTag'),'Card',ccE(ccCardLabel(c)))
+      +axField(ico('fShield'),'Card Status',axBadge(statusTone(w),w))
+      +axField(ico('fCal'),lost?'Reported On':'Held On',ccE(on))
+      +axField(ico('fBox'),lost?'What Happened':'Reason',ccE(r.reason))
+      +(lost&&r.status==='Pending'?axField(ico('fCheck'),'Next Step',ccE((STEP[r.step]||STEP.Block)+' · '+adminName())):'')
+      +(r.note?axField(ico('fBox'),'Details',ccE(r.note),true):'')
+      +'</div>';
+  }
+  function logForm(r){
+    const mv=movesOf(r);if(!mv.length)return '';
+    const a=csrAct&&csrAct.id===r.id?csrAct:null;
+    return '<div class="lp-logs-form"><div class="lp-logs-form-header"><span class="lp-log-dot"></span>'+r.status+'</div><p class="lp-logs-form-sub"></p>'
+      +lpLogStatusField('csrl-act-'+r.id,r.status,[r.status].concat(mv.map(function(v){return MOVES[v].label;})),'emsCsrLogPick')
+      +'<div class="lp-logs-form-label">Comment <span class="lp-logs-form-req">*</span></div>'
+      +'<textarea class="lp-logs-form-textarea" id="csrl-note" placeholder="Enter comment">'+ccE(a?a.note||'':'')+'</textarea>'
+      +'<div style="display:flex;gap:10px;margin-top:12px"><button class="ep-cancel-btn" style="flex:1" onclick="emsCsrLogCancel()">Cancel</button>'
+      +'<button class="lp-logs-save-btn" style="flex:1" onclick="emsCsrLogSubmit('+r.id+')">Submit</button></div></div>';
+  }
+  function panelHTML(){
+    const x=find(csrSel);if(!x)return '';
+    const a=csrAct&&csrAct.id===x.r.id?csrAct:null;
+    const body=csrTab==='logs'?(typeof lpLogsView==='function'?lpLogsView(x.r.logs||[],logForm(x.r),{select:true,current:x.r.status,open:a?a.label:undefined}):''):detailsHTML(x);
+    return axTabBar('csr',TABS,csrTab,'emsCsrNav','emsCsrClose')+'<div class="lp-isb-body">'+body+'</div>';
+  }
+  const markRows=function(){document.querySelectorAll('.csr-row').forEach(function(t){t.classList.toggle('lp-row-selected',t.id==='csr-row-'+csrSel);});};
+  const otherPanels=function(){
+    if(typeof ccLoadSel!=='undefined')ccLoadSel=null;if(typeof ccReqSel!=='undefined')ccReqSel=null;
+    ['ccl','ccr'].forEach(function(k){const sb=document.getElementById(k+'-split-sb');if(sb)sb.classList.remove('open');});
+    document.querySelectorAll('.ccl-row,.ccr-row').forEach(function(t){t.classList.remove('lp-row-selected');});
   };
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.querySelector('#csr-modal .ct-modal'))window.emsCsrClose();});
+  window.emsCsrOpen=function(id,tab){
+    if(!find(id))return;
+    if(csrSel!==id)csrAct=null;
+    csrTab=tab||(typeof sbKeepTab==='function'?sbKeepTab(csrSel,csrTab,'details'):'details');csrSel=id;
+    otherPanels();
+    const sb=document.getElementById('csr-split-sb');
+    if(!sb){renderADTPage();return;}
+    sb.classList.add('open');isbTab('csr',panelHTML);markRows();
+  };
+  window.emsCsrClose=function(){
+    csrSel=null;csrAct=null;
+    const sb=document.getElementById('csr-split-sb');if(sb)sb.classList.remove('open');markRows();
+  };
+  window.emsCsrNav=function(t){csrTab=t;isbTab('csr',panelHTML);};
+  window.emsCsrLogPick=function(val,csid){
+    const id=Number(String(csid||'').replace(/^csrl-act-/,'')),x=find(id);if(!x||!val)return;
+    if(csrAct&&csrAct.id===id&&csrAct.label===val)return;   // the Logs view picks it again as it draws: nothing to change
+    const v=Object.keys(MOVES).find(function(k){return MOVES[k].label===val;});
+    const ta=document.getElementById('csrl-note');
+    csrAct=v?{id:id,label:val,to:v,note:ta?ta.value:''}:null;
+    isbTab('csr',panelHTML);
+  };
+  window.emsCsrLogCancel=function(){if(csrAct){csrAct=null;isbTab('csr',panelHTML);}};
+  window.emsCsrLogSubmit=function(id){
+    const x=find(id),a=csrAct&&csrAct.id===id?csrAct:null;
+    if(!x||!a){showToast('Pick a step','error','Choose Block card or Disable card first.');return;}
+    const ta=document.getElementById('csrl-note'),note=String(ta?ta.value:a.note||'').trim();
+    if(!note){if(ta)ta.classList.add('is-invalid');showToast('Comment is required','error','Write a comment for '+a.label+'.');return;}
+    const err=act(id,a.to,note);
+    if(err){showToast('Not done','error',err);return;}
+    csrAct=null;renderADTPage();
+    showToast('Done','success',keyOf(x.r)+': card '+(a.to==='Blocked'?'blocked':'disabled')+'.');
+  };
+  /* The panel sits beside the list's own panel; opening a load or a request closes it. */
+  if(typeof ccRqaListHTML==='function'){
+    const p0=ccRqaListHTML;
+    ccRqaListHTML=function(){
+      const out=p0.apply(this,arguments);
+      if(csrSel!=null&&!find(csrSel)){csrSel=null;csrAct=null;}
+      if(csrSel!=null&&!admin()){csrSel=null;csrAct=null;}
+      const tmp=document.createElement('div');tmp.innerHTML=out;
+      const sb=tmp.querySelector('#ccl-split-sb,#ccr-split-sb');if(!sb)return out;
+      if(csrSel!=null){sb.classList.remove('open');tmp.querySelectorAll('.ccl-row,.ccr-row').forEach(function(t){t.classList.remove('lp-row-selected');});
+        const row=tmp.querySelector('#csr-row-'+csrSel);if(row)row.classList.add('lp-row-selected');}
+      sb.insertAdjacentHTML('afterend','<div class="lp-split-sb'+(csrSel!=null?' open':'')+'" id="csr-split-sb"><div class="lp-isb" id="csr-isb-inner">'
+        +(csrSel!=null?sbRender(panelHTML,'csr'):'')+'</div></div>');
+      return tmp.innerHTML;
+    };
+  }
+  ['ccRqaOpenLoad','ccRqaOpenReq'].forEach(function(n){
+    if(typeof window[n]!=='function')return;
+    const f0=window[n];
+    window[n]=function(){if(csrSel!=null)window.emsCsrClose();return f0.apply(this,arguments);};
+  });
 })();
