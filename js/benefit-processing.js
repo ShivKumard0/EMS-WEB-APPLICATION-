@@ -150,6 +150,25 @@
     e.bpBase={month:prevOf(nowM()),limits:limits};
     if(typeof presSaveSoon==='function')presSaveSoon();
   }
+  function sampleAdjustments(){
+    const e=entRec(),m=nowM();if(!e||e.bpAdjSeed||(typeof presBuilding!=='undefined'&&presBuilding))return;
+    const list=cards().filter(function(c){return status(c,m)==='Pending';});if(list.length<4)return;
+    e.bpAdjSeed=m;
+    const u=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null,by=u&&typeof idName==='function'?idName(u.userId):'Karan Shah';
+    [[2,'FUEL','Decrease',500,'Leave without pay','On leave without pay for 5 working days.'],
+     [5,'MEAL','Increase',300,'One-time allowance','Client workshop week.'],
+     [8,'TEL','Decrease',200,'Recovery of excess load','Excess load in the previous month.']].forEach(function(x){
+      const c=list[Math.min(x[0],list.length-1)],en=plan(c)[x[1]]||0;
+      if(!c||!(en>x[3]))return;
+      const k=calc(c,m,true);if(k.adj[x[1]])return;
+      k.adj[x[1]]={type:x[2],amount:x[3],reason:x[4],notes:x[5],by:by,at:today()};
+      e.bpLogs=e.bpLogs||{};
+      const st=typeof stampNow==='function'?stampNow():{date:'',time:''};
+      (e.bpLogs[c.id]=e.bpLogs[c.id]||[]).unshift({date:st.date,time:st.time,user:by,userId:u?u.userId:'',status:'Pending',step:'Adjustment',
+        action:'Adjustment added · '+wName(x[1])+': '+x[2]+' '+money(x[3])+' ('+money(en)+' → '+money(Math.max(0,en+(x[2]==='Decrease'?-1:1)*x[3]))+'). Reason: '+x[4]+' - '+x[5].replace(/\.+$/,'')+'.'});
+    });
+    if(typeof presSaveSoon==='function')presSaveSoon();
+  }
   /* Last month's spend per wallet. From the card's own transactions of that month; for the month before the
      company's records begin, a figure kept with the snapshot (55-95% of that month's limit), set once. */
   const hash=function(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%1000)/1000;};
@@ -295,7 +314,7 @@
     return '<span class="bpx-bar-txt">'+txt+'</span><span class="bpx-bar-btns">'+btn+'</span>';
   }
   function pageHTML(){
-    baseline();
+    baseline();sampleAdjustments();
     const m=month(),rows=shown(),all=cards(),okAll=rows.filter(pickable);
     if(open!=null&&!rows.some(function(c){return c.id===open;})){open=null;adjOf=null;act=null;}
     const allOn=okAll.length>0&&okAll.every(function(c){return sel[c.id];});
@@ -374,15 +393,14 @@
       const tE=sum(pl),tF=live?sum(fin):0;
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Reviewed'||st==='Approved'?st+' - cannot be edited':loaded?'Disbursed - cannot be edited':'')+'</span></div>'
         +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
-        +'<th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">'+(loaded?'Loaded':'Final Load')+'</th><th class="bpx-num">Balance</th>'+(ed?'<th></th>':'')+'</tr></thead><tbody>'
+        +'<th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">Balance</th>'+(ed?'<th></th>':'')+'</tr></thead><tbody>'
         +types.map(function(t){
-          const was=lm?lm[t]:null,en=pl[t],a=A[t]||null,am=adjAmt(a),f=live&&en!=null?fin[t]:null,b0=(bal[t]&&bal[t].available)||0;
+          const was=lm?lm[t]:null,en=pl[t],a=A[t]||null,am=adjAmt(a),b0=(bal[t]&&bal[t].available)||0;
           return '<tr'+(adjOf&&adjOf.wallet===t?' class="bpx-on"':'')+'><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div>'+(a&&live?'<div class="lp-c-sub" title="'+E(a.reason+(a.notes?' · '+a.notes:''))+'">'+E(a.reason)+'</div>':'')+'</td>'
             +'<td class="csag-td bpx-num">'+(was!=null?money(was):'—')+'</td>'
             +'<td class="csag-td bpx-num">'+(was!=null&&sp[t]!=null?money(sp[t]):'—')+'</td>'
             +'<td class="csag-td bpx-num">'+(en!=null?money(en):'—')+'</td>'
             +'<td class="csag-td bpx-num"'+(am&&live?' style="font-weight:600;color:'+(am>0?'#15803d':'#b45309')+'"':'')+'>'+(en!=null&&live?(am?signed(am):money(0)):'—')+'</td>'
-            +'<td class="csag-td bpx-num" style="font-weight:600">'+(f!=null?money(f):'—')+'</td>'
             +'<td class="csag-td bpx-num">'+money(b0)+'</td>'
             +(ed?'<td class="csag-td bpx-pen">'+(en!=null?'<button type="button" class="bpx-pen-btn" title="Adjust '+E(wName(t))+'" aria-label="Adjust '+E(wName(t))+'" onclick="bpxAdjOpen(\''+t+'\')">'+(typeof SB_PEN!=='undefined'?SB_PEN:'Edit')+'</button>':'')+'</td>':'')
             +'</tr>';
@@ -524,15 +542,15 @@
   /* ── The summary before a bulk submit or approval ── */
   function summary(mode){
     const m=month(),p=picked();
-    const go=[],inactive=[],other=[],changes=[],adjList=[],byW={};
+    const go=[],inactive=[],other=[],changes=[],adjList=[],byW={};let skip=0;
     p.forEach(function(c){
       const st=status(c,m);
       if(mode==='submit'){
         if(st==='Inactive'){inactive.push({c:c,why:why(c),amount:sum(plan(c))});return;}
-        if(st==='Reviewed')return;
+        if(st==='Reviewed'||st==='Approved'){skip++;return;}
         if(st!=='Pending'&&st!=='Rejected'){other.push(c);return;}
       }else{
-        if(st!==(mode==='disburse'?'Approved':'Reviewed'))return;
+        if(st!==(mode==='disburse'?'Approved':'Reviewed')){skip++;return;}
         if(why(c)){inactive.push({c:c,why:why(c),amount:sum(finalOf(c,m))});return;}
       }
       const en=entOf(c,m),fin=finalOf(c,m),a=adjs(c,m),lm=last(c,m);
@@ -542,14 +560,14 @@
       Object.keys(a).forEach(function(k){if(en[k]!=null)adjList.push({c:c,wallet:k,a:a[k],was:en[k],now:fin[k]});});
       if(lm){Object.keys(en).concat(Object.keys(lm)).filter(function(k,i,x){return x.indexOf(k)===i;}).forEach(function(k){const x=Number(lm[k])||0,y=Number(en[k])||0;if(x!==y)changes.push({c:c,wallet:k,was:x,now:y});});}
     });
-    return {mode:mode,month:m,picked:p.length,go:go,inactive:inactive,other:other,changes:changes,adjList:adjList,byW:byW,
+    return {mode:mode,month:m,picked:p.length,skip:skip,go:go,inactive:inactive,other:other,changes:changes,adjList:adjList,byW:byW,
       total:go.reduce(function(s,x){return s+x.total;},0),ent:go.reduce(function(s,x){return s+sum(x.ent);},0)};
   }
   const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   const CAP='font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#6b7280';
   function confirmHTML(){
     const s=confirm;if(!s)return '';
-    const ap=s.mode!=='submit',dis=s.mode==='disburse';
+    const ap=s.mode!=='submit',dis=s.mode==='disburse',FROM=dis?'Approved':ap?'Reviewed':'Pending',TO=dis?'Disbursed':ap?'Approved':'Reviewed';
     const tile=function(l,v,sub){return '<div class="bpx-tile"><div style="'+CAP+'">'+l+'</div><div class="bpx-tile-v">'+v+'</div><div class="bpx-tile-s">'+sub+'</div></div>';};
     const sec=function(t,n){return '<div style="'+CAP+';margin:18px 0 8px">'+t+(n!=null?' · '+n:'')+'</div>';};
     const tbl=function(head,rows){return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';};
@@ -560,6 +578,8 @@
       +'<div style="font-size:13px;color:#6b7280;margin-top:3px">'+(dis?'Check the amounts below. Disbursing credits the wallets at once.':ap?'Check the amounts below. Approved cards can then be disbursed; no wallet is credited yet.':'Check the limits, adjustments and statuses below. Finance approves the reviewed cards before any wallet is loaded.')+'</div></div>'
       +'<button class="ct-modal-close" onclick="bpxConfirmClose()" aria-label="Close">'+X+'</button></div>'
       +'<div class="bpx-sum">'
+      +'<div class="bpx-step"><span>'+badge(TONE[FROM]||'idle',FROM)+'</span><span class="bpx-step-arrow">→</span><span>'+badge(TONE[TO]||'idle',TO)+'</span>'
+        +'<span class="bpx-step-txt"><b>'+s.go.length+'</b> of '+s.picked+' selected card'+(s.picked===1?'':'s')+' · <b>'+money(s.total)+'</b>'+(dis?' credited to the wallets':ap?' approved, not credited yet':' reviewed, sent for approval')+'</span></div>'
       +'<div class="bpx-tiles">'+tile(dis?'To Disburse':ap?'To Approve':'To Review',s.go.length,money(s.total))
         +tile('Adjustments',s.adjList.length,s.adjList.length?'net '+signed(net):'none')
         +tile('Limit Changes',s.changes.length,s.changes.length?up+' higher · '+(s.changes.length-up)+' lower':'same as last month')
@@ -577,6 +597,12 @@
     if(s.inactive.length)h+=sec('Inactive · not '+(dis?'disbursed':ap?'approved':'reviewed'),s.inactive.length)+tbl('<th>Employee</th><th>Card</th><th>Reason</th><th class="bpx-num">Amount Held Back</th>',
       s.inactive.map(function(x){return '<tr><td class="csag-td"><div class="lp-c-main">'+E(empName(x.c))+'</div></td><td class="csag-td" style="white-space:nowrap">'+E(cardNo(x.c))+'</td><td class="csag-td">'+E(x.why)+'</td><td class="csag-td bpx-num">'+money(x.amount)+'</td></tr>';}).join('')
       +'<tr class="bpx-total"><td class="csag-td" colspan="3"><b>Total held back</b></td><td class="csag-td bpx-num"><b>'+money(held)+'</b></td></tr>');
+    if(s.go.length)h+=sec('Cards in this step',s.go.length)+tbl('<th>S. No</th><th>Employee</th><th>Card</th><th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">Final Load</th>',
+      s.go.map(function(x,i){const en=sum(x.ent),d=x.total-en;
+        return '<tr><td class="csag-td csag-num">'+(i+1)+'</td><td class="csag-td"><div class="lp-c-main">'+E(empName(x.c))+'</div></td><td class="csag-td" style="white-space:nowrap">'+E(cardNo(x.c))+'</td><td class="csag-td bpx-num">'+money(en)+'</td>'
+          +'<td class="csag-td bpx-num"'+(d?' style="font-weight:600;color:'+(d>0?'#15803d':'#b45309')+'"':'')+'>'+(d?signed(d):'—')+'</td><td class="csag-td bpx-num" style="font-weight:600">'+money(x.total)+'</td></tr>';}).join('')
+      +'<tr class="bpx-total"><td class="csag-td" colspan="3"><b>Total</b></td><td class="csag-td bpx-num"><b>'+money(s.ent)+'</b></td><td class="csag-td bpx-num"><b>'+(net?signed(net):'—')+'</b></td><td class="csag-td bpx-num"><b>'+money(s.total)+'</b></td></tr>');
+    if(s.skip)h+='<div class="wb-muted" style="font-size:12.5px;margin-top:12px">'+s.skip+' selected card'+(s.skip===1?' is':'s are')+' at another step and '+(s.skip===1?'is':'are')+' not part of this one.</div>';
     if(s.other.length)h+=sec('Nothing to load',s.other.length)+'<div class="wb-muted" style="font-size:13px">'+E(s.other.map(empName).join(', '))+' - no wallet limit is set, or the final load is 0.</div>';
     h+='</div><div class="ct-modal-foot"><span class="wb-muted" style="font-size:12.5px">'+(s.go.length?(dis?'Each card is credited once for '+E(mLabel(s.month))+'.':ap?'Approved calculations go on to Disburse.':'Reviewed calculations cannot be edited until they are decided.'):'Nothing to '+(dis?'disburse':ap?'approve':'review')+' in this selection.')+'</span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="bpxConfirmClose()">Cancel</button>'
       +'<button class="ep-save-btn" '+(s.go.length?'':'disabled style="opacity:.5;cursor:not-allowed" ')+'onclick="bpxConfirmGo()">'+(dis?'Disburse':ap?'Approve':'Mark Reviewed')+'</button></div></div></div></div>';
@@ -683,6 +709,8 @@
       +'.bpx-tile-v{font-size:22px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:4px}'
       +'.bpx-tile-s{font-size:12px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       +'.bpx-total td{background:#f8fafc}'
+      +'.bpx-step{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;margin-bottom:12px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;font-size:13px;color:var(--navy,#0f172a)}'
+      +'.bpx-step-arrow{color:#6b7280;font-size:15px}.bpx-step-txt{margin-left:6px}.bpx-step-txt b{font-weight:700}'
       +'.bpx-calc tr.bpx-on td{background:#f1f5f9}'
       +'.bpx-pen{width:40px;text-align:right}.bpx-pen-btn{width:28px;height:28px;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:#fff;color:var(--navy,#0f172a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}'
       +'.bpx-pen-btn:hover{background:#f1f5f9}.bpx-pen-btn svg{width:13px;height:13px}'
