@@ -180,7 +180,7 @@
     const head='<tr><th class="rpt-n">S. No</th>'+d.cols.map(function(c){return '<th'+(num(c[2])?' class="rpt-num"':'')+'>'+E(c[1])+'</th>';}).join('')+'</tr>';
     const body=view.length?view.map(function(r,i){return '<tr><td class="rpt-n">'+((pg-1)*PER+i+1)+'</td>'+d.cols.map(function(c){
         const v=r[c[0]],long=c[2]===''&&String(v||'').length>48;
-        return '<td'+(num(c[2])?' class="rpt-num"':long?' class="rpt-long" title="'+E(v)+'"':'')+'>'+cell(v,c[2])+'</td>';}).join('')+'</tr>';}).join('')
+        return '<td'+(num(c[2])?' class="rpt-num"':c[2]==='d'||c[2]==='b'?' class="rpt-nw"':long?' class="rpt-long" title="'+E(v)+'"':'')+'>'+cell(v,c[2])+'</td>';}).join('')+'</tr>';}).join('')
       :'<tr><td colspan="'+(d.cols.length+1)+'" class="rpt-empty">No records for this report'+(d.noPeriod?'':' in '+E(period.toLowerCase()))+(q?' matching "'+E(q)+'"':'')+'.</td></tr>';
     const foot=rows.length&&mcols.length?'<tr class="rpt-total"><td class="rpt-n"></td>'+d.cols.map(function(c,i){
         return '<td'+(num(c[2])?' class="rpt-num"':'')+'>'+(c[2]==='m'?money(tot(c[0])):i===0?'Total':'')+'</td>';}).join('')+'</tr>':'';
@@ -250,14 +250,15 @@
       +'.rpt-sum{padding:14px 28px;border-right:1px solid var(--border,#e5e7eb);min-width:170px}'
       +'.rpt-sum span{display:block;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gray,#6a7282)}'
       +'.rpt-sum b{display:block;font-size:18px;line-height:26px;font-weight:700;color:var(--navy,#0f172a);margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums}'
-      +'.rpt-table-wrap{overflow:auto}'
-      +'.rpt-table{width:100%;border-collapse:collapse;font-size:13px;color:var(--navy,#0f172a)}'
-      +'.rpt-table thead th{background:#0f172a;color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:11px 14px;white-space:nowrap;position:sticky;top:0}'
-      +'.rpt-table thead th:first-child{padding-left:28px}.rpt-table td:first-child{padding-left:28px}.rpt-table thead th:last-child,.rpt-table td:last-child{padding-right:28px}'
-      +'.rpt-table tbody td{padding:10px 14px;border-bottom:1px solid #eef0f3;white-space:nowrap;vertical-align:middle}'
+      +'.rpt-table-wrap{overflow-x:hidden}'
+      +'.rpt-table{width:100%;border-collapse:collapse;font-size:12.5px;color:var(--navy,#0f172a)}'
+      +'.rpt-table thead th{background:#0f172a;color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:11px 8px;white-space:normal;line-height:1.35;vertical-align:bottom}'
+      +'.rpt-table thead th:first-child{padding-left:24px}.rpt-table tbody td:first-child{padding-left:24px}.rpt-table thead th:last-child,.rpt-table tbody td:last-child{padding-right:24px}'
+      +'.rpt-table tbody td{padding:10px 8px;border-bottom:1px solid #eef0f3;white-space:normal;word-break:break-word;line-height:1.4;vertical-align:middle}'
+      +'.rpt-table td.rpt-nw,.rpt-table td.rpt-num{white-space:nowrap;word-break:normal}'
       +'.rpt-table tbody tr:nth-child(even) td{background:#fafbfc}'
-      +'.rpt-table td.rpt-long{white-space:normal;min-width:240px;max-width:420px;line-height:1.45}'
-      +'.rpt-num{text-align:right!important;font-variant-numeric:tabular-nums}.rpt-n{width:64px;color:var(--gray,#6a7282)}'
+      +'.rpt-table td.rpt-long{min-width:160px}'
+      +'.rpt-num{text-align:right!important;font-variant-numeric:tabular-nums}.rpt-n{width:52px;color:var(--gray,#6a7282);white-space:nowrap}'
       +'.rpt-table tr.rpt-total td{background:#f1f5f9;border-top:2px solid #0f172a;border-bottom:0;font-weight:700}'
       +'.rpt-empty{text-align:center;color:var(--gray,#6a7282);padding:36px 12px!important;background:#fff!important}'
       +'.rpt-ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px;border-top:1px solid var(--border,#e5e7eb);font-size:12px;color:var(--gray,#6a7282)}'
