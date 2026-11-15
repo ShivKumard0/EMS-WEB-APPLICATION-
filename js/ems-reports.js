@@ -270,11 +270,20 @@
   /* ── The menu item, right under Requests & Loads; the page ── */
   /* Its own item in the side panel, right after Corporate Cards (product owner, 15 Nov 2026: "bring reports to outside
      the corporates and rename it to reports & analytics"). */
-  if(!sidebarItems.some(function(x){return x&&x.id===PG;})){
+  /* The side panel is kept between visits, so an earlier "Reports" item saved inside Corporate Cards is taken out
+     (product owner, 15 Nov 2026: "remove reports from corporate cards") - now, and again once the saved data is in. */
+  function placeMenu(){
+    if(typeof sidebarItems==='undefined')return;
+    sidebarItems.forEach(function(g){if(g&&Array.isArray(g.children))g.children=g.children.filter(function(c){return !c||c.id!==PG;});});
     const I=typeof sbIco!=='undefined'?sbIco:{};
+    const own=sidebarItems.filter(function(x){return x&&x.id===PG;});
+    own.slice(1).forEach(function(x){sidebarItems.splice(sidebarItems.indexOf(x),1);});
+    if(own.length){own[0].label=TITLE;return;}
     const at=sidebarItems.findIndex(function(x){return x&&x.dropdown==='Corporate Cards';});
     sidebarItems.splice(at<0?sidebarItems.length:at+1,0,{id:PG,label:TITLE,color:'green',icon:I.fileText||I.grid||''});
   }
+  placeMenu();
+  Promise.resolve(window.PRES_READY).then(function(){try{placeMenu();if(typeof buildSidebar==='function')buildSidebar();}catch(e){}});
   if(typeof supportPageMeta!=='undefined')supportPageMeta[PG]={title:TITLE,context:TITLE,filters:[],columns:[],rows:[]};
   if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[PG]='cards';
   if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(PG)<0)EMS_CLIENT_PAGES.push(PG);
