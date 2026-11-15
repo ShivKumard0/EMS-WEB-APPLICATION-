@@ -227,7 +227,7 @@
     const c=cardOf(p);if(!c)return noCard;
     const reason=String(p.reason||'').trim(),direct=ccPCan(ccNow(),'card.lifecycle.manage');
     const err=direct?ccHoldRelease(c.id,reason):ccHoldReleaseRequest(c.id,reason);
-    return err?{ok:false,error:err}:{ok:true,ref:expKey(c),released:direct};
+    return err?{ok:false,error:err}:{ok:true,ref:expKey(c),released:!(c.hold&&c.hold.active)};
   }
   function cardLost(p){
     const c=cardOf(p);if(!c)return noCard;
@@ -242,14 +242,26 @@
     const st=caActiveStage(res.rec);
     return {ok:true,ref:expKey(c),repl:expKey(res.rec),status:res.rec.status,at:st?caNs(st.approvers):''};
   }
+  /* A new card once the old one is Disabled (product owner, 15 Nov 2026): the web's own card request, submitted for
+     approval on its route. */
+  function cardNew(p){
+    const c=cardOf(p);if(!c)return noCard;
+    const g=ccProg(c.programmeId);if(!g)return {ok:false,error:'The card programme is missing.'};
+    const res=ccReqCreate({employeeEid:c.employeeEid,programmeId:g.id,cardType:p.cardType||c.type,reason:p.reason,purpose:String(p.purpose||'').trim(),
+      deliveryMode:p.deliveryMode||'',deliveryText:String(p.deliveryText||'').trim(),comments:String(p.comments||'').trim()},true);
+    if(!res||res.error)return {ok:false,error:(res&&res.error)||'The web app did not accept the card request.'};
+    const st=caActiveStage(res.rec);
+    return {ok:true,ref:expKey(c),req:expKey(res.rec),status:res.rec.status,at:st?caNs(st.approvers):''};
+  }
   const DO={'claim.submit':function(c){return submitClaim(c.id,c.payload||{});},'advance.submit':function(c){return submitAdvance(c.id,c.payload||{});},
+    'card.newRequest':function(c){return cardNew(c.payload||{});},
     'card.hold':function(c){return cardHold(c.payload||{});},'card.releaseHold':function(c){return cardRelease(c.payload||{});},
     'card.reportLost':function(c){return cardLost(c.payload||{});},'card.replace':function(c){return cardReplace(c.payload||{});},
     'approval.decide':function(c){return decide(c.payload||{});},'request.withdraw':function(c){return withdraw(c.payload||{});},
     'request.respond':function(c){return respond(c.payload||{});},'advance.return':function(c){return advReturn(c.payload||{});}};
   const SAY={'claim.submit':'submitted','advance.submit':'requested','approval.decide':'',
     'request.withdraw':'withdrew','request.respond':'answered the Follow-Up on','advance.return':'recorded a return on',
-    'card.hold':'put on hold','card.releaseHold':'asked to release the hold on','card.reportLost':'reported lost or stolen','card.replace':'requested a replacement for'};
+    'card.hold':'put on hold','card.releaseHold':'asked to release the hold on','card.reportLost':'reported lost or stolen','card.replace':'requested a replacement for','card.newRequest':'asked for a new card in place of'};
   function apply(c){
     const by=c.by_uid||'';
     if(!DO[c.type])return {ok:false,error:'The web app does not know this action.'};
@@ -366,7 +378,7 @@
         advTypes:advTypesHere(true).filter(function(t){return t.model==='One-Time';}).map(function(t){return t.name;}),
         walletNames:names,usesWallets:wal.length>0,today:wbToday(),
         cardLost:typeof CC_LOST_REASONS!=='undefined'?CC_LOST_REASONS.slice():[],cardRepl:typeof CC_REPL_REASONS!=='undefined'?CC_REPL_REASONS.slice():[],
-        cardDelivery:typeof CC_DELIVERY!=='undefined'?CC_DELIVERY.slice():[]};
+        cardDelivery:typeof CC_DELIVERY!=='undefined'?CC_DELIVERY.slice():[],cardReqReasons:typeof CC_REQ_REASONS!=='undefined'?CC_REQ_REASONS.slice():[]};
       expensesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['exp:'+r.id]=expOut(r);});
       advancesData.filter(function(r){return r.entity===E;}).forEach(function(r){out['adv:'+r.id]=advOut(r);});
       people.forEach(function(p){
@@ -379,7 +391,14 @@
         /* Each card as the web has it: status, hold and an open replacement (the phone's My cards reads these). */
         const state=mine.map(function(c){
           const g=ccProg(c.programmeId),rp=typeof ccOpenReplacementOf==='function'?ccOpenReplacementOf(c.id):null,st=rp&&typeof caActiveStage==='function'?caActiveStage(rp):null;
+          /* Once the card is closed (Disabled): the latest card request for the same programme - the new card. */
+          const nr=c.status==='Closed'?ccRequests.filter(function(q){return q.kind==='card request'&&q.employeeEid===c.employeeEid&&q.programmeId===c.programmeId&&q.entity===E
+            &&['Rejected','Withdrawn','Cancelled'].indexOf(q.status)<0
+            &&q.id!==c.requestId&&!(typeof ccCardOfReq==='function'&&ccCardOfReq(q)&&ccCardEnded(ccCardOfReq(q)));}).sort(function(a,b){return b.id-a.id;})[0]:null;
+          const ns=nr&&typeof caActiveStage==='function'?caActiveStage(nr):null;
           return {id:c.id,key:expKey(c),last4:c.last4||'',type:c.type||'',status:c.status,forms:g?g.forms.slice():[],
+            word:typeof emsCardWord==='function'?emsCardWord(c):c.status,
+            newReq:nr?{key:expKey(nr),status:nr.status==='Awaiting Approval'?nr.status:(typeof ccReqTrack==='function'?ccReqTrack(nr):nr.status),at:ns&&nr.status==='Awaiting Approval'?caNs(ns.approvers):''}:null,
             hold:c.hold&&c.hold.active?{type:c.hold.type,reason:c.hold.reason||'',release:!!c.hold.releaseRequest}:null,
             repl:rp?{key:expKey(rp),status:rp.status,at:st&&rp.status==='Awaiting Approval'?caNs(st.approvers):''}:null};
         });

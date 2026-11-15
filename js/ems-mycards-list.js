@@ -28,7 +28,7 @@ function emsMcListHTML(eid){
       +'<td><div class="lp-c-main ax-c-link">'+ccE(ccMask(c.last4))+'</div><div class="lp-c-sub">'+ccE(expKey(c))+'</div></td>'
       +'<td><div class="lp-c-plain ax-c-trunc">'+ccE(p?p.name:'')+'</div><div class="lp-c-sub">'+ccE(c.type)+'</div></td>'
       +'<td class="exp-c-amt" style="white-space:nowrap">'+(ccCardEnded(c)?'<span class="wb-muted">—</span>':ccE(expMoney(emsMcAvail(c),c.currency)))+'</td>'
-      +'<td>'+axBadge(statusTone(c.status),c.status)+(c.hold&&c.hold.active?'<div class="lp-c-sub">'+ccE(c.hold.type==='Temporary'?'Temporary hold':'On hold')+'</div>':'')+'</td>'
+      +'<td>'+axBadge(statusTone((typeof emsCardWord==='function'?emsCardWord(c):c.status)),(typeof emsCardWord==='function'?emsCardWord(c):c.status))+(c.hold&&c.hold.active&&typeof emsCardWord!=='function'?'<div class="lp-c-sub">'+ccE(c.hold.type==='Temporary'?'Temporary hold':'On hold')+'</div>':'')+'</td>'
       +'<td onclick="event.stopPropagation()"><button type="button" class="ct-dots-btn" title="View Details" aria-label="View '+attrSafe(expKey(c))+'" onclick="'+open+'">'+EMS_DOTS+'</button></td></tr>';
   });
   const table='<table class="lp-table ax-table exp-table cc-table"><thead><tr><th>S. No</th><th>Card</th><th>Programme</th><th>Available Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
@@ -42,7 +42,7 @@ function emsMcSidebar(){
   if(!tabs.some(function(t){return t.id===emsMcTab;}))emsMcTab='card';
   if(typeof ccAct!=='undefined'&&ccAct&&ccAct.inLogs&&(emsMcTab!=='logs'||ccAct.cardId!==c.id))ccAct=null;   // an action started in Logs ends when its tab is left
   const p=ccProg(c.programmeId);
-  const hero=sbHero({icon:typeof CC_ICO!=='undefined'?CC_ICO.hero:'',name:ccE(ccMask(c.last4)),meta:[expKey(c),ccE(p?p.name:'')],status:axBadge(statusTone(c.status),c.status)});
+  const hero=sbHero({icon:typeof CC_ICO!=='undefined'?CC_ICO.hero:'',name:ccE(ccMask(c.last4)),meta:[expKey(c),ccE(p?p.name:'')],status:axBadge(statusTone((typeof emsCardWord==='function'?emsCardWord(c):c.status)),(typeof emsCardWord==='function'?emsCardWord(c):c.status))});
   let body;
   if(emsMcTab==='wallets')body=hero+emsMcWalletsHTML(c);
   else if(emsMcTab==='logs'){const logs=emsCardLogs(c).map(function(x){return {date:x.date,time:x.time,user:x.by,status:x.status,action:x.action};});

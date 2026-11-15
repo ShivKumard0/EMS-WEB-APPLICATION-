@@ -198,7 +198,7 @@ function emsCardHTML(){
   const txns=emsMyTxns(c.employeeEid).filter(function(t){return t.cardId===c.id;});
   const body='<div class="emsvc-modal">'+emsCardVisual(c)+'</div><div class="sb-hist-wrap"><table class="ax-hist sb-hist"><tbody>'
       +row('Card Name',ccE(p?p.name:''))+row('Card Number',ccE(ccMask(c.last4))+' <span class="ax-sub">'+ccE(expKey(c))+'</span>')+row('Card Type',ccE(c.type))
-      +row('Card Status',axBadge(statusTone(c.status),c.status))+row('Controls in Effect',ccE(s&&typeof ccCtlSummary==='function'?ccCtlSummary(s,c.currency):'As programme'))+row('Card Provider',ccE(typeof ccProviderName==='function'?ccProviderName(c.provider):c.provider||''))
+      +row('Card Status',axBadge(statusTone((typeof emsCardWord==='function'?emsCardWord(c):c.status)),(typeof emsCardWord==='function'?emsCardWord(c):c.status)))+row('Controls in Effect',ccE(s&&typeof ccCtlSummary==='function'?ccCtlSummary(s,c.currency):'As programme'))+row('Card Provider',ccE(typeof ccProviderName==='function'?ccProviderName(c.provider):c.provider||''))
     +'</tbody></table></div>'
     +sec('Wallets')+'<div class="sb-hist-wrap"><table class="ax-hist sb-hist"><thead><tr><th>Wallet</th><th class="wb-num">Loaded</th><th class="wb-num">Spent</th><th class="wb-num">Refunds</th><th class="wb-num">Available</th></tr></thead><tbody>'+ws+'</tbody></table></div>'
     +sec('Loads ('+loads.length+')')+(loads.length?'<div class="sb-hist-wrap"><table class="ax-hist sb-hist"><thead><tr><th>Load</th><th>Wallet</th><th class="wb-num">Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>'
@@ -518,5 +518,5 @@ function emsCardItemHTML(c){
   const p=ccProg(c.programmeId);
   return '<div class="emsvc-item">'+emsCardVisual(c)
     +'<div class="emsvc-foot"><div class="emsvc-foot-l"><div class="lp-c-plain ax-c-trunc">'+ccE(p?p.name:'')+'</div><div class="ax-sub">'+ccE(expKey(c))+' · '+ccE(c.type)+'</div></div>'
-      +'<div class="emsvc-foot-r">'+axBadge(statusTone(c.status),c.status)+emsMenu('ems-cm-'+c.id,emsCardItems(c))+'</div></div></div>';
+      +'<div class="emsvc-foot-r">'+axBadge(statusTone((typeof emsCardWord==='function'?emsCardWord(c):c.status)),(typeof emsCardWord==='function'?emsCardWord(c):c.status))+emsMenu('ems-cm-'+c.id,emsCardItems(c))+'</div></div></div>';
 }

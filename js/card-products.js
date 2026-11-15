@@ -76,6 +76,12 @@ const ccpBook={};
       +'.nxc-net{font-style:italic;font-weight:800;font-size:19px;letter-spacing:.02em}.nxc-net b{color:#f4a51c}'
       +'.nxc-w{display:flex;align-items:center;gap:12px;border:1px solid var(--border,#e5e7eb);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}'
       +'.nxc-w-name{flex:1;font-size:13.5px;font-weight:600;color:var(--navy,#0f172a)}'
+      /* Branches and departments under an active wallet (product owner, 15 Nov 2026), ticked as in Module Control */
+      +'.nxc-w{flex-wrap:wrap}.nxc-reach{flex-basis:100%;min-width:0}.nxc-reach-h{font-size:11.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--gray,#6a7282);margin:12px 0 0}'
+      +'.nxc-reach .mcs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}'
+      +'.nxc-reach .mcs-opt{display:flex;align-items:center;gap:8px;border:1px solid var(--border,#e5e7eb);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--navy,#0f172a);cursor:pointer;min-width:0;background:#fff;font-weight:400}'
+      +'.nxc-reach .mcs-opt input{accent-color:#1a1a1a;width:15px;height:15px;margin:0;flex:none}.nxc-reach .mcs-opt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+      +'.nxc-reach-line{flex-basis:100%;font-size:12px;color:var(--gray,#6a7282);margin-top:2px;line-height:1.5}'
       +'.nxc .cs-toggle input:checked+.cs-toggle-slider{background:#1a1a1a}'
       +'.nxc .cs-toggle input:disabled+.cs-toggle-slider{opacity:.55;cursor:default}';
     (document.head||document.documentElement).appendChild(st);
@@ -162,7 +168,10 @@ const ccpBook={};
     const d=new Date(Number(a.slice(0,4))+5,Number(a.slice(5,7))-1,Number(a.slice(8,10))-1);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   };
-  const stOf=function(c){return c.status==='Active'?'Active':'Inactive';};
+  /* Active, On Hold, Blocked, Disabled - anything else (not yet active, expired, replaced) Inactive (product owner,
+     15 Nov 2026: the card's status reads the same here as on the phone; js/ems-card-safety.js emsCardWord). */
+  const LWORDS=['Active','On Hold','Blocked','Disabled','Inactive'],LTONE={'Active':'ok','On Hold':'wait','Blocked':'bad','Disabled':'idle','Inactive':'idle'};
+  const stOf=function(c){const w=typeof emsCardWord==='function'?emsCardWord(c):(c.status==='Active'?'Active':'Inactive');return LWORDS.indexOf(w)>=0?w:'Inactive';};
   const cardsHere=function(){
     const e=ent();
     return (typeof ccCards!=='undefined'?ccCards:[]).filter(function(c){return c.entity===e&&c.status!=='Not Issued';})
@@ -186,16 +195,17 @@ const ccpBook={};
         +'<td><div class="lp-c-plain">'+E(holder(c))+'</div></td>'
         +'<td><div class="lp-c-plain">'+E(dLabel(actOn(c))||'-')+'</div></td>'
         +'<td><div class="lp-c-plain">'+E(dLabel(expOn(c))||'-')+'</div></td>'
-        +'<td>'+badge(stOf(c)==='Active'?'ok':'idle',stOf(c))+'</td>'
+        +'<td>'+badge(LTONE[stOf(c)]||'idle',stOf(c))+'</td>'
         +(typeof csuDots==='function'?csuDots('ccpLOpen('+c.id+')',holder(c)):'<td></td>')+'</tr>';
     });
-    const act=all.filter(function(c){return stOf(c)==='Active';}).length;
-    const tiles=typeof caStat==='function'?caStat('Active',act,lstatus==='Active','ccpLStat(\'Active\')','ok')+caStat('Inactive',all.length-act,lstatus==='Inactive','ccpLStat(\'Inactive\')','idle'):'';
+    /* A tile per status in use, Active and Inactive always. */
+    const tiles=typeof caStat==='function'?LWORDS.filter(function(w){return w==='Active'||w==='Inactive'||all.some(function(c){return stOf(c)===w;});}).map(function(w){
+      return caStat(w,all.filter(function(c){return stOf(c)===w;}).length,lstatus===w,'ccpLStat(\''+w+'\')',LTONE[w]);}).join(''):'';
     const table='<table class="lp-table ax-table cc-table"><thead><tr><th>S. No</th><th>Card Number</th><th>User Name</th><th>Activation Date</th><th>Expiry Date</th><th>Status</th><th>Action</th></tr></thead><tbody>'
       +(trs.length?trs.join(''):(typeof ccEmpty==='function'?ccEmpty(7,all.length?'No card matches this filter.':'No card has been issued yet.'):''))+'</tbody></table>';
     return '<div class="lp-page">'
       +(typeof ccFilterBar==='function'?ccFilterBar((typeof lpSearchField==='function'?lpSearchField('nxl-q',lq,'Search name or card number','ccpLApply()'):'')
-          +(typeof apCS==='function'?apCS('nxl-status',['Active','Inactive'],lstatus,'All Statuses'):'')
+          +(typeof apCS==='function'?apCS('nxl-status',LWORDS,lstatus,'All Statuses'):'')
           +(typeof clearFiltersBtn==='function'?clearFiltersBtn([lq,lstatus],'ccpLReset()'):'')+'<button class="lp-pill-search" onclick="ccpLApply()">Search</button>',tiles):'')
       +(typeof ccSplit==='function'?ccSplit('nxl',table,lsel!=null,listPanelHTML):table)
       +'</div>';
@@ -240,7 +250,7 @@ const ccpBook={};
       if(fullNo())vis=vis.replace('class="emsvc-card','class="emsvc-card is-shown');   // name and number in full
       const ws=typeof ccCardWallets==='function'?ccCardWallets(c):[];
       body='<div class="emsvc-modal" style="margin:4px 0 16px;display:flex;justify-content:center">'+vis+'</div>'
-        +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Details</span>'+badge(stOf(c)==='Active'?'ok':'idle',stOf(c))+'</div>'
+        +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Details</span>'+badge(LTONE[stOf(c)]||'idle',stOf(c))+'</div>'
         +'<div class="lp-sb-detail-grid">'
         +fcI('tag','Card ID',E(typeof expKey==='function'?expKey(c):c.id))+fc('Card Number',E(cardNo(c)))
         +fcI('users','User Name',E(holder(c)))+fcI('users','Employee ID',E(e&&e.empId?e.empId:'-'))
@@ -290,6 +300,35 @@ const ccpBook={};
     }
     return (typeof axTabBar==='function'?axTabBar('nxc',tabs,tab,'ccpNav','ccpClose'):'')+'<div class="lp-isb-body">'+body+'</div>';
   }
+  /* ── Who each wallet is for: branches and departments (product owner, 15 Nov 2026: "when i enable meal, under that,
+     like Administration → Company Settings → Module Control, options for selecting this card benefit for which branch
+     ... and then departments"). Kept with the card (r.reach) and written to its Logs, everything ticked to start, like
+     Module Control: saved and shown only - who gets a wallet stays with Wallet & Benefits → Employees and each
+     employee's Card Benefit. ── */
+  const reachBranches=function(r){return typeof emsBranchNames==='function'?emsBranchNames(r.entity):[];};
+  const reachDepts=function(){return typeof wbDepts==='function'?wbDepts():[];};
+  const reachOf=function(r,code,src){const x=((src||r.reach||{})[code])||{};
+    const b=reachBranches(r),d=reachDepts();
+    return {b:Array.isArray(x.b)?x.b.filter(function(v){return b.indexOf(v)>=0;}):b.slice(),d:Array.isArray(x.d)?x.d.filter(function(v){return d.indexOf(v)>=0;}):d.slice()};};
+  const reachText=function(list,all){return !list.length?'None':list.length===all.length?'All':list.join(', ');};
+  function reachHTML(r,code){
+    const b=reachBranches(r),d=reachDepts();if(!b.length&&!d.length)return '';
+    const cur=reachOf(r,code,editing&&draft?draft.__reach:null);
+    if(!editing)return '<div class="nxc-reach-line">Branches: '+E(reachText(cur.b,b))+' · Departments: '+E(reachText(cur.d,d))+'</div>';
+    const ticks=function(kind,all,sel){return '<div class="mcs-grid">'+all.map(function(v,i){
+      return '<label class="mcs-opt"><input type="checkbox"'+(sel.indexOf(v)>=0?' checked':'')+' onchange="ccpReach(\''+code+'\',\''+kind+'\','+i+',this.checked)"><span title="'+E(v)+'">'+E(v)+'</span></label>';}).join('')+'</div>';};
+    return '<div class="nxc-reach">'+(b.length?'<div class="nxc-reach-h">Branches · '+cur.b.length+' of '+b.length+'</div>'+ticks('b',b,cur.b):'')
+      +(d.length?'<div class="nxc-reach-h">Departments · '+cur.d.length+' of '+d.length+'</div>'+ticks('d',d,cur.d):'')+'</div>';
+  }
+  window.ccpReach=function(code,kind,i,on){
+    const r=rec();if(!editing||!draft||!r)return;
+    const all=kind==='b'?reachBranches(r):reachDepts(),v=all[i];if(v==null)return;
+    draft.__reach=draft.__reach||{};
+    const cur=reachOf(r,code,draft.__reach),list=cur[kind].filter(function(x){return x!==v;});
+    if(on)list.push(v);
+    cur[kind]=all.filter(function(x){return list.indexOf(x)>=0;});   // in the list's own order
+    draft.__reach[code]=cur;repaint();
+  };
   function walletsHTML(r){
     const ws=walletsOf(r.entity),cur=editing&&draft?draft:r.wallets,c=can(),n=ws.filter(function(w){return cur[w[0]]!==false;}).length;
     let h='<div class="nxc"><div class="lp-sb-view-header"><span class="lp-sb-section-title">Wallets</span>'
@@ -301,7 +340,7 @@ const ccpBook={};
       return '<div class="nxc-w"><span class="nxc-w-name">'+E(w[1])+'</span>'
         +(editing?'<label class="cs-toggle" title="'+(on?'Make inactive: ':'Make active: ')+E(w[1])+'"><input type="checkbox" aria-label="'+E(w[1])+'"'+(on?' checked':'')
             +' onchange="ccpPick(\''+w[0]+'\',this.checked)"><span class="cs-toggle-slider"></span></label>'
-          :badge(on?'ok':'idle',on?'Active':'Inactive'))+'</div>';
+          :badge(on?'ok':'idle',on?'Active':'Inactive'))+(on?reachHTML(r,w[0]):'')+'</div>';
     }).join('');
     if(editing)h+='<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="ccpCancel()">Cancel</button><button class="ep-save-btn" onclick="ccpSave()">Save changes</button></div>';
     return h+'</div>';
@@ -374,16 +413,28 @@ const ccpBook={};
   };
   window.ccpClose=function(){sel=null;editing=false;draft=null;const sb=document.getElementById('nxc-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.nxc-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
   window.ccpNav=function(t){tab=t;if(t!=='wallets'){editing=false;draft=null;}if(t!=='settings'){sEdit=false;sDraft=null;}repaint();};
-  window.ccpEdit=function(){const r=rec();if(!r||!can())return;editing=true;draft=Object.assign({},r.wallets);repaint();};
+  window.ccpEdit=function(){const r=rec();if(!r||!can())return;editing=true;draft=Object.assign({},r.wallets);draft.__reach=JSON.parse(JSON.stringify(r.reach||{}));repaint();};
   window.ccpCancel=function(){editing=false;draft=null;repaint();};
   window.ccpPick=function(code,on){if(!editing||!draft)return;draft[code]=!!on;repaint();};
   window.ccpSave=function(){
     const r=rec();if(!r||!can()||!draft)return;
     const ws=walletsOf(r.entity),changed=ws.filter(function(w){return (r.wallets[w[0]]!==false)!==(draft[w[0]]!==false);});
-    if(!changed.length){editing=false;draft=null;repaint();showToast('No changes','info');return;}
+    /* Branches and departments of the wallets left on. */
+    const bAll=reachBranches(r),dAll=reachDepts(),rch=[];
+    for(const w of ws){
+      if(draft[w[0]]===false)continue;
+      const was=reachOf(r,w[0]),now=reachOf(r,w[0],draft.__reach);
+      if((bAll.length&&!now.b.length)||(dAll.length&&!now.d.length)){showToast('Pick who it is for','error','Tick at least one branch and one department for '+w[1]+'.');return;}
+      if(was.b.join('|')!==now.b.join('|')||was.d.join('|')!==now.d.join('|'))rch.push([w,now]);
+    }
+    if(!changed.length&&!rch.length){editing=false;draft=null;repaint();showToast('No changes','info');return;}
     if(!ws.some(function(w){return draft[w[0]]!==false;})){showToast('Keep one wallet on','error','A multiwallet card needs at least one wallet.');return;}
     ws.forEach(function(w){r.wallets[w[0]]=draft[w[0]]!==false;});
-    const text='Wallets updated: '+changed.map(function(w){return w[1]+' '+(r.wallets[w[0]]?'active':'inactive');}).join(', ')+'.';
+    r.reach=r.reach||{};
+    rch.forEach(function(x){r.reach[x[0][0]]={b:x[1].b.slice(),d:x[1].d.slice()};});
+    const parts=changed.map(function(w){return w[1]+' '+(r.wallets[w[0]]?'active':'inactive');})
+      .concat(rch.map(function(x){return x[0][1]+' for branches '+reachText(x[1].b,bAll).replace(/^All$/,'all')+' and departments '+reachText(x[1].d,dAll).replace(/^All$/,'all');}));
+    const text='Wallets updated: '+parts.join('; ')+'.';
     log(r,r.status,text);editing=false;draft=null;renderADTPage();
     showToast('Wallets saved','success',r.name+' · '+text.replace('Wallets updated: ',''));
   };
