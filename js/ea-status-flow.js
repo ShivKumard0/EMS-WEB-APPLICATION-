@@ -95,7 +95,8 @@
       out=out.replace('<th>Payment</th>','<th>Pending At</th>');
       /* Tiles: where the requests are waiting. */
       const all=eaRows(),cnt=function(s){return all.filter(function(x){return x.flow===s;}).length;};
-      const T=FLOW;
+      /* No Disbursed tile (product owner, 15 Nov 2026: "remove it from the top status"); the status and its filter stay. */
+      const T=FLOW.filter(function(s){return s!=='Disbursed';});
       const tiles=T.map(function(s){return caStat(s,cnt(s),eaApprF===s,'eaStat(\''+s+'\')',TONE[s]);}).join('');
       const tmp=document.createElement('div');tmp.innerHTML=out;
       const box=tmp.querySelector('.exp-stats');if(box){box.innerHTML=tiles;box.classList.add('ea-flow-stats');out=tmp.innerHTML;}
