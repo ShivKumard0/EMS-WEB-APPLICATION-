@@ -15,6 +15,8 @@
    How it works:
    - Filters: Year, Month, Branch, Department, Status, search. A card is Draft, Pending Approval, Rejected, Loaded,
      Inactive (the employee or the card is not Active) or No Limit (no wallet limit set).
+     Status words (product owner, 15 Nov 2026, later): Pending by default → Reviewed (after any adjustment) →
+     Approved (wallets credited), or Rejected. The Logs steps are those words.
    - The benefit wallets are loaded: Meal, Fuel, Gift, Telecom, Health - not Reimbursement or Corporate Expense.
    - ☰ → Wallets: last month's load and spend, the entitlement, the adjustment (pencil), the final load and the
      balance. Logs: Submit for Approval, Approve, Reject, each with a comment. Workflow: the steps done and to come.
@@ -46,7 +48,7 @@
   const prevOf=function(m){const t=m.split('-');let y=+t[0],k=+t[1]-1;if(k<1){k=12;y--;}return y+'-'+p2(k);};
   const SKIP=['CORP','REIMB'];
   const wName=function(t){return typeof wbTypeName==='function'?wbTypeName(t):t;};
-  const TONE={'Draft':'info','Pending Approval':'wait','Rejected':'bad','Loaded':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
+  const TONE={'Pending':'wait','Reviewed':'info','Rejected':'bad','Approved':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
   const REASONS=['Policy-approved correction','Joined or left mid-month (pro-rata)','Leave without pay','One-time allowance','Recovery of excess load','Other'];
   const meName=function(){return typeof idMeName==='function'?idMeName():'';};
   const financeName=function(){const u=typeof idUserByEmail==='function'?idUserByEmail('rohan.mehta@opendhi.in'):null;return u&&typeof idName==='function'?idName(u.userId):'Finance';};
@@ -66,8 +68,10 @@
     const e=entRec();if(!e)return null;
     if(!e.bpCalc){if(!make)return null;e.bpCalc={};}
     if(!e.bpCalc[m]){if(!make)return null;e.bpCalc[m]={};}
-    if(!e.bpCalc[m][c.id]){if(!make)return null;e.bpCalc[m][c.id]={status:'Draft',adj:{}};}
-    return e.bpCalc[m][c.id];
+    if(!e.bpCalc[m][c.id]){if(!make)return null;e.bpCalc[m][c.id]={status:'Pending',adj:{}};}
+    const k=e.bpCalc[m][c.id],OLD={'Draft':'Pending','Pending Approval':'Reviewed','Loaded':'Approved'};
+    if(OLD[k.status])k.status=OLD[k.status];
+    return k;
   }
   const benefitTypes=function(){
     if(typeof wbWallets==='undefined')return [];
@@ -101,12 +105,12 @@
   /* Entitlement ± adjustment per wallet (never below zero). Once submitted or loaded: what was submitted. */
   function finalOf(c,m){
     const it=itemOf(m,c.id);if(it)return it.wallets;
-    const k=calc(c,m);if(k&&k.status==='Pending Approval'&&k.wallets)return k.wallets;
+    const k=calc(c,m);if(k&&k.status==='Reviewed'&&k.wallets)return k.wallets;
     const pl=plan(c),a=adjs(c,m),out={};
     Object.keys(pl).forEach(function(t){out[t]=Math.max(0,pl[t]+adjAmt(a[t]));});
     return out;
   }
-  const entOf=function(c,m){const it=itemOf(m,c.id);if(it)return it.ent||it.wallets;const k=calc(c,m);return k&&k.status==='Pending Approval'&&k.ent?k.ent:plan(c);};
+  const entOf=function(c,m){const it=itemOf(m,c.id);if(it)return it.ent||it.wallets;const k=calc(c,m);return k&&k.status==='Reviewed'&&k.ent?k.ent:plan(c);};
   const adjTotal=function(c,m){return sum(finalOf(c,m))-sum(entOf(c,m));};
   /* Last month: that month's load; before the first run, the limits as they were snapshot. */
   function last(c,m){
@@ -122,15 +126,15 @@
     return '';
   }
   function status(c,m){
-    if(runOf(m,c.id))return 'Loaded';
+    if(runOf(m,c.id))return 'Approved';
     if(m!==nowM())return 'Not Processed';
     const k=calc(c,m);
-    if(k&&k.status==='Pending Approval')return 'Pending Approval';
+    if(k&&k.status==='Reviewed')return 'Reviewed';
     if(why(c))return 'Inactive';
     if(k&&k.status==='Rejected')return 'Rejected';
-    return sum(plan(c))>0?'Draft':'No Limit';
+    return sum(plan(c))>0?'Pending':'No Limit';
   }
-  const editable=function(c,m){const s=status(c,m);return m===nowM()&&canSubmit()&&(s==='Draft'||s==='Rejected');};
+  const editable=function(c,m){const s=status(c,m);return m===nowM()&&canSubmit()&&(s==='Pending'||s==='Rejected');};
 
   /* Once: last month's limits, so the first summary has something to compare with. Three cards had a lower limit. */
   function baseline(){
@@ -166,11 +170,11 @@
   /* ── Logs ── */
   function logsOf(c){
     const e=entRec(),kept=(e&&e.bpLogs&&e.bpLogs[c.id])||[],m=nowM(),t=m.split('-'),done=!!runOf(m,c.id);
-    const st0=!done&&status(c,m)==='Inactive'?'Inactive':(done||sum(plan(c))>0?'Draft':'No Limit'),pl=entOf(c,m);
+    const st0=!done&&status(c,m)==='Inactive'?'Inactive':(done||sum(plan(c))>0?'Pending':'No Limit'),pl=entOf(c,m);
     const text=st0==='Inactive'?why(c)+' - not processed for '+mLabel(m)+'. '+money(sum(plan(c)))+' is held back.'
       :st0==='No Limit'?'No wallet limit is set - nothing to load for '+mLabel(m)+'.'
       :'Benefits calculated for '+mLabel(m)+': '+Object.keys(pl).map(function(k){return wName(k)+' '+money(pl[k]);}).join(', ')+'.';
-    const first={date:'01 '+MON[+t[1]-1].slice(0,3)+' '+t[0],time:'09:00:00 AM',user:'System',status:st0,step:st0==='Draft'?'Benefits calculated':st0,action:text};
+    const first={date:'01 '+MON[+t[1]-1].slice(0,3)+' '+t[0],time:'09:00:00 AM',user:'System',status:st0,step:st0==='Pending'?'Benefits calculated':st0,action:text};
     const when=function(l){return typeof wfStepTime==='function'?(wfStepTime(l,0)||0):0;};
     return kept.concat([first]).map(function(l,i){return {l:l,i:i,t:when(l)};}).sort(function(x,y){return (y.t-x.t)||(x.i-y.i);}).map(function(x){return x.l;});
   }
@@ -205,30 +209,30 @@
   /* ── What each step does ── */
   function submit(c,note){
     const m=nowM(),st=status(c,m);
-    if(!canSubmit())return 'Only the Company Admin submits a benefit load.';
-    if(st!=='Draft'&&st!=='Rejected')return empName(c)+' is '+st+' for '+mLabel(m)+'.';
+    if(!canSubmit())return 'Only the Company Admin reviews a benefit load.';
+    if(st!=='Pending'&&st!=='Rejected')return empName(c)+' is '+st+' for '+mLabel(m)+'.';
     const fin=finalOf(c,m),tot=sum(fin),en=plan(c);
     if(!(tot>0))return 'Nothing to load for '+empName(c)+': the final load is 0.';
     const k=calc(c,m,true),a=tot-sum(en);
-    k.status='Pending Approval';k.wallets=Object.assign({},fin);k.ent=Object.assign({},en);k.by=meName();k.at=today();k.reason='';
-    addLog(c,'Pending Approval','Submitted for approval','Submitted for approval · '+mLabel(m)+': '+money(tot)+(a?' (entitlement '+money(sum(en))+', adjustments '+signed(a)+')':'')+(note?'. Comment: '+note:'.'));
+    k.status='Reviewed';k.wallets=Object.assign({},fin);k.ent=Object.assign({},en);k.by=meName();k.at=today();k.reason='';
+    addLog(c,'Reviewed','Reviewed','Reviewed · '+mLabel(m)+': '+money(tot)+(a?' (entitlement '+money(sum(en))+', adjustments '+signed(a)+')':'')+(note?'. Comment: '+note:'.'));
     return '';
   }
   function decline(c,note){
     const m=nowM();
     if(!canApprove())return 'Only Finance or the Company Admin decides a benefit load.';
-    if(status(c,m)!=='Pending Approval')return empName(c)+' is not waiting for approval.';
+    if(status(c,m)!=='Reviewed')return empName(c)+' is not reviewed yet.';
     const k=calc(c,m,true);
     k.status='Rejected';k.reason=note||'';delete k.wallets;delete k.ent;
-    addLog(c,'Rejected','Rejected','Rejected · '+mLabel(m)+(note?'. Reason: '+note:'.')+' No wallet balance changed; it can be edited and submitted again.');
+    addLog(c,'Rejected','Rejected','Rejected · '+mLabel(m)+(note?'. Reason: '+note:'.')+' No wallet balance changed; it can be edited and reviewed again.');
     return '';
   }
   /* Approval credits the wallets: one run for the cards approved together. */
   function approve(list,note){
     const e=entRec(),m=nowM();if(!e)return {error:'No company.'};
     if(!canApprove())return {error:'Only Finance or the Company Admin approves a benefit load.'};
-    const ok=list.filter(function(c){return status(c,m)==='Pending Approval'&&!why(c)&&!runOf(m,c.id);});
-    if(!ok.length)return {error:'Nothing here is waiting for approval, or the card is no longer Active.'};
+    const ok=list.filter(function(c){return status(c,m)==='Reviewed'&&!why(c)&&!runOf(m,c.id);});
+    if(!ok.length)return {error:'Nothing here is reviewed and waiting for approval, or the card is no longer Active.'};
     e.bpRuns=Array.isArray(e.bpRuns)?e.bpRuns:[];
     const n=1001+e.bpRuns.length,st=typeof stampNow==='function'?stampNow():{date:'',time:''};
     const items=ok.map(function(c){const k=calc(c,m,true);
@@ -239,8 +243,8 @@
     ok.forEach(function(c,i){
       const it=items[i];
       addLog(c,'Approved','Approved','Approved · '+mLabel(m)+': '+money(it.total)+(note?'. Comment: '+note:'.'));
-      addLog(c,'Loaded','Wallets loaded',run.key+' · '+mLabel(m)+' loaded: '+parts(it)+'.',1);
-      calc(c,m,true).status='Loaded';
+      addLog(c,'Approved','Wallets loaded',run.key+' · '+mLabel(m)+' loaded: '+parts(it)+'.',1);
+      calc(c,m,true).status='Approved';
     });
     e.bpRuns.push(run);   // from here the ledger shows the credits
     ok.forEach(function(c,i){if(typeof ccLog==='function')ccLog(c,c.status,'Benefit load '+run.key+' · '+mLabel(m)+': '+parts(items[i])+'.');});
@@ -261,21 +265,21 @@
   function pickable(c){
     if(!isNow())return false;
     const s=status(c,month());
-    if(s==='Pending Approval')return canApprove();
-    return canSubmit()&&s!=='Loaded';
+    if(s==='Reviewed')return canApprove();
+    return canSubmit()&&s!=='Approved';
   }
   const picked=function(){return shown().filter(function(c){return sel[c.id]&&pickable(c);});};
   function barHTML(){
     if(!isNow())return '<span class="wb-muted">Benefits are processed for the current month ('+E(mLabel(nowM()))+'). '+E(mLabel(month()))+' is shown for reference.</span>';
     const m=month(),p=picked();
-    const sub=p.filter(function(c){const s=status(c,m);return s==='Draft'||s==='Rejected';}),pen=p.filter(function(c){return status(c,m)==='Pending Approval';});
+    const sub=p.filter(function(c){const s=status(c,m);return s==='Pending'||s==='Rejected';}),pen=p.filter(function(c){return status(c,m)==='Reviewed';});
     const tot=function(l){return money(l.reduce(function(a,c){return a+sum(finalOf(c,m));},0));};
-    const txt=p.length?'<b>'+p.length+'</b> selected'+(sub.length?' · <b>'+sub.length+'</b> to submit · <b>'+tot(sub)+'</b>':'')+(pen.length?' · <b>'+pen.length+'</b> waiting for approval · <b>'+tot(pen)+'</b>':'')
+    const txt=p.length?'<b>'+p.length+'</b> selected'+(sub.length?' · <b>'+sub.length+'</b> to review · <b>'+tot(sub)+'</b>':'')+(pen.length?' · <b>'+pen.length+'</b> reviewed · <b>'+tot(pen)+'</b>':'')
       :'Select the cards to process for '+E(mLabel(m));
     const off=' disabled style="opacity:.5;cursor:not-allowed"';
     let btn='';
     if(canApprove()&&pen.length)btn+='<button class="ep-cancel-btn" onclick="bpxRejectOpen()">Reject</button><button class="ep-save-btn" onclick="bpxConfirmOpen(\'approve\')">Approve</button>';
-    if(canSubmit()&&(sub.length||!pen.length))btn+='<button class="ep-save-btn"'+(p.length?'':off)+' onclick="bpxConfirmOpen(\'submit\')">Submit for Approval</button>';
+    if(canSubmit()&&(sub.length||!pen.length))btn+='<button class="ep-save-btn"'+(p.length?'':off)+' onclick="bpxConfirmOpen(\'submit\')">Mark Reviewed</button>';
     return '<span class="bpx-bar-txt">'+txt+'</span><span class="bpx-bar-btns">'+btn+'</span>';
   }
   function pageHTML(){
@@ -299,7 +303,7 @@
         +'<td>'+badge(TONE[st]||'idle',st)+(st==='Inactive'?'<div class="lp-c-sub">'+E(why(c))+'</div>':'')+'</td>'
         +(typeof csuDots==='function'?csuDots('bpxOpen('+c.id+')',empName(c)):'<td></td>')+'</tr>';
     });
-    const words=isNow()?['Draft','Pending Approval','Rejected','Loaded','Inactive','No Limit']:['Loaded','Not Processed'];
+    const words=isNow()?['Pending','Reviewed','Rejected','Approved','Inactive','No Limit']:['Approved','Not Processed'];
     const opt=['Rejected','No Limit'];
     const tiles=typeof caStat==='function'?words.filter(function(w){return opt.indexOf(w)<0||all.some(function(c){return status(c,m)===w;});}).map(function(w){
       return caStat(w,all.filter(function(c){return status(c,m)===w;}).length,fStatus===w,'bpxStat(\''+w+'\')',TONE[w]);}).join(''):'';
@@ -339,11 +343,6 @@
       +'</div>'
       +'<div class="bpx-adj-ent is-final"><span>Final Load</span><b id="bpx-a-final">'+money(fin)+'</b></div>'
       +'<div class="ea-hint" style="margin:10px 0 0">This change applies to '+E(mLabel(m))+' only and is included in the total sent for approval. The employee\'s monthly limit is not changed.</div>'
-      +'<div class="bpx-vals"><div class="bpx-vals-ttl">Validation</div>'
-        +v((e.status||'Active')==='Active','Employee is '+(e.status||'Active').toLowerCase()+'.')
-        +v(on&&pl[t]>0,'Wallet ('+wName(t)+') is '+(on&&pl[t]>0?'assigned and eligible.':'not assigned.'))
-        +v(cardWord(c)==='Active','Card (•••• '+(c.last4||'')+') is '+cardWord(c).toLowerCase()+'.')
-        +v(!runOf(m,c.id),runOf(m,c.id)?'Already loaded for '+mLabel(m)+'.':'Not previously loaded for '+mLabel(m)+'.')+'</div>'
       +'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="bpxAdjCancel()">Cancel</button>'
         +(a?'<button class="ep-cancel-btn" onclick="bpxAdjRemove()">Remove Adjustment</button>':'')
         +'<button class="ep-save-btn" onclick="bpxAdjSave()">Save Adjustment</button></div></div>';
@@ -361,7 +360,7 @@
       const types=benefitTypes(),bal=typeof emsLedgerWallets==='function'?emsLedgerWallets(c.employeeEid,c.id):{};
       const sp=spentLast(c,m),loaded=!!it,pm=mLabel(prevOf(m)).split(' ')[0],ed=editable(c,m),A=adjs(c,m);
       const tE=sum(pl),tF=live?sum(fin):0;
-      body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Pending Approval'?'Waiting for approval - cannot be edited':loaded?'Loaded - cannot be edited':'')+'</span></div>'
+      body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Reviewed'?'Reviewed - cannot be edited':loaded?'Approved - cannot be edited':'')+'</span></div>'
         +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
         +'<th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">'+(loaded?'Loaded':'Final Load')+'</th><th class="bpx-num">Balance</th>'+(ed?'<th></th>':'')+'</tr></thead><tbody>'
         +types.map(function(t){
@@ -384,8 +383,8 @@
       body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
     }else if(tab==='workflow'){
       const done=logsOf(c).map(function(l){return {title:l.step||l.status||'',user:l.user||'System',date:l.date||'',time:l.time||'',description:l.action||''};});
-      const S1={title:'Submit for approval',owner:'Company Admin'},S2={title:'Approval',owner:financeName()+' (Finance)'},S3={title:'Wallets loaded',owner:'System'};
-      const steps=st==='Draft'?[S1,S2,S3]:st==='Pending Approval'?[S2,S3]:st==='Rejected'?[{title:'Edit and resubmit',owner:'Company Admin'},S2,S3]
+      const S1={title:'Review',owner:'Company Admin'},S2={title:'Approval',owner:financeName()+' (Finance)'},S3={title:'Wallets loaded',owner:'System'};
+      const steps=st==='Pending'?[S1,S2,S3]:st==='Reviewed'?[S2,S3]:st==='Rejected'?[{title:'Edit and review again',owner:'Company Admin'},S2,S3]
         :st==='Inactive'?[{title:'Make the '+(/^Employee/.test(why(c))?'employee':'card')+' Active',owner:'Company Admin'},S1,S2,S3]
         :st==='No Limit'?[{title:'Set the wallet limits',owner:'Company Admin'},S1,S2,S3]:[];
       body=typeof wfTimelineHTML==='function'?wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done):'';
@@ -406,7 +405,7 @@
         +F(I.fHash,'Card Number',E(cardNo(c)))+F(I.fCal,'Benefit Period',E(mLabel(m)))
         +F(I.fCash,'Last Month',lm?money(sum(lm)):'—')+F(I.fCash,'Monthly Entitlement',money(sum(pl)))
         +F(I.fCash,'Adjustments',live?signed(sum(fin)-sum(pl)):'—')+F(I.fCash,r?'Loaded':'Final Proposed Load',live?money(sum(fin)):'—')
-        +(k&&k.by&&(st==='Pending Approval'||r)?F(I.fUser,'Submitted By',E(k.by)):'')
+        +(k&&k.by&&(st==='Reviewed'||r)?F(I.fUser,'Submitted By',E(k.by)):'')
         +(r?F(I.fCal,'Loaded On',E(r.at))+F(I.fUser,'Approved By',E(r.by)):'')
         +(st==='Rejected'&&k?F(I.fTag,'Rejection Reason',E(k.reason||'—')):'')
         +(st==='Inactive'?F(I.fTag,'Not Processed Because',E(why(c))):'')
@@ -417,12 +416,12 @@
   const repanel=function(){if(typeof isbTab==='function'&&document.getElementById('bpx-split-sb'))isbTab('bpx',panelHTML);else renderADTPage();};
 
   /* ── Logs: the step that is open to this user, with a comment ── */
-  const MOVES={'Submit for Approval':'submit','Approve':'approve','Reject':'reject'};
+  const MOVES={'Reviewed':'submit','Approved':'approve','Rejected':'reject'};
   function movesOf(c){
     if(!isNow())return [];
     const s=status(c,month());
-    if((s==='Draft'||s==='Rejected')&&canSubmit())return ['Submit for Approval'];
-    if(s==='Pending Approval'&&canApprove())return ['Approve','Reject'];
+    if((s==='Pending'||s==='Rejected')&&canSubmit())return ['Reviewed'];
+    if(s==='Reviewed'&&canApprove())return ['Approved','Rejected'];
     return [];
   }
   function logForm(c){
@@ -438,7 +437,8 @@
   window.bpxLogPick=function(val,csid){
     const id=Number(String(csid||'').replace(/^bpxl-act-/,''));if(!id||!val)return;
     if(act&&act.id===id&&act.label===val)return;   // the Logs view picks it again as it draws
-    if(!MOVES[val]){if(!act)return;act=null;}
+    const cc=typeof ccCard==='function'?ccCard(id):null;
+    if(!MOVES[val]||!cc||val===status(cc,month())){if(!act)return;act=null;}   // the current status is not a step
     else{const ta=document.getElementById('bpxl-note');act={id:id,label:val,note:ta?ta.value:''};}
     repanel();
   };
@@ -449,7 +449,7 @@
     const ta=document.getElementById('bpxl-note'),note=String(ta?ta.value:a.note||'').trim();
     if(!note){if(ta)ta.classList.add('is-invalid');say('Comment is required','error','Write a comment for '+a.label+'.');return;}
     const what=MOVES[a.label],amount=money(sum(finalOf(c,nowM())));let err='',done='',ref='';
-    if(what==='submit'){err=submit(c,note);done='Submitted for approval';}
+    if(what==='submit'){err=submit(c,note);done='Marked as reviewed';}
     else if(what==='reject'){err=decline(c,note);done='Rejected';}
     else{const r=approve([c],note);err=r.error||'';done='Wallets loaded';if(r.run)ref=r.run.key+' · ';}
     if(err){say('Not done','error',err);return;}
@@ -515,10 +515,10 @@
       const st=status(c,m);
       if(mode==='submit'){
         if(st==='Inactive'){inactive.push({c:c,why:why(c),amount:sum(plan(c))});return;}
-        if(st==='Pending Approval')return;
-        if(st!=='Draft'&&st!=='Rejected'){other.push(c);return;}
+        if(st==='Reviewed')return;
+        if(st!=='Pending'&&st!=='Rejected'){other.push(c);return;}
       }else{
-        if(st!=='Pending Approval')return;
+        if(st!=='Reviewed')return;
         if(why(c)){inactive.push({c:c,why:why(c),amount:sum(finalOf(c,m))});return;}
       }
       const en=entOf(c,m),fin=finalOf(c,m),a=adjs(c,m),lm=last(c,m);
@@ -542,11 +542,11 @@
     const types=benefitTypes().filter(function(t){return s.byW[t];});
     const up=s.changes.filter(function(x){return x.now>x.was;}).length,held=s.inactive.reduce(function(a,x){return a+x.amount;},0),net=s.total-s.ent;
     let h='<div class="ct-modal-overlay" style="z-index:2000" onclick="bpxConfirmClose()"><div class="ct-modal" style="width:min(940px,95vw)" role="dialog" aria-modal="true" aria-label="Benefit load summary" onclick="event.stopPropagation()">'
-      +'<div class="ct-modal-hdr"><div><span class="ct-modal-title">'+(ap?'Approve benefit load':'Submit for approval')+' · '+E(mLabel(s.month))+'</span>'
-      +'<div style="font-size:13px;color:#6b7280;margin-top:3px">'+(ap?'Check the amounts below. Approving credits the wallets at once.':'Check the limits, adjustments and statuses below. Finance approves before any wallet is loaded.')+'</div></div>'
+      +'<div class="ct-modal-hdr"><div><span class="ct-modal-title">'+(ap?'Approve benefit load':'Mark as reviewed')+' · '+E(mLabel(s.month))+'</span>'
+      +'<div style="font-size:13px;color:#6b7280;margin-top:3px">'+(ap?'Check the amounts below. Approving credits the wallets at once.':'Check the limits, adjustments and statuses below. Finance approves the reviewed cards before any wallet is loaded.')+'</div></div>'
       +'<button class="ct-modal-close" onclick="bpxConfirmClose()" aria-label="Close">'+X+'</button></div>'
       +'<div class="bpx-sum">'
-      +'<div class="bpx-tiles">'+tile(ap?'To Load':'To Submit',s.go.length,money(s.total))
+      +'<div class="bpx-tiles">'+tile(ap?'To Load':'To Review',s.go.length,money(s.total))
         +tile('Adjustments',s.adjList.length,s.adjList.length?'net '+signed(net):'none')
         +tile('Limit Changes',s.changes.length,s.changes.length?up+' higher · '+(s.changes.length-up)+' lower':'same as last month')
         +tile('Inactive',s.inactive.length,s.inactive.length?money(held)+' held back':'none')+'</div>';
@@ -560,12 +560,12 @@
       s.changes.map(function(x){const d=x.now-x.was;
         return '<tr><td class="csag-td"><div class="lp-c-main">'+E(empName(x.c))+'</div></td><td class="csag-td">'+E(wName(x.wallet))+'</td><td class="csag-td bpx-num">'+(x.was?money(x.was):'—')+'</td><td class="csag-td bpx-num">'+(x.now?money(x.now):'—')+'</td>'
           +'<td class="csag-td bpx-num" style="font-weight:600;color:'+(d>0?'#15803d':'#b45309')+'">'+(d>0?'▲ ':'▼ ')+money(Math.abs(d))+'</td></tr>';}).join(''));
-    if(s.inactive.length)h+=sec('Inactive · not '+(ap?'loaded':'submitted'),s.inactive.length)+tbl('<th>Employee</th><th>Card</th><th>Reason</th><th class="bpx-num">Amount Held Back</th>',
+    if(s.inactive.length)h+=sec('Inactive · not '+(ap?'loaded':'reviewed'),s.inactive.length)+tbl('<th>Employee</th><th>Card</th><th>Reason</th><th class="bpx-num">Amount Held Back</th>',
       s.inactive.map(function(x){return '<tr><td class="csag-td"><div class="lp-c-main">'+E(empName(x.c))+'</div></td><td class="csag-td" style="white-space:nowrap">'+E(cardNo(x.c))+'</td><td class="csag-td">'+E(x.why)+'</td><td class="csag-td bpx-num">'+money(x.amount)+'</td></tr>';}).join('')
       +'<tr class="bpx-total"><td class="csag-td" colspan="3"><b>Total held back</b></td><td class="csag-td bpx-num"><b>'+money(held)+'</b></td></tr>');
     if(s.other.length)h+=sec('Nothing to load',s.other.length)+'<div class="wb-muted" style="font-size:13px">'+E(s.other.map(empName).join(', '))+' - no wallet limit is set, or the final load is 0.</div>';
-    h+='</div><div class="ct-modal-foot"><span class="wb-muted" style="font-size:12.5px">'+(s.go.length?(ap?'Each card is loaded once for '+E(mLabel(s.month))+'.':'Submitted calculations cannot be edited until they are decided.'):'Nothing to '+(ap?'approve':'submit')+' in this selection.')+'</span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="bpxConfirmClose()">Cancel</button>'
-      +'<button class="ep-save-btn" '+(s.go.length?'':'disabled style="opacity:.5;cursor:not-allowed" ')+'onclick="bpxConfirmGo()">'+(ap?'Approve &amp; Load':'Submit for Approval')+'</button></div></div></div></div>';
+    h+='</div><div class="ct-modal-foot"><span class="wb-muted" style="font-size:12.5px">'+(s.go.length?(ap?'Each card is loaded once for '+E(mLabel(s.month))+'.':'Reviewed calculations cannot be edited until they are decided.'):'Nothing to '+(ap?'approve':'review')+' in this selection.')+'</span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="bpxConfirmClose()">Cancel</button>'
+      +'<button class="ep-save-btn" '+(s.go.length?'':'disabled style="opacity:.5;cursor:not-allowed" ')+'onclick="bpxConfirmGo()">'+(ap?'Approve &amp; Load':'Mark Reviewed')+'</button></div></div></div></div>';
     return h;
   }
   function rejectHTML(){
@@ -627,12 +627,12 @@
     s.go.forEach(function(x){if(!submit(x.c,'')){n++;total+=x.total;}delete sel[x.c.id];});
     s.inactive.concat(s.other.map(function(c){return {c:c};})).forEach(function(x){delete sel[x.c.id];});
     saved();renderADTPage();
-    say('Submitted for approval','success',mLabel(m)+' · '+n+' card'+(n===1?'':'s')+' · '+money(total)+(s.inactive.length?' · '+s.inactive.length+' inactive not submitted':'')+'.');
+    say('Marked as reviewed','success',mLabel(m)+' · '+n+' card'+(n===1?'':'s')+' · '+money(total)+(s.inactive.length?' · '+s.inactive.length+' inactive not reviewed':'')+'.');
   };
   window.bpxRejectOpen=function(){
     if(!canApprove()||!isNow())return;
-    const n=picked().filter(function(c){return status(c,month())==='Pending Approval';}).length;
-    if(!n){say('Select cards','error','Tick the cards waiting for approval.');return;}
+    const n=picked().filter(function(c){return status(c,month())==='Reviewed';}).length;
+    if(!n){say('Select cards','error','Tick the reviewed cards.');return;}
     confirm=null;reject={n:n};paintConfirm();
     const t=document.getElementById('bpx-rej-note');if(t)t.focus();
   };
@@ -642,7 +642,7 @@
     const t=document.getElementById('bpx-rej-note'),note=String(t?t.value:'').trim();
     if(!note){if(t)t.classList.add('is-invalid');say('Reason is required','error','Say why the load is rejected.');return;}
     let n=0;
-    picked().filter(function(c){return status(c,month())==='Pending Approval';}).forEach(function(c){if(!decline(c,note))n++;delete sel[c.id];});
+    picked().filter(function(c){return status(c,month())==='Reviewed';}).forEach(function(c){if(!decline(c,note))n++;delete sel[c.id];});
     reject=null;paintConfirm();saved();renderADTPage();
     say('Rejected','success',n+' benefit load'+(n===1?'':'s')+' rejected. No wallet balance changed.');
   };
