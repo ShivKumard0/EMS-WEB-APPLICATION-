@@ -40,7 +40,10 @@
     const allOff=inNova()?['rbac-workspaces','rbac-templates']:[];
     if(!rbacOff&&!cardOff.length&&!expOff.length&&!allOff.length)return out;
     const OFF={'Corporate Cards':cardOff,'Expense Management':expOff};
-    return out.filter(function(g){return !(rbacOff&&g&&g.dropdown==='RBAC');}).map(function(g){
+    /* Opendhi, every role: no Finance group in the side panel (product owner, 15 Nov 2026: "remove finance from the
+       side bar"). Its pages stay reachable from their links, as before. */
+    const finOff=inNova();
+    return out.filter(function(g){return !(rbacOff&&g&&g.dropdown==='RBAC')&&!(finOff&&g&&g.dropdown==='Finance');}).map(function(g){
       if(!g||!g.children)return g;
       const off=(OFF[g.dropdown]||[]).concat(allOff);
       if(!off.length||!g.children.some(function(c){return off.indexOf(c.id)>=0;}))return g;

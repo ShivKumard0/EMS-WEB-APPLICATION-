@@ -13,7 +13,7 @@
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
   if(typeof sidebarItems==='undefined'||typeof renderPageContent!=='function')return;
-  const PG='ems-reports',TITLE='Reports';
+  const PG='ems-reports',TITLE='Reports & Analytics';
   const E=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const ent=function(){return typeof idEntity==='function'?idEntity():'';};
   const entRec=function(){return typeof entitiesData!=='undefined'?entitiesData.find(function(e){return e.entityId===ent();})||null:null;};
@@ -38,7 +38,7 @@
   const sub=function(x){return typeof eaSubstatus==='function'?eaSubstatus(x):'';};
 
   /* ── Period ── */
-  const PERIODS=['This Month','Last Month','Last 3 Months','This Financial Year','All Time'];
+  const PERIODS=['This Month','Last Month','Last 3 Months','All Time'];   // no financial year (product owner, 15 Nov 2026)
   function range(p){
     const t=today(),y=+t.slice(0,4),m=+t.slice(5,7);
     const first=function(yy,mm){while(mm<1){mm+=12;yy--;}return yy+'-'+p2(mm)+'-01';};
@@ -268,11 +268,12 @@
   })();
 
   /* ── The menu item, right under Requests & Loads; the page ── */
-  const g=sidebarItems.find(function(x){return x&&x.dropdown==='Corporate Cards';});
-  if(g&&!g.children.some(function(c){return c.id===PG;})){
+  /* Its own item in the side panel, right after Corporate Cards (product owner, 15 Nov 2026: "bring reports to outside
+     the corporates and rename it to reports & analytics"). */
+  if(!sidebarItems.some(function(x){return x&&x.id===PG;})){
     const I=typeof sbIco!=='undefined'?sbIco:{};
-    const at=g.children.findIndex(function(c){return c.label==='Requests & Loads';});
-    g.children.splice(at<0?g.children.length:at+1,0,{id:PG,label:TITLE,color:'green',icon:I.fileText||I.card||''});
+    const at=sidebarItems.findIndex(function(x){return x&&x.dropdown==='Corporate Cards';});
+    sidebarItems.splice(at<0?sidebarItems.length:at+1,0,{id:PG,label:TITLE,color:'green',icon:I.fileText||I.grid||''});
   }
   if(typeof supportPageMeta!=='undefined')supportPageMeta[PG]={title:TITLE,context:TITLE,filters:[],columns:[],rows:[]};
   if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[PG]='cards';
