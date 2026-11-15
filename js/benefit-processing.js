@@ -31,7 +31,7 @@
 (function(){
   if(!/[?&]env=presentation/.test(location.search))return;
   if(typeof sidebarItems==='undefined'||typeof renderPageContent!=='function'||typeof ccCards==='undefined')return;
-  const PG='benefit-processing',TITLE='Benefit Processing';
+  const PG='benefit-processing',TITLE='Wallet Load';   // renamed from Benefit Processing (product owner, 15 Nov 2026); the page id is kept
   const E=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const ent=function(){return typeof idEntity==='function'?idEntity():'';};
   const entRec=function(){return typeof entitiesData!=='undefined'?entitiesData.find(function(e){return e.entityId===ent();})||null:null;};
@@ -695,6 +695,44 @@
   };
   document.addEventListener('keydown',function(ev){if(ev.key!=='Escape')return;if(confirm)window.bpxConfirmClose();else if(reject)window.bpxRejectClose();});
 
+  /* Start the month again (product owner, 15 Nov 2026: "i want to show it to people multiple times ... a small refresh
+     button on the side of the switch role, on clicking it will again change all the status to pending"). This month's
+     cards go back to Pending: the reviews, approvals, rejections and disbursements of the month are taken back - so
+     the wallet balances return to what they were before the load - and their log lines are removed. The adjustments
+     stay, so the run can be shown again as it was. Nothing outside this page's own records is touched. */
+  window.bpxResetMonth=function(){
+    const e=entRec(),m=nowM();if(!e||!canSubmit())return;
+    const t=m.split('-'),tag=' '+MON[+t[1]-1].slice(0,3)+' '+t[0];
+    const gone=(e.bpRuns||[]).filter(function(r){return r.month===m;});
+    e.bpRuns=(e.bpRuns||[]).filter(function(r){return r.month!==m;});
+    const cm=(e.bpCalc&&e.bpCalc[m])||{};
+    let n=0;
+    Object.keys(cm).forEach(function(id){const k=cm[id];if(k.status!=='Pending')n++;
+      k.status='Pending';delete k.wallets;delete k.ent;delete k.by;delete k.at;delete k.approvedBy;delete k.approvedAt;delete k.reason;});
+    Object.keys(e.bpLogs||{}).forEach(function(id){
+      e.bpLogs[id]=e.bpLogs[id].filter(function(l){return l.step==='Adjustment'||String(l.date||'').slice(-tag.length)!==tag;});});
+    /* the line each disbursement wrote to the card's own Logs */
+    const keys=gone.map(function(r){return 'Benefit load '+r.key+' ';});
+    if(keys.length)cards().forEach(function(c){if(Array.isArray(c.logs))c.logs=c.logs.filter(function(l){const a=String(l.action||'');return !keys.some(function(k){return a.indexOf(k)===0;});});});
+    sel={};act=null;adjOf=null;confirm=null;reject=null;paintConfirm();fStatus='';
+    saved();renderADTPage();
+    say('Started again','success',mLabel(m)+': every card is Pending'+(gone.length?'; wallet balances are back to before the load':'')+'.');
+  };
+  const RESET_ICO='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+  function resetBtn(){
+    let b=document.getElementById('bpx-reset');
+    const show=typeof page!=='undefined'&&page===PG&&canSubmit();
+    if(!b){
+      if(!show)return;
+      const w=document.getElementById('role-dd-wrap');if(!w||!w.parentNode)return;
+      b=document.createElement('button');b.type='button';b.id='bpx-reset';b.className='bpx-reset';
+      b.title='Start again: set every card to Pending for this month';b.setAttribute('aria-label',b.title);
+      b.innerHTML=RESET_ICO;b.onclick=function(){window.bpxResetMonth();};
+      w.parentNode.insertBefore(b,w);
+    }
+    b.style.display=show?'':'none';
+  }
+
   /* ── Look ── */
   (function(){
     if(document.getElementById('bpx-style'))return;
@@ -709,6 +747,8 @@
       +'.bpx-tile-v{font-size:22px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:4px}'
       +'.bpx-tile-s{font-size:12px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       +'.bpx-total td{background:#f8fafc}'
+      +'.bpx-reset{width:34px;height:34px;border:1px solid var(--border,#e5e7eb);border-radius:9px;background:#fff;color:var(--navy,#0f172a);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin-right:8px;flex-shrink:0}'
+      +'.bpx-reset:hover{background:#f1f5f9}'
       +'.bpx-step{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;margin-bottom:12px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;font-size:13px;color:var(--navy,#0f172a)}'
       +'.bpx-step-arrow{color:#6b7280;font-size:15px}.bpx-step-txt{margin-left:6px}.bpx-step-txt b{font-weight:700}'
       +'.bpx-calc tr.bpx-on td{background:#f1f5f9}'
@@ -766,6 +806,7 @@
     renderADTPage=function(){
       const out=a0.apply(this,arguments);
       if(typeof page!=='undefined'&&page===PG){const b=document.getElementById('tb-page-add-btn');if(b)b.style.display='none';}
+      try{resetBtn();}catch(e){}
       return out;
     };
   }
