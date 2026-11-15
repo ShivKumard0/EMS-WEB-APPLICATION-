@@ -7,6 +7,10 @@
      super admin and also from Nova Retail super admin."
    - Company Admin (every company): no Statements & Reconciliation under Corporate Cards. "Also from the company admin
      from the sidebar in Corporate Cards hide statement and reconciliation."
+   - Reporting Manager in Nova Retail / Opendhi: no Funding & Budgets under Expense Management. Finance Admin there: no
+     Funding & Budgets under Expense Management and no Statements & Reconciliation under Corporate Cards (product owner,
+     15 Nov 2026: "from reporting manager in side bar hide Funding and budgets from expenses, and from finance admin hide
+     funding and budgets ... and statement and reconciliation").
    "Make sure this doesn't affect any other feature or any functionality": untouched on purpose - the screens themselves
    and who may open them, every link, dashboard tile and search-palette entry that opens them, Company Settings → Card
    Setup, the rights behind them, every other profile (Finance, verifiers, Compliance, …) and the Super Admin of every
@@ -26,13 +30,17 @@
   window.getSidebarItems=function(){
     const out=g0.apply(this,arguments);
     if(!building)return out;
-    let rbacOff=false,cardOff=[];
+    let rbacOff=false,cardOff=[],expOff=[];
     if(isSA()){rbacOff=inHome();if(rbacOff||inNova())cardOff=CARD_OFF;}
     else if(role()==='Company Admin')cardOff=['card-statements'];
-    if(!rbacOff&&!cardOff.length)return out;
+    else if(role()==='Reporting Manager'&&inNova())expOff=['budgets'];
+    else if(role()==='Finance Admin'&&inNova()){expOff=['budgets'];cardOff=['card-statements'];}
+    if(!rbacOff&&!cardOff.length&&!expOff.length)return out;
+    const OFF={'Corporate Cards':cardOff,'Expense Management':expOff};
     return out.filter(function(g){return !(rbacOff&&g&&g.dropdown==='RBAC');}).map(function(g){
-      if(!cardOff.length||!g||g.dropdown!=='Corporate Cards'||!g.children)return g;
-      return Object.assign({},g,{children:g.children.filter(function(c){return cardOff.indexOf(c.id)<0;})});
+      const off=g&&OFF[g.dropdown];
+      if(!off||!off.length||!g.children)return g;
+      return Object.assign({},g,{children:g.children.filter(function(c){return off.indexOf(c.id)<0;})});
     });
   };
 })();
