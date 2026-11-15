@@ -3,8 +3,9 @@
    selecting any one of it then the corresponding report will open and it can be downloadable. it should look well
    structured and in proper format. under requests and loads add reports. due to this none of the approval or
    submission functionality should change."
-   One page, right under Requests & Loads: Report Type (every report, grouped) · Period · Search · Download. Until a
-   report is picked the page lists them by group; picking one shows its figures, its table with a total row, and
+   One page, right under Requests & Loads: Report Type (every report, in the dropdown only) · Period · Search. Until a
+   report is picked the page is blank; picking one shows it as a report sheet - company, title, period, generated on
+   and by, the totals, the table with a total row, page x of y - and
    Download saves exactly what is on screen (all pages) as a CSV file that opens in Excel.
    READ ONLY: every report reads the records the other screens already keep (claims, advances, cards, transactions,
    wallet ledger, wallet loads, capping limits, logs). Nothing is written, no status is changed, no request is made.
@@ -165,35 +166,34 @@
   /* ── Page ── */
   const DL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
   const DOC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>';
-  function pickerHTML(){
-    return GROUPS.map(function(g){
-      const list=REPORTS.filter(function(r){return r.group===g;});
-      return '<div class="rpt-grp"><div class="rpt-grp-ttl">'+E(g)+'<span>'+list.length+'</span></div><div class="rpt-cards">'
-        +list.map(function(r){return '<button type="button" class="rpt-card" onclick="rptOpen(\''+r.id+'\')"><span class="rpt-card-ico">'+DOC+'</span><span class="rpt-card-txt"><b>'+E(r.name)+'</b><span>'+E(r.desc)+'</span></span></button>';}).join('')
-        +'</div></div>';
-    }).join('');
-  }
   function reportHTML(){
     const d=def(),rows=data(),pages=Math.max(1,Math.ceil(rows.length/PER));if(pg>pages)pg=pages;
     const view=rows.slice((pg-1)*PER,pg*PER),rg=range(period);
     const mcols=d.cols.filter(function(c){return c[2]==='m';});
     const tot=function(k){return rows.reduce(function(s,r){return s+(Number(r[k])||0);},0);};
-    const tiles='<div class="rpt-tiles"><div class="rpt-tile"><span>Rows</span><b>'+rows.length+'</b></div>'
-      +mcols.slice(0,3).map(function(c){return '<div class="rpt-tile"><span>Total '+E(c[1])+'</span><b>'+money(tot(c[0]))+'</b></div>';}).join('')+'</div>';
+    const co=typeof idEntityName==='function'?idEntityName(ent()):'',who=typeof idMeName==='function'?idMeName():'';
+    const st=typeof stampNow==='function'?stampNow():{date:dLabel(today()),time:''};
+    const per=d.noPeriod?'As of '+dLabel(today()):(rg[0]?dLabel(rg[0])+' to '+dLabel(rg[1]):'All records to '+dLabel(today()));
+    const meta=function(l,v){return '<div class="rpt-meta-row"><span>'+l+'</span><b>'+E(v)+'</b></div>';};
+    const sums='<div class="rpt-sums"><div class="rpt-sum"><span>Records</span><b>'+rows.length+'</b></div>'
+      +mcols.slice(0,4).map(function(c){return '<div class="rpt-sum"><span>Total '+E(c[1])+'</span><b>'+money(tot(c[0]))+'</b></div>';}).join('')+'</div>';
     const head='<tr><th class="rpt-n">S. No</th>'+d.cols.map(function(c){return '<th'+(num(c[2])?' class="rpt-num"':'')+'>'+E(c[1])+'</th>';}).join('')+'</tr>';
     const body=view.length?view.map(function(r,i){return '<tr><td class="rpt-n">'+((pg-1)*PER+i+1)+'</td>'+d.cols.map(function(c){
         const v=r[c[0]],long=c[2]===''&&String(v||'').length>48;
         return '<td'+(num(c[2])?' class="rpt-num"':long?' class="rpt-long" title="'+E(v)+'"':'')+'>'+cell(v,c[2])+'</td>';}).join('')+'</tr>';}).join('')
       :'<tr><td colspan="'+(d.cols.length+1)+'" class="rpt-empty">No records for this report'+(d.noPeriod?'':' in '+E(period.toLowerCase()))+(q?' matching "'+E(q)+'"':'')+'.</td></tr>';
     const foot=rows.length&&mcols.length?'<tr class="rpt-total"><td class="rpt-n"></td>'+d.cols.map(function(c,i){
-        return '<td'+(num(c[2])?' class="rpt-num"':'')+'>'+(c[2]==='m'?'<b>'+money(tot(c[0]))+'</b>':i===0?'<b>Total</b>':'')+'</td>';}).join('')+'</tr>':'';
-    return '<div class="rpt-head"><div><div class="rpt-ttl">'+E(d.name)+'</div><div class="rpt-sub">'+E(d.desc)+' '
-        +(d.noPeriod?'As of '+E(dLabel(today()))+'.':E(period)+(rg[0]?' · '+E(dLabel(rg[0]))+' to '+E(dLabel(rg[1])):'')+'.')+'</div></div>'
-        +'<button class="ep-save-btn rpt-dl" '+(rows.length?'':'disabled style="opacity:.5;cursor:not-allowed" ')+'onclick="rptDownload()">'+DL+' Download</button></div>'
-      +tiles
-      +'<div class="rpt-table-wrap"><table class="lp-table ax-table rpt-table"><thead>'+head+'</thead><tbody>'+body+foot+'</tbody></table></div>'
-      +(rows.length>PER?'<div class="rpt-pager"><span>Showing '+((pg-1)*PER+1)+'–'+Math.min(rows.length,pg*PER)+' of '+rows.length+'</span><span class="rpt-pager-btns">'
-        +'<button class="ep-cancel-btn" '+(pg<=1?'disabled ':'')+'onclick="rptPage('+(pg-1)+')">Previous</button><b>'+pg+' / '+pages+'</b><button class="ep-cancel-btn" '+(pg>=pages?'disabled ':'')+'onclick="rptPage('+(pg+1)+')">Next</button></span></div>':'');
+        return '<td'+(num(c[2])?' class="rpt-num"':'')+'>'+(c[2]==='m'?money(tot(c[0])):i===0?'Total':'')+'</td>';}).join('')+'</tr>':'';
+    return '<div class="rpt-paper">'
+      +'<div class="rpt-hd"><div class="rpt-hd-l"><div class="rpt-co">'+E(co)+'</div><div class="rpt-ttl">'+E(d.name)+'</div><div class="rpt-sub">'+E(d.desc)+'</div></div>'
+        +'<div class="rpt-hd-r"><div class="rpt-meta">'+meta('Period',d.noPeriod?per:period+' · '+per)+meta('Generated On',st.date+(st.time?' · '+st.time:''))+meta('Generated By',who)+(q?meta('Filter','"'+q+'"'):'')+'</div>'
+        +'<button class="ep-save-btn rpt-dl" '+(rows.length?'':'disabled style="opacity:.5;cursor:not-allowed" ')+'onclick="rptDownload()">'+DL+' Download</button></div></div>'
+      +sums
+      +'<div class="rpt-table-wrap"><table class="rpt-table"><thead>'+head+'</thead><tbody>'+body+foot+'</tbody></table></div>'
+      +'<div class="rpt-ft"><span>'+E(co)+' · '+E(d.name)+' · '+rows.length+' record'+(rows.length===1?'':'s')+(rows.length>PER?' · showing '+((pg-1)*PER+1)+'–'+Math.min(rows.length,pg*PER):'')+'</span>'
+        +'<span class="rpt-pager-btns">'+(rows.length>PER?'<button class="ep-cancel-btn" '+(pg<=1?'disabled ':'')+'onclick="rptPage('+(pg-1)+')">Previous</button>':'')+'<b>Page '+pg+' of '+pages+'</b>'
+        +(rows.length>PER?'<button class="ep-cancel-btn" '+(pg>=pages?'disabled ':'')+'onclick="rptPage('+(pg+1)+')">Next</button>':'')+'</span></div>'
+      +'</div>';
   }
   function pageHTML(){
     const d=def();
@@ -202,9 +202,9 @@
       +'<div class="rpt-f rpt-f-type"><label class="ep-form-label">Report Type</label>'+(typeof apCS==='function'?apCS('rpt-type',opts,d?d.name:'','Select report type','rptTypeHook'):'')+'</div>'
       +'<div class="rpt-f"><label class="ep-form-label">Period</label>'+(typeof apCS==='function'?apCS('rpt-period',PERIODS,d&&d.noPeriod?'':period,d&&d.noPeriod?'As of today':'Period','rptPeriodHook'):'')+'</div>'
       +'<div class="rpt-f rpt-f-q"><label class="ep-form-label" for="rpt-q">Search</label><input class="ep-form-input" id="rpt-q" value="'+E(q)+'" placeholder="Search in this report" '+(d?'':'disabled ')+'onkeydown="if(event.key===\'Enter\')rptSearch()"></div>'
-      +'<div class="rpt-f rpt-f-btn"><button class="lp-pill-search" '+(d?'':'disabled style="opacity:.5" ')+'onclick="rptSearch()">Search</button>'+(d?'<button class="ep-cancel-btn" onclick="rptOpen(\'\')">All Reports</button>':'')+'</div>'
+      +'<div class="rpt-f rpt-f-btn"><button class="lp-pill-search" '+(d?'':'disabled style="opacity:.5" ')+'onclick="rptSearch()">Search</button>'+'</div>'
       +'</div>'
-      +(d?reportHTML():'<div class="rpt-intro">Select a report type above, or pick one below. Every report can be downloaded.</div>'+pickerHTML())
+      +(d?reportHTML():'<div class="rpt-blank"><span class="rpt-blank-ico">'+DOC+'</span><b>Select a report type</b><span>Choose a report from Report Type above to view it. Every report can be downloaded.</span></div>')
       +'</div>';
   }
 
@@ -236,27 +236,33 @@
     const st=document.createElement('style');st.id='rpt-style';
     st.textContent='.rpt-bar{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(160px,1fr) minmax(180px,1.2fr) auto;gap:14px;align-items:end;padding:16px;border:1px solid var(--border,#e5e7eb);border-radius:14px;background:#fff}'
       +'.rpt-f{min-width:0}.rpt-f .ep-form-label{display:block;margin-bottom:6px}.rpt-f .ep-form-input{width:100%;margin:0;height:36px;box-sizing:border-box}.rpt-f .cs-wrap{display:block}.rpt-f-btn .lp-pill-search,.rpt-f-btn .ep-cancel-btn{height:36px}.rpt-f-btn{display:flex;gap:8px;align-items:center}'
-      +'.rpt-intro{margin:18px 2px 4px;font-size:13px;color:var(--gray,#6a7282)}'
-      +'.rpt-grp{margin-top:18px}.rpt-grp-ttl{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--gray,#6a7282);margin-bottom:10px}'
-      +'.rpt-grp-ttl span{font-weight:600;background:#eef2f7;color:var(--navy,#0f172a);border-radius:999px;padding:1px 8px;letter-spacing:0}'
-      +'.rpt-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}'
-      +'.rpt-card{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px 16px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--navy,#0f172a);min-width:0}'
-      +'.rpt-card:hover{border-color:#cbd5e1;background:#f8fafc}.rpt-card-ico{width:36px;height:36px;border-radius:10px;background:#eef2f7;display:flex;align-items:center;justify-content:center;flex-shrink:0}'
-      +'.rpt-card-txt{display:flex;flex-direction:column;gap:3px;min-width:0}.rpt-card-txt b{font-size:14px;font-weight:600}.rpt-card-txt span{font-size:12.5px;line-height:1.45;color:var(--gray,#6a7282)}'
-      +'.rpt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:20px 2px 14px}.rpt-ttl{font-size:18px;font-weight:700;color:var(--navy,#0f172a)}.rpt-sub{font-size:13px;color:var(--gray,#6a7282);margin-top:3px}'
-      +'.rpt-dl{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}'
-      +'.rpt-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}'
-      +'.rpt-tile{border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:12px 16px;background:#fff;min-width:0}.rpt-tile span{display:block;font-size:11.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--gray,#6a7282)}'
-      +'.rpt-tile b{display:block;font-size:20px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-      +'.rpt-table-wrap{border:1px solid var(--border,#e5e7eb);border-radius:14px;background:#fff;overflow:auto}'
-      +'.rpt-table{width:100%;border-collapse:collapse}.rpt-table th{white-space:nowrap}.rpt-table td{white-space:nowrap;font-size:13px}'
+      +'.rpt-blank{margin-top:16px;border:1px dashed #cbd5e1;border-radius:14px;background:#fff;padding:56px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--gray,#6a7282);font-size:13px}'
+      +'.rpt-blank b{font-size:15px;color:var(--navy,#0f172a);font-weight:600}.rpt-blank-ico{width:44px;height:44px;border-radius:12px;background:#eef2f7;color:var(--navy,#0f172a);display:flex;align-items:center;justify-content:center;margin-bottom:6px}'
+      +'.rpt-paper{margin-top:16px;background:#fff;border:1px solid var(--border,#e5e7eb);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05),0 4px 14px rgba(15,23,42,.04)}'
+      +'.rpt-hd{display:flex;justify-content:space-between;gap:24px;padding:24px 28px 20px;border-bottom:2px solid #0f172a}'
+      +'.rpt-hd-l{min-width:0}.rpt-co{font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gray,#6a7282)}'
+      +'.rpt-ttl{font-size:24px;line-height:32px;font-weight:700;color:var(--navy,#0f172a);letter-spacing:-.3px;margin-top:4px}.rpt-sub{font-size:13px;color:var(--gray,#6a7282);margin-top:4px}'
+      +'.rpt-hd-r{display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0}'
+      +'.rpt-meta{display:grid;gap:4px}.rpt-meta-row{display:grid;grid-template-columns:104px auto;gap:12px;font-size:12.5px;line-height:1.5}'
+      +'.rpt-meta-row span{color:var(--gray,#6a7282)}.rpt-meta-row b{color:var(--navy,#0f172a);font-weight:600;text-align:right;white-space:nowrap}'
+      +'.rpt-dl{display:inline-flex;align-items:center;gap:8px}'
+      +'.rpt-sums{display:flex;flex-wrap:wrap;background:#f8fafc;border-bottom:1px solid var(--border,#e5e7eb)}'
+      +'.rpt-sum{padding:14px 28px;border-right:1px solid var(--border,#e5e7eb);min-width:170px}'
+      +'.rpt-sum span{display:block;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--gray,#6a7282)}'
+      +'.rpt-sum b{display:block;font-size:18px;line-height:26px;font-weight:700;color:var(--navy,#0f172a);margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums}'
+      +'.rpt-table-wrap{overflow:auto}'
+      +'.rpt-table{width:100%;border-collapse:collapse;font-size:13px;color:var(--navy,#0f172a)}'
+      +'.rpt-table thead th{background:#0f172a;color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:11px 14px;white-space:nowrap;position:sticky;top:0}'
+      +'.rpt-table thead th:first-child{padding-left:28px}.rpt-table td:first-child{padding-left:28px}.rpt-table thead th:last-child,.rpt-table td:last-child{padding-right:28px}'
+      +'.rpt-table tbody td{padding:10px 14px;border-bottom:1px solid #eef0f3;white-space:nowrap;vertical-align:middle}'
+      +'.rpt-table tbody tr:nth-child(even) td{background:#fafbfc}'
       +'.rpt-table td.rpt-long{white-space:normal;min-width:240px;max-width:420px;line-height:1.45}'
-      +'.rpt-num{text-align:right!important;font-variant-numeric:tabular-nums}.rpt-n{width:56px;color:var(--gray,#6a7282)}'
-      +'.rpt-total td{background:#f8fafc;border-top:1px solid var(--border,#e5e7eb)}'
-      +'.rpt-empty{text-align:center;color:var(--gray,#6a7282);padding:28px 12px!important}'
-      +'.rpt-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:13px;color:var(--gray,#6a7282)}'
+      +'.rpt-num{text-align:right!important;font-variant-numeric:tabular-nums}.rpt-n{width:64px;color:var(--gray,#6a7282)}'
+      +'.rpt-table tr.rpt-total td{background:#f1f5f9;border-top:2px solid #0f172a;border-bottom:0;font-weight:700}'
+      +'.rpt-empty{text-align:center;color:var(--gray,#6a7282);padding:36px 12px!important;background:#fff!important}'
+      +'.rpt-ft{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px;border-top:1px solid var(--border,#e5e7eb);font-size:12px;color:var(--gray,#6a7282)}'
       +'.rpt-pager-btns{display:flex;align-items:center;gap:10px}.rpt-pager-btns b{color:var(--navy,#0f172a);font-weight:600}.rpt-pager-btns button[disabled]{opacity:.5;cursor:not-allowed}'
-      +'@media(max-width:1100px){.rpt-bar{grid-template-columns:1fr 1fr}.rpt-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.rpt-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}';
+      +'@media(max-width:1100px){.rpt-bar{grid-template-columns:1fr 1fr}.rpt-hd{flex-direction:column}.rpt-hd-r{align-items:flex-start}}';
     (document.head||document.documentElement).appendChild(st);
   })();
 
