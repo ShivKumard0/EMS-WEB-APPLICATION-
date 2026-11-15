@@ -37,16 +37,18 @@
   const nextId=function(){return all().reduce(function(m,x){return Math.max(m,x.r.id);},5000)+1;};
   const keyOf=function(r){return 'CSR-'+r.id;};
   const who=function(A){return typeof caN==='function'?caN(A.who):'';};
-  const log=function(r,A,status,action){
+  /* step: the Workflow step's name; chg: [[field, old, new]] for History. */
+  const log=function(r,A,status,action,step,chg){
     const s=typeof stampNow==='function'?stampNow():{date:'',time:''};
-    (r.logs=r.logs||[]).unshift({date:s.date,time:s.time,user:who(A),userId:A.who||'',status:status,action:action});
+    (r.logs=r.logs||[]).unshift({date:s.date,time:s.time,user:who(A),userId:A.who||'',status:status,action:action,step:step||'',chg:chg||[]});
   };
   const save=function(){if(typeof presSaveSoon==='function')presSaveSoon();};
   const add=function(c,kind,A,reason,note){
     const r={id:nextId(),kind:kind,status:kind==='hold'?'On Hold':'Pending',reason:reason||'',note:note||'',by:A.who,at:new Date().toISOString(),step:kind==='lost'?'Block':''};
     (c.csr=c.csr||[]).push(r);
     log(r,A,r.status,kind==='hold'?'Card put on hold by '+who(A)+(reason?': '+reason:'')+'. No approval is needed.'
-      :'Card reported '+String(reason).toLowerCase()+' by '+who(A)+(note?': '+note:'')+'. Waiting for the company admin to block the card.');
+      :'Card reported '+String(reason).toLowerCase()+' by '+who(A)+(note?': '+note:'')+'. Waiting for the company admin to block the card.',
+      kind==='hold'?'Card put on hold':'Reported '+String(reason).toLowerCase(),[['Request Status','',r.status],['Card Status','Active','On Hold']]);
     save();return r;
   };
   const openLost=function(c){return (c&&c.csr||[]).find(function(r){return r.kind==='lost'&&r.status==='Pending';})||null;};
@@ -65,7 +67,7 @@
     const was=c&&c.hold&&c.hold.active?c.hold.type:'';
     const out=e0.apply(this,arguments);
     if(was==='Temporary'&&c.entity===nova())(c.csr||[]).forEach(function(r){
-      if(r.kind==='hold'&&r.status==='On Hold'){r.status='Released';log(r,A||ccNow(),'Released','Hold ended: '+why+'.');}
+      if(r.kind==='hold'&&r.status==='On Hold'){r.status='Released';log(r,A||ccNow(),'Released','Hold ended: '+why+'.','Hold released',[['Request Status','On Hold','Released'],['Card Status','On Hold','Active']]);}
     });
     return out;
   };
@@ -186,8 +188,9 @@
     if(!note)return 'Add a comment.';
     const A=ccNow(),res=ccOutcomeRecord('lifecycle',c.id,{value:v==='Blocked'?'Blocked':'Closed',source:CC_DEMO,note:note},A);
     if(res&&res.error)return res.error;
-    if(v==='Blocked'){r.step='Disable';log(r,A,'Pending','Card '+ccCardLabel(c)+' blocked by '+who(A)+': '+note+'. Next: disable the card.');}
-    else{r.step='';r.status='Approved';log(r,A,'Approved','Card '+ccCardLabel(c)+' disabled by '+who(A)+': '+note+'. '+ccHolderName(c)+' can now ask for a new card.');}
+    if(v==='Blocked'){r.step='Disable';log(r,A,'Pending','Card '+ccCardLabel(c)+' blocked by '+who(A)+': '+note+'. Next: disable the card.','Card blocked',[['Card Status','On Hold','Blocked']]);}
+    else{r.step='';r.status='Approved';log(r,A,'Approved','Card '+ccCardLabel(c)+' disabled by '+who(A)+': '+note+'. '+ccHolderName(c)+' can now ask for a new card.','Card disabled',
+      [['Request Status','Pending','Approved'],['Card Status','Blocked','Disabled']]);}
     save();
     return '';
   }
@@ -213,8 +216,8 @@
     sub:function(r){const x=find(r.id);return keyOf(r)+(x?' · '+ccE(ccHolderName(x.c))+' · '+ccE(ccCardLabel(x.c)):'');}});
 
   /* ── 6 · The side panel, as every other row's: Details · Logs ── */
-  let csrSel=null,csrTab='details',csrAct=null;   // csrAct: the step picked in Logs {id, label, to, note}
-  const TABS=[{id:'details',label:'Details'},{id:'logs',label:'Logs'}];
+  let csrSel=null,csrTab='basic-details',csrAct=null;   // csrAct: the step picked in Logs {id, label, to, note}
+  const TABS=[{id:'basic-details',label:'Basic Details'},{id:'logs',label:'Logs'},{id:'history',label:'History'},{id:'workflow',label:'Workflow'}];
   const ico=function(k){return typeof AX_ICO!=='undefined'&&AX_ICO[k]?AX_ICO[k]:'';};
   function detailsHTML(x){
     const r=x.r,c=x.c,lost=r.kind==='lost',w=emsCardWord(c),d=new Date(r.at);
@@ -241,10 +244,39 @@
       +'<div style="display:flex;gap:10px;margin-top:12px"><button class="ep-cancel-btn" style="flex:1" onclick="emsCsrLogCancel()">Cancel</button>'
       +'<button class="lp-logs-save-btn" style="flex:1" onclick="emsCsrLogSubmit('+r.id+')">Submit</button></div></div>';
   }
+  /* History: the Change History table every panel has - one row per field a step changed, newest first. */
+  function historyHTML(x){
+    const rows=[];
+    (x.r.logs||[]).forEach(function(l){
+      const chg=l.chg&&l.chg.length?l.chg:[['Request Status','',l.status]];
+      chg.forEach(function(c){rows.push({by:l.user,time:l.date+(l.time?', '+l.time:''),field:c[0],old:c[1],val:c[2]});});
+    });
+    const cell=function(v,cls){return '<td'+(cls?' class="'+cls+'"':'')+(v?' title="'+ccE(v)+'"':'')+'>'+(v?ccE(v):'<span class="sb-dash">&mdash;</span>')+'</td>';};
+    const head='<div class="lp-sb-view-header"><span class="lp-sb-section-title">Change History</span><span class="ax-count">'+rows.length+' change'+(rows.length===1?'':'s')+'</span></div>';
+    if(!rows.length)return head+'<div class="lp-wf-empty">No field has changed yet.</div>';
+    return head+'<div class="sb-hist-wrap"><table class="ax-hist sb-hist"><thead><tr><th>S. No</th><th>Update By</th><th>Update Time</th><th>Field Name</th><th>Old Value</th><th>New Value</th></tr></thead><tbody>'
+      +rows.map(function(r,i){return '<tr><td class="sb-hist-n">'+(i+1)+'</td>'+cell(r.by)+cell(r.time,'sb-hist-time')+'<td><b>'+ccE(r.field)+'</b></td>'+cell(r.old,'sb-hist-old')+cell(r.val,'sb-hist-new')+'</tr>';}).join('')
+      +'</tbody></table></div>';
+  }
+  /* Workflow: the steps done (from the logs) and the ones still to come, with who they wait for. */
+  function workflowHTML(x){
+    const r=x.r,done=(r.logs||[]).slice().reverse().map(function(l){return {title:l.step||l.status||'',user:l.user||'System',date:l.date||'',time:l.time||'',description:l.action||''};});
+    const steps=[];
+    if(r.kind==='lost'&&r.status==='Pending'){
+      if(r.step!=='Disable')steps.push({title:STEP.Block,owner:adminName()});
+      steps.push({title:STEP.Disable,owner:adminName()});
+      steps.push({title:'Ask for a new card',owner:ccHolderName(x.c)});
+    }else if(r.kind==='lost'&&r.status==='Approved'&&!(typeof ccLiveCardsOf==='function'&&ccLiveCardsOf(x.c.employeeEid,x.c.programmeId).length))
+      steps.push({title:'Ask for a new card',owner:ccHolderName(x.c)});
+    else if(r.kind==='hold'&&r.status==='On Hold')steps.push({title:'Release the hold',owner:ccHolderName(x.c)});
+    if(typeof wfTimelineHTML!=='function')return '';
+    return wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done);
+  }
   function panelHTML(){
     const x=find(csrSel);if(!x)return '';
     const a=csrAct&&csrAct.id===x.r.id?csrAct:null;
-    const body=csrTab==='logs'?(typeof lpLogsView==='function'?lpLogsView(x.r.logs||[],logForm(x.r),{select:true,current:x.r.status,open:a?a.label:undefined}):''):detailsHTML(x);
+    const body=csrTab==='logs'?(typeof lpLogsView==='function'?lpLogsView(x.r.logs||[],logForm(x.r),{select:true,current:x.r.status,open:a?a.label:undefined}):'')
+      :csrTab==='history'?historyHTML(x):csrTab==='workflow'?workflowHTML(x):detailsHTML(x);
     return axTabBar('csr',TABS,csrTab,'emsCsrNav','emsCsrClose')+'<div class="lp-isb-body">'+body+'</div>';
   }
   const markRows=function(){document.querySelectorAll('.csr-row').forEach(function(t){t.classList.toggle('lp-row-selected',t.id==='csr-row-'+csrSel);});};
@@ -256,7 +288,7 @@
   window.emsCsrOpen=function(id,tab){
     if(!find(id))return;
     if(csrSel!==id)csrAct=null;
-    csrTab=tab||(typeof sbKeepTab==='function'?sbKeepTab(csrSel,csrTab,'details'):'details');csrSel=id;
+    csrTab=tab||(typeof sbKeepTab==='function'?sbKeepTab(csrSel,csrTab,'basic-details'):'basic-details');csrSel=id;
     otherPanels();
     const sb=document.getElementById('csr-split-sb');
     if(!sb){renderADTPage();return;}
