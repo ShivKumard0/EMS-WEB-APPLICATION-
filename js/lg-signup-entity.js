@@ -155,6 +155,45 @@
     if(!r.uid){let u=Date.parse(r.created)||Date.now();while(recs.some(function(x){return x!==r&&x.uid===u;}))u++;r.uid=u;}
     r.tabs=r.tabs||{};r.roles=r.roles||[];r.attachments=r.attachments||[];return r;
   }
+  /* Sample companies (product owner, 15 Nov 2026: "in Dhi Hyperlocal in Company Settings show few realistic mock line
+     items with no configuration done, just fill it with basic details and bank details, rest all I will do manually"):
+     four client companies as signed up - Pending, no Entity ID yet - with Basic Details and Banking Details filled in
+     and everything else (Payroll, Leaves, Attendance, Module Control, Card Setup, E-Sign, Roles & Access) left to set
+     up. Added once (again after a reset if missing); they cannot sign in. */
+  const MOCK=[
+    {store:'Sahyadri Logistics Pvt Ltd',first:'Vikrant',last:'Deshmukh',email:'vikrant.deshmukh@sahyadrilogistics.in',mobile:'9822041736',city:'Pune',days:11,
+     address:'Office 402, Pride Purple Square, Kalewadi Phata, Wakad, Pune, Maharashtra 411057',
+     bank:{payBank:'HDFC Bank',account:'50200061834927',ifsc:'HDFC0001747',swift:'HDFCINBBXXX',bkEmail:'accounts@sahyadrilogistics.in',bkPhone:'+91 20 6712 4400',vat:'27AAKCS4821M1Z6'}},
+    {store:'Kaveri Fresh Foods Pvt Ltd',first:'Anitha',last:'Raghavan',email:'anitha.raghavan@kaverifreshfoods.in',mobile:'9845073120',city:'Bengaluru',days:8,
+     address:'No. 18, 3rd Floor, 100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038',
+     bank:{payBank:'ICICI Bank',account:'034705004182',ifsc:'ICIC0000347',swift:'ICICINBBCTS',bkEmail:'finance@kaverifreshfoods.in',bkPhone:'+91 80 4129 6650',vat:'29AAGCK7316R1Z2'}},
+    {store:'Meridian Care Diagnostics Pvt Ltd',first:'Sandeep',last:'Reddy',email:'sandeep.reddy@meridiancarediagnostics.in',mobile:'9849362815',city:'Hyderabad',days:5,
+     address:'Plot 27, Road No. 36, Jubilee Hills, Hyderabad, Telangana 500033',
+     bank:{payBank:'Axis Bank',account:'921020034417582',ifsc:'UTIB0001094',swift:'AXISINBB094',bkEmail:'accounts@meridiancarediagnostics.in',bkPhone:'+91 40 4852 7710',vat:'36AAJCM5590L1Z9'}},
+    {store:'Tanvi Textiles Pvt Ltd',first:'Hetal',last:'Shah',email:'hetal.shah@tanvitextiles.in',mobile:'9824156093',city:'Surat',days:2,
+     address:'A-512, Silver Business Point, VIP Circle, Uttran, Surat, Gujarat 394105',
+     bank:{payBank:'Kotak Mahindra Bank',account:'9412563870',ifsc:'KKBK0002858',swift:'KKBKINBBCPC',bkEmail:'accounts@tanvitextiles.in',bkPhone:'+91 261 4021 880',vat:'24AAHCT3381K1ZB'}}];
+  (function(){
+    let added=0;
+    MOCK.forEach(function(m){
+      if(find(m.email))return;
+      const at=new Date(Date.now()-m.days*86400000);at.setHours(10+(m.days%7),12+m.days*3,(m.days*17)%60,0);
+      const t=stamp(at),who=m.first+' '+m.last;
+      const r={dial:'IN(+91)',mobile:m.mobile,first:m.first,last:m.last,email:m.email,store:m.store,cat:'Expense Management',country:'India',
+        pass:'',status:'Pending',entityId:'',created:at.toISOString(),updated:at.toISOString(),mock:true,
+        logs:[{date:t.date,time:t.time,user:who,status:'Pending',action:'Signed up. '+m.store+' · Expense Management · India.'}],
+        tabs:{'basic-details':{baseCurrency:'INR',timeZone:'Asia/Kolkata',address:m.address,city:m.city},
+          'banking-details':Object.assign({bkCountry:'India',payName:m.store,bkCurrency:'INR'},m.bank)}};
+      recs.push(r);norm(r);added++;
+    });
+    if(added)save();
+  })();
+  /* No sign up on the sign-in page (product owner, 15 Nov 2026: "now i dont want to show sign up, directly i want to show
+     sign in"): the "Don't have an account? Sign up" line is hidden; signing in is unchanged. */
+  (function(){
+    const st=document.createElement('style');st.id='lg-no-signup';st.textContent='#v-login .lg-foot{display:none!important}';
+    (document.head||document.documentElement).appendChild(st);
+  })();
   const recOfRow=function(n){if(!inDhi())return null;const i=Number(n)-2;return i>=0&&i<recs.length?norm(recs[i]):null;};
   const updatedCell=function(iso){const d=new Date(iso),n=new Date();return d.toDateString()===n.toDateString()?'Today':d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();};
   const ownerOf=function(r){return (r.tabs&&r.tabs['basic-details']&&r.tabs['basic-details'].owner)||(r.first+' '+r.last);};
