@@ -32,7 +32,8 @@
     const out=h0.apply(this,arguments);
     const tb=document.createElement('tbody');tb.innerHTML=out;const tr=tb.firstElementChild;if(!tr||tr.children.length<7)return out;
     const s=sub(x),td=document.createElement('td');td.className='ea-c-sub';
-    td.innerHTML=s?'<div class="lp-c-plain" title="'+s+'">'+s+'</div>':'';
+    /* A pill, like Status (product owner, 15 Nov 2026: "substatus also show as status pills"). */
+    td.innerHTML=s?(typeof axBadge==='function'?axBadge(s==='Fully Approved'?'ok':'info',s):s):'';
     tr.insertBefore(td,tr.children[6]);
     return tr.outerHTML;
   };
@@ -46,7 +47,7 @@
   (function(){
     if(document.getElementById('ea-sub-style'))return;
     const st=document.createElement('style');st.id='ea-sub-style';
-    st.textContent='.ea-c-sub .lp-c-plain{white-space:nowrap}';
+    st.textContent='.ea-c-sub{white-space:nowrap}';
     (document.head||document.documentElement).appendChild(st);
   })();
 
