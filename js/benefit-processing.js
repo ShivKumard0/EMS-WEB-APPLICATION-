@@ -9,7 +9,7 @@
    employee's full limit (Wallet & Benefits → Employees / Card Benefit) · one row per employee's card · Company Admin
    and Super Admin only.
    How it works:
-   - Filters: Year, Month, Branch, Department, Status, search. A card is Ready, Loaded (this month's load is done),
+   - Filters: Year, Month, Branch, Department, Status, search. A card is Ready, Credited (this month's load is done),
      Inactive (the employee or the card is not Active) or No Limit (no wallet limit set).
    - The benefit wallets are loaded: Meal, Fuel, Gift, Telecom, Health - not Reimbursement or Corporate Expense, which
      are filled by claims and card loads.
@@ -37,7 +37,7 @@
   const prevOf=function(m){const t=m.split('-');let y=+t[0],k=+t[1]-1;if(k<1){k=12;y--;}return y+'-'+p2(k);};
   const SKIP=['CORP','REIMB'];
   const wName=function(t){return typeof wbTypeName==='function'?wbTypeName(t):t;};
-  const TONE={'Ready':'info','Loaded':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
+  const TONE={'Ready':'info','Credited':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
 
   let fy=+today().slice(0,4),fm=+today().slice(5,7),fBranch='',fDept='',fStatus='',q='';
   let sel={},open=null,tab='details',confirm=null;
@@ -87,7 +87,7 @@
     return '';
   }
   function status(c,m){
-    if(runOf(m,c.id))return 'Loaded';
+    if(runOf(m,c.id))return 'Credited';
     if(m!==today().slice(0,7))return 'Not Processed';
     if(why(c))return 'Inactive';
     return sum(plan(c))>0?'Ready':'No Limit';
@@ -107,6 +107,43 @@
     });
     e.bpBase={month:prevOf(today().slice(0,7)),limits:limits};
     if(typeof presSaveSoon==='function')presSaveSoon();
+  }
+  /* Last month's spend per wallet. From the card's own transactions of that month; for the month before the
+     company's records begin, a figure kept with the snapshot (55-95% of that month's limit), set once. */
+  const hash=function(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%1000)/1000;};
+  function spentLast(c,m){
+    const pm=prevOf(m),out={};
+    (typeof emsLedgerEntries==='function'?emsLedgerEntries(c.employeeEid,c.id):[]).forEach(function(x){
+      if(x.sign<0&&x.kind!=='Balance transfer'&&String(x.date||'').slice(0,7)===pm)out[x.wallet]=(out[x.wallet]||0)+x.amount;});
+    if(Object.keys(out).length)return out;
+    const e=entRec(),b=e&&e.bpBase;
+    if(!b||b.month!==pm||!b.limits[c.id])return out;
+    b.spent=b.spent||{};
+    if(!b.spent[c.id]){
+      const o={};Object.keys(b.limits[c.id]).forEach(function(k){o[k]=Math.round(b.limits[c.id][k]*(0.55+0.4*hash(c.id+'|'+k))/10)*10;});
+      b.spent[c.id]=o;if(typeof presSaveSoon==='function')presSaveSoon();
+    }
+    return b.spent[c.id];
+  }
+  /* A card's benefit log, newest first: the loads made, and - for a card not yet credited this month - where it stands. */
+  function logsOf(c){
+    const e=entRec(),kept=(e&&e.bpLogs&&e.bpLogs[c.id])||[],m=today().slice(0,7),it=itemOf(m,c.id);
+    const st=it?'Ready':status(c,m),pl=it?it.wallets:plan(c),t=m.split('-');
+    const text=st==='Inactive'?why(c)+' - not loaded for '+mLabel(m)+'. '+money(sum(pl))+' is held back.'
+      :st==='No Limit'?'No wallet limit is set - nothing to load for '+mLabel(m)+'.'
+      :mLabel(m)+' is ready to load: '+Object.keys(pl).map(function(k){return wName(k)+' '+money(pl[k]);}).join(', ')+'.';
+    const first={date:'01 '+MON[+t[1]-1].slice(0,3)+' '+t[0],time:'09:00:00 AM',user:'System',status:st,step:st==='Ready'?'Limits checked':st,action:text};
+    const when=function(l){return typeof wfStepTime==='function'?(wfStepTime(l,0)||0):0;};
+    return kept.concat([first]).map(function(l,i){return {l:l,i:i,t:when(l)};}).sort(function(x,y){return (y.t-x.t)||(x.i-y.i);}).map(function(x){return x.l;});
+  }
+  function addLog(c,status,step,text,after){
+    const e=entRec();if(!e)return;
+    e.bpLogs=e.bpLogs||{};
+    /* after: seconds after now, so two steps of one action keep their order in Logs and Workflow */
+    const d=new Date(Date.now()+(after||0)*1000),MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h=d.getHours();const ap=h>=12?'PM':'AM';h=h%12||12;
+    const st={date:p2(d.getDate())+' '+MS[d.getMonth()]+' '+d.getFullYear(),time:p2(h)+':'+p2(d.getMinutes())+':'+p2(d.getSeconds())+' '+ap};
+    (e.bpLogs[c.id]=e.bpLogs[c.id]||[]).unshift({date:st.date,time:st.time,user:typeof idMeName==='function'?idMeName():'',userId:typeof idMe==='function'?idMe():'',status:status,step:step,action:text});
   }
 
   /* ── The ledger: a run's credits are wallet loads of their own ── */
@@ -136,7 +173,7 @@
       return true;
     });
   }
-  const pickable=function(c){return isNow()&&can()&&status(c,month())!=='Loaded';};
+  const pickable=function(c){return isNow()&&can()&&status(c,month())!=='Credited';};
   const picked=function(){return shown().filter(function(c){return sel[c.id]&&pickable(c);});};
   function barHTML(){
     const p=picked(),load=p.filter(function(c){return status(c,month())==='Ready';});
@@ -151,7 +188,7 @@
     if(open!=null&&!rows.some(function(c){return c.id===open;}))open=null;
     const allOn=okAll.length>0&&okAll.every(function(c){return sel[c.id];});
     const trs=rows.map(function(c,i){
-      const st=status(c,m),e=emp(c),pk=pickable(c),lm=last(c,m),amt=amountOf(c,m),changed=lm&&st!=='Loaded'&&isNow()&&sum(lm)!==sum(plan(c));
+      const st=status(c,m),e=emp(c),pk=pickable(c),lm=last(c,m),amt=amountOf(c,m),changed=lm&&st!=='Credited'&&isNow()&&sum(lm)!==sum(plan(c));
       return '<tr class="bpx-row'+(open===c.id?' lp-row-selected':'')+'" id="bpx-row-'+c.id+'" style="cursor:pointer" onclick="bpxOpen('+c.id+')">'
         +'<td class="bpx-ck" onclick="event.stopPropagation()">'+(pk?'<input type="checkbox" aria-label="Select '+E(empName(c))+'"'+(sel[c.id]?' checked':'')+' onchange="bpxPick('+c.id+',this.checked)">':'')+'</td>'
         +'<td class="lp-c-n">'+(i+1)+'</td>'
@@ -163,7 +200,7 @@
         +'<td>'+badge(TONE[st]||'idle',st)+(st==='Inactive'?'<div class="lp-c-sub">'+E(why(c))+'</div>':'')+'</td>'
         +(typeof csuDots==='function'?csuDots('bpxOpen('+c.id+')',empName(c)):'<td></td>')+'</tr>';
     });
-    const words=isNow()?['Ready','Loaded','Inactive','No Limit']:['Loaded','Not Processed'];
+    const words=isNow()?['Ready','Credited','Inactive','No Limit']:['Credited','Not Processed'];
     const tiles=typeof caStat==='function'?words.filter(function(w){return w!=='No Limit'||all.some(function(c){return status(c,m)===w;});}).map(function(w){
       return caStat(w,all.filter(function(c){return status(c,m)===w;}).length,fStatus===w,'bpxStat(\''+w+'\')',TONE[w]);}).join(''):'';
     const years=[String(+today().slice(0,4)-1),today().slice(0,4)];
@@ -186,7 +223,7 @@
   /* ── A card's details ── */
   function panelHTML(){
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c)return '';
-    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'history',label:'History'}];
+    const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'history',label:'History'},{id:'workflow',label:'Workflow'}];
     if(!tabs.some(function(t){return t.id===tab;}))tab='details';
     const m=month(),e=emp(c),st=status(c,m),pl=plan(c),lm=last(c,m),it=itemOf(m,c.id);
     const I=typeof AX_ICO!=='undefined'?AX_ICO:{},F=function(ico,l,v){return typeof axField==='function'?axField(ico||'',l,v):'';};
@@ -195,17 +232,31 @@
     if(tab==='wallets'){
       const types=benefitTypes(),bal=typeof emsLedgerWallets==='function'?emsLedgerWallets(c.employeeEid,c.id):{};
       const onCard=typeof ccCardWallets==='function'?ccCardWallets(c):types;
+      const sp=spentLast(c,m),credited=!!it,pm=mLabel(prevOf(m)).split(' ')[0];
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Wallets · '+E(mLabel(m))+'</span><span class="wb-muted">'+Object.keys(it?it.wallets:pl).length+' of '+types.length+' loaded each month</span></div>'
-        +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Wallet</th><th class="bpx-num">Last Month</th><th class="bpx-num">'+(it?'Loaded':'This Month')+'</th><th class="bpx-num">Balance</th><th>Status</th></tr></thead><tbody>'
+        +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
+        +'<th class="bpx-num">Balance'+(credited?'':' Now')+'</th><th class="bpx-num">'+(credited?'Credited':'To Load')+'</th>'+(credited?'':'<th class="bpx-num">After Load</th>')+'<th>Status</th></tr></thead><tbody>'
         +types.map(function(t){
           const x=typeof ecbEntry==='function'?ecbEntry(c.employeeEid,t):null,isOn=onCard.indexOf(t)>=0&&!!(x&&x.on);
-          const now=it?it.wallets[t]:pl[t],was=lm?lm[t]:null,diff=!it&&was!=null&&now!=null&&was!==now;
+          const now=it?it.wallets[t]:pl[t],was=lm?lm[t]:null,diff=!it&&was!=null&&now!=null&&was!==now,b0=(bal[t]&&bal[t].available)||0;
+          const willLoad=!credited&&st==='Ready'&&now!=null;
           return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div></td>'
             +'<td class="csag-td bpx-num">'+(was!=null?money(was):'—')+'</td>'
+            +'<td class="csag-td bpx-num">'+(was!=null&&sp[t]!=null?money(sp[t]):'—')+'</td>'
+            +'<td class="csag-td bpx-num"'+(credited?' style="font-weight:600"':'')+'>'+money(b0)+'</td>'
             +'<td class="csag-td bpx-num"'+(diff?' style="font-weight:600"':'')+'>'+(now!=null?money(now):'—')+(diff?' <span class="lp-c-sub">'+(now>was?'▲':'▼')+'</span>':'')+'</td>'
-            +'<td class="csag-td bpx-num">'+money((bal[t]&&bal[t].available)||0)+'</td>'
+            +(credited?'':'<td class="csag-td bpx-num" style="font-weight:600">'+(willLoad?money(b0+now):'—')+'</td>')
             +'<td class="csag-td">'+badge(isOn?'ok':'idle',isOn?'On':'Off')+'</td></tr>';
-        }).join('')+'</tbody></table></div>';
+        }).join('')+'</tbody></table></div>'
+        +'<div class="ea-hint" style="margin-top:10px">'+(credited?'The balance includes this month\'s load.':st==='Ready'?'After Load is the balance now plus this month\'s load.':'This card is not loaded this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
+    }else if(tab==='logs'){
+      body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
+    }else if(tab==='workflow'){
+      const done=logsOf(c).map(function(l){return {title:l.step||l.status||'',user:l.user||'System',date:l.date||'',time:l.time||'',description:l.action||''};});
+      const steps=st==='Ready'?[{title:'Submit for load',owner:(typeof idMeName==='function'?idMeName():'')||'Company Admin'},{title:'Wallets credited',owner:'System'}]
+        :st==='Inactive'?[{title:'Make the '+(/^Employee/.test(why(c))?'employee':'card')+' Active',owner:'Company Admin'},{title:'Submit for load',owner:'Company Admin'}]
+        :st==='No Limit'?[{title:'Set the wallet limits',owner:'Company Admin'},{title:'Submit for load',owner:'Company Admin'}]:[];
+      body=typeof wfTimelineHTML==='function'?wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done):'';
     }else if(tab==='history'){
       const hs=runs().filter(function(r){return r.items.some(function(i){return i.cardId===c.id;});}).sort(function(a,b){return b.month.localeCompare(a.month);});
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Loads</span><span class="ax-count">'+hs.length+'</span></div>'
@@ -225,6 +276,63 @@
         +'</div>';
     }
     return (typeof axTabBar==='function'?axTabBar('bpx',tabs,tab,'bpxNav','bpxClose'):'')+'<div class="lp-isb-body">'+body+'</div>';
+  }
+
+  /* Logs: a Ready card can be submitted for load on its own, with a comment (product owner, 15 Nov 2026: "through logs
+     i can submit for load for individual employee as well"). */
+  let act=null;   // {id, label, note}
+  const STEP='Submit for Load';
+  function logForm(c){
+    if(!can()||!isNow()||status(c,month())!=='Ready'||typeof lpLogStatusField!=='function')return '';
+    const a=act&&act.id===c.id?act:null;
+    return '<div class="lp-logs-form"><div class="lp-logs-form-header"><span class="lp-log-dot"></span>Ready</div><p class="lp-logs-form-sub"></p>'
+      +lpLogStatusField('bpxl-act-'+c.id,'Ready',['Ready',STEP],'bpxLogPick')
+      +'<div class="lp-logs-form-label">Comment <span class="lp-logs-form-req">*</span></div>'
+      +'<textarea class="lp-logs-form-textarea" id="bpxl-note" placeholder="Enter comment">'+E(a?a.note||'':'')+'</textarea>'
+      +'<div style="display:flex;gap:10px;margin-top:12px"><button class="ep-cancel-btn" style="flex:1" onclick="bpxLogCancel()">Cancel</button>'
+      +'<button class="lp-logs-save-btn" style="flex:1" onclick="bpxLogSubmit('+c.id+')">Submit</button></div></div>';
+  }
+  window.bpxLogPick=function(val,csid){
+    const id=Number(String(csid||'').replace(/^bpxl-act-/,''));if(!id||!val)return;
+    if(act&&act.id===id&&act.label===val)return;   // the Logs view picks it again as it draws
+    if(!act&&val!==STEP)return;
+    const ta=document.getElementById('bpxl-note');
+    act=val===STEP?{id:id,label:val,note:ta?ta.value:''}:null;
+    if(typeof isbTab==='function')isbTab('bpx',panelHTML);
+  };
+  window.bpxLogCancel=function(){if(act){act=null;if(typeof isbTab==='function')isbTab('bpx',panelHTML);}};
+  window.bpxLogSubmit=function(id){
+    const c=typeof ccCard==='function'?ccCard(id):null,a=act&&act.id===id?act:null;
+    if(!c||!can())return;
+    if(!a){if(typeof showToast==='function')showToast('Pick a step','error','Choose Submit for Load first.');return;}
+    const ta=document.getElementById('bpxl-note'),note=String(ta?ta.value:a.note||'').trim();
+    if(!note){if(ta)ta.classList.add('is-invalid');if(typeof showToast==='function')showToast('Comment is required','error','Write a comment for the load.');return;}
+    if(status(c,today().slice(0,7))!=='Ready'){act=null;renderADTPage();return;}
+    const pl=plan(c),run=load([{c:c,wallets:pl,total:sum(pl)}],[],note);
+    act=null;delete sel[c.id];renderADTPage();
+    if(run&&typeof showToast==='function')showToast('Wallets credited','success',run.key+' · '+empName(c)+' · '+money(run.total)+'.');
+  };
+  /* One run: the cards credited now (and the inactive ones left out), kept with the company and written to the logs. */
+  function load(list,inactive,note){
+    const e=entRec();if(!e||!list.length)return null;
+    const m=today().slice(0,7);
+    e.bpRuns=Array.isArray(e.bpRuns)?e.bpRuns:[];
+    const n=1001+e.bpRuns.length,st=typeof stampNow==='function'?stampNow():{date:'',time:''};
+    const run={id:n,key:'BPR-'+n,month:m,date:today(),at:st.date+' | '+st.time,by:typeof idMeName==='function'?idMeName():'',byId:typeof idMe==='function'?idMe():'',note:note||'',
+      total:list.reduce(function(a,x){return a+x.total;},0),
+      items:list.map(function(x){return {cardId:x.c.id,eid:x.c.employeeEid,wallets:Object.assign({},x.wallets),total:x.total};}),
+      skipped:(inactive||[]).map(function(x){return {cardId:x.c.id,eid:x.c.employeeEid,reason:x.why,amount:x.amount};})};
+    list.forEach(function(x){
+      const parts=Object.keys(x.wallets).map(function(k){return wName(k)+' '+money(x.wallets[k]);}).join(', ');
+      addLog(x.c,'Submitted','Submitted for load','Submitted for load · '+mLabel(m)+': '+money(x.total)+(note?'. Comment: '+note:'.'));
+      addLog(x.c,'Credited','Wallets credited',run.key+' · '+mLabel(m)+' credited: '+parts+'.',1);
+    });
+    e.bpRuns.push(run);   // from here the ledger shows the credits
+    list.forEach(function(x){
+      if(typeof ccLog==='function')ccLog(x.c,x.c.status,'Benefit load '+run.key+' · '+mLabel(m)+': '+Object.keys(x.wallets).map(function(k){return wName(k)+' '+money(x.wallets[k]);}).join(', ')+'.');});
+    if(typeof emsClearCache==='function')emsClearCache();
+    if(typeof presSaveSoon==='function')presSaveSoon();
+    return run;
   }
 
   /* ── The summary before loading ── */
@@ -296,12 +404,13 @@
   window.bpxReset=function(){q='';fBranch='';fDept='';fStatus='';open=null;renderADTPage();};
   window.bpxStat=function(s){fStatus=fStatus===s?'':s;open=null;renderADTPage();};
   window.bpxOpen=function(id){
+    if(open!==id)act=null;
     open=id;tab='details';
     const sb=document.getElementById('bpx-split-sb');if(!sb||typeof isbTab!=='function'){renderADTPage();return;}
     sb.classList.add('open');isbTab('bpx',panelHTML);
     document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.toggle('lp-row-selected',x.id==='bpx-row-'+id);});
   };
-  window.bpxClose=function(){open=null;const sb=document.getElementById('bpx-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
+  window.bpxClose=function(){open=null;act=null;const sb=document.getElementById('bpx-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
   window.bpxNav=function(t){tab=t;if(typeof isbTab==='function')isbTab('bpx',panelHTML);else renderADTPage();};
   window.bpxSubmit=function(){
     if(!can()||!isNow())return;
@@ -311,26 +420,14 @@
   window.bpxConfirmClose=function(){confirm=null;paintConfirm();};
   window.bpxConfirmGo=function(){
     if(!confirm||!can())return;
-    const e=entRec();if(!e)return;
-    /* Worked out again at this moment: only cards that are still Ready and not loaded for the month. */
+    /* Worked out again at this moment: only cards that are still Ready and not credited for the month. */
     const s=summary(),m=s.month;confirm=null;paintConfirm();
     if(!s.load.length)return;
-    e.bpRuns=Array.isArray(e.bpRuns)?e.bpRuns:[];
-    const n=1001+e.bpRuns.length,st=typeof stampNow==='function'?stampNow():{date:'',time:''};
-    const by=typeof idMeName==='function'?idMeName():'',byId=typeof idMe==='function'?idMe():'';
-    const run={id:n,key:'BPR-'+n,month:m,date:today(),at:st.date+' | '+st.time,by:by,byId:byId,total:s.total,
-      items:s.load.map(function(x){return {cardId:x.c.id,eid:x.c.employeeEid,wallets:Object.assign({},x.wallets),total:x.total};}),
-      skipped:s.inactive.map(function(x){return {cardId:x.c.id,eid:x.c.employeeEid,reason:x.why,amount:x.amount};})};
-    e.bpRuns.push(run);
-    s.load.forEach(function(x){
-      if(typeof ccLog==='function')ccLog(x.c,x.c.status,'Benefit load '+run.key+' · '+mLabel(m)+': '+Object.keys(x.wallets).map(function(k){return wName(k)+' '+money(x.wallets[k]);}).join(', ')+'.');
-      delete sel[x.c.id];
-    });
+    const run=load(s.load,s.inactive,'');if(!run)return;
+    s.load.forEach(function(x){delete sel[x.c.id];});
     s.inactive.concat(s.nolimit.map(function(c){return {c:c};})).forEach(function(x){delete sel[x.c.id];});
-    if(typeof emsClearCache==='function')emsClearCache();
-    if(typeof presSaveSoon==='function')presSaveSoon();
     renderADTPage();
-    if(typeof showToast==='function')showToast('Wallets loaded','success',run.key+' · '+mLabel(m)+' · '+s.load.length+' card'+(s.load.length===1?'':'s')+' · '+money(s.total)+(s.inactive.length?' · '+s.inactive.length+' inactive not loaded':'')+'.');
+    if(typeof showToast==='function')showToast('Wallets credited','success',run.key+' · '+mLabel(m)+' · '+s.load.length+' card'+(s.load.length===1?'':'s')+' · '+money(s.total)+(s.inactive.length?' · '+s.inactive.length+' inactive not loaded':'')+'.');
   };
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&confirm)window.bpxConfirmClose();});
 
