@@ -50,6 +50,27 @@ const EXP_SUBCATS={
   'Telephone & Internet':['Mobile','Broadband'],
   'Books & Learning':['Books','Course','Certification']
 };
+/* More categories and expense types (product owner, 16 Nov 2026): ten groups added next to the ones above. Nothing
+   above is removed; where a group has the name of an existing category its types are added to that category. */
+const EXP_OTHER_SUB='Other - Specify';   // an item of this type must carry a Description
+(function(){
+  const MORE=[
+    ['Travel & Transport',['Flight','Train','Bus','Cab/Taxi','Auto-rickshaw','Metro/Local Train','Vehicle Rental']],
+    ['Accommodation',['Hotel','Guest House','Serviced Apartment']],
+    ['Meals & Refreshments',['Breakfast','Lunch','Dinner','Snacks & Beverages','Catering']],
+    ['Fuel & Vehicle Expenses',['Petrol','Diesel','EV Charging','Mileage Claim - Car','Mileage Claim - Two-wheeler','Parking','Toll Charges']],
+    ['Telephone & Internet',['Mobile Bill','Broadband Bill','Mobile Data Pack','International Roaming']],
+    ['Office Supplies & Services',['Stationery','Printing & Photocopying','Courier & Postage','Office Consumables']],
+    ['Learning & Development',['Books & E-books','Training & Courses','Certification & Examination Fees','Conference & Seminar Fees','Professional Membership']],
+    ['IT Equipment & Software',['Computer Accessories','Devices & Equipment','Software Licences','Software Subscriptions','Equipment Repairs']],
+    ['Meetings & Events',['Venue Hire','Event Management Charges','Team Activity Fees','Event Materials & Decorations']],
+    ['Other Approved Expenses',[EXP_OTHER_SUB]]];
+  MORE.forEach(function(m){
+    if(EXP_CATEGORIES.indexOf(m[0])<0)EXP_CATEGORIES.push(m[0]);
+    const subs=EXP_SUBCATS[m[0]]=EXP_SUBCATS[m[0]]||[];
+    m[1].forEach(function(x){if(subs.indexOf(x)<0)subs.push(x);});
+  });
+})();
 const EXP_CURRENCIES=['INR','GBP','USD','EUR','AED'];
 const EXP_CLAIM_FOR=['Self','Others'];
 const EXP_APP_TYPES=['Reimbursement','Advance'];
@@ -761,6 +782,7 @@ function expCheckLine(d,category){
   const n=parseFloat(d.amount);
   if(isNaN(n)||n<=0){showToast('Amount Spent must be more than 0','error');return false;}
   if((EXP_SUBCATS[category]||[]).indexOf(d.subCat)<0){showToast('Pick a sub category of '+category,'error');return false;}
+  if(d.subCat===EXP_OTHER_SUB&&!String(d.comments||'').trim()){showToast('Description is required','error','Explain what this expense was for when the type is '+EXP_OTHER_SUB+'.');return false;}
   if(d.end&&d.end<d.start){showToast('Ends before it starts','error','End Date must be on or after the Start Date.');return false;}
   if(d.start>axToday()){showToast('Start Date is in the future','error','Claim an expense once it has been spent.');return false;}
   /* Advance funding: a reference, a positive part no larger than the line or than what the advance still has. */
