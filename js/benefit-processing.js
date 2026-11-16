@@ -484,10 +484,10 @@
             /* Headings in step with this month's table (product owner, 16 Nov 2026): the month before first, then the
                month itself, then Balance (its closing balance). Opening and closing stay in the tiles above. */
             +(function(){
-              const pv=prevOf(wv),hp=histMonth(c,pv)||{},pn=mLabel(pv).slice(0,3),cn=mLabel(wv).slice(0,3);
+              const pv=prevOf(wv),hp=histMonth(c,pv)||{},pn=mLabel(pv).split(' ')[0],cn=mLabel(wv).split(' ')[0];
               const P=function(t,k){return hp[t]?money(hp[t][k]):'—';},PT=function(k){return ks.some(function(t){return hp[t];})?money(ks.reduce(function(a,t){return a+(hp[t]?hp[t][k]:0);},0)):'—';};
-              return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc bpx-hist"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pn)+' Loaded</th><th class="bpx-num">'+E(pn)+' Spent</th>'
-                +'<th class="bpx-num">'+E(cn)+' Loaded</th><th class="bpx-num">'+E(cn)+' Spent</th><th class="bpx-num">Balance</th></tr></thead><tbody>'
+              return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc bpx-hist"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pn)+'<br>Loaded</th><th class="bpx-num">'+E(pn)+'<br>Spent</th>'
+                +'<th class="bpx-num">'+E(cn)+'<br>Loaded</th><th class="bpx-num">'+E(cn)+'<br>Spent</th><th class="bpx-num">Balance</th></tr></thead><tbody>'
                 +ks.map(function(t){const r=h[t];
                   return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div></td><td class="csag-td bpx-num">'+P(t,'loaded')+'</td><td class="csag-td bpx-num">'+P(t,'spent')+'</td>'
                     +'<td class="csag-td bpx-num">'+money(r.loaded)+'</td><td class="csag-td bpx-num">'+money(r.spent)+'</td><td class="csag-td bpx-num" style="font-weight:600">'+money(r.close)+'</td></tr>';}).join('')
@@ -499,10 +499,10 @@
           :'<div class="bpx-hist-none">No wallet load was processed for this card in '+E(mLabel(wv))+'.</div>');
     }else if(tab==='wallets'){
       const types=benefitTypes(),bal=typeof emsLedgerWallets==='function'?emsLedgerWallets(c.employeeEid,c.id):{};
-      const sp=spentLast(c,m),loaded=!!it,pm=mLabel(prevOf(m)).slice(0,3),ed=editable(c,m),A=adjs(c,m);
+      const sp=spentLast(c,m),loaded=!!it,pm=mLabel(prevOf(m)).split(' ')[0],ed=editable(c,m),A=adjs(c,m);
       const tE=sum(pl),tF=live?sum(fin):0;
       body=hero+periodHTML(m)+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Reviewed'||st==='Approved'?st+' - cannot be edited':loaded?'Disbursed - cannot be edited':'')+'</span></div>'
-        +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
+        +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+'<br>Loaded</th><th class="bpx-num">'+E(pm)+'<br>Spent</th>'
         +'<th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">Balance</th>'+(ed?'<th></th>':'')+'</tr></thead><tbody>'
         +types.map(function(t){
           const was=lm?lm[t]:null,en=pl[t],a=A[t]||null,am=adjAmt(a),b0=(bal[t]&&bal[t].available)||0;
@@ -881,7 +881,7 @@
       +'.bpx-step-arrow{color:#6b7280;font-size:15px}.bpx-step-txt{margin-left:6px}.bpx-step-txt b{font-weight:700}'
       +'.bpx-calc tr.bpx-on td{background:#f1f5f9}'
       +'table.bpx-calc{min-width:0!important;width:100%}.bpx-calc th,.bpx-calc td{padding-left:9px!important;padding-right:9px!important}.bpx-calc td:first-child,.bpx-calc th:first-child{white-space:nowrap;padding-left:14px!important}.bpx-calc td:first-child .lp-c-sub{white-space:normal}'
-      +'.bpx-calc thead th.bpx-num{white-space:normal!important;line-height:1.3;vertical-align:bottom}'
+      +'.bpx-calc thead th.bpx-num{white-space:normal!important;line-height:1.3}.bpx-calc thead th{vertical-align:bottom!important}'
       +'.bpx-calc td.bpx-pen,.bpx-calc thead th:last-child:not(.bpx-num){position:static!important;width:44px;padding-left:4px!important;box-shadow:none!important}'
       +'.bpx-wm{display:flex;align-items:center;gap:10px;margin:18px 0 18px;padding:10px 14px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff}'
       +'.bpx-wm-l{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray,#6a7282);margin-right:4px}'
