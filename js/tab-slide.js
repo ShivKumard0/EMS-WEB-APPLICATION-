@@ -109,7 +109,27 @@ function place(bar,fam,key){
   lastRect[key]=r;
 }
 
+/* STRANDED MARKERS. The page differ matches by position and keeps the marker
+   (data-patch-keep), so when a repaint turns the old bar's <div> into some
+   other <div> - an expanded detail panel puts its header where the tab bar
+   was - the marker survives inside an element that is no longer a tab bar and
+   draws a stray outline over whatever sits there (the employee's name). A
+   marker is only ever valid as a direct child of a bar of its own family, and
+   only one per bar; anything else is removed. */
+function sweep(){
+  var all=document.querySelectorAll('.tab-ind');
+  for(var i=0;i<all.length;i++){
+    var ind=all[i],p=ind.parentElement,ok=false;
+    for(var f=0;p&&f<FAMILIES.length;f++){
+      if(p.matches(FAMILIES[f].bar)&&ind.classList.contains('tab-ind--'+FAMILIES[f].shape)){ok=true;break;}
+    }
+    if(ok&&p.querySelector(':scope > .tab-ind')!==ind)ok=false;   // a second marker in the same bar
+    if(!ok)ind.remove();
+  }
+}
+
 function sync(){
+  sweep();
   for(var f=0;f<FAMILIES.length;f++){
     var fam=FAMILIES[f];
     var bars=document.querySelectorAll(fam.bar);

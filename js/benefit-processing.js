@@ -55,6 +55,7 @@
 
   let fy=+today().slice(0,4),fm=+today().slice(5,7),fBranch='',fDept='',fStatus='',q='';
   let sel={},open=null,tab='details',confirm=null,act=null,adjOf=null,reject=null;
+  let barWas=false,barLast='',adjDone=null;   // the bar's last shown state and content, so it can slide in and fade out
   const month=function(){return fy+'-'+p2(fm);};
   const nowM=function(){return today().slice(0,7);};
   const isNow=function(){return month()===nowM();};
@@ -299,6 +300,14 @@
     return canSubmit()&&s!=='Disbursed';
   }
   const picked=function(){return shown().filter(function(c){return sel[c.id]&&pickable(c);});};
+  /* The bar shows once a card is selected; a past month keeps its reference note. */
+  const barOn=function(){return !isNow()||picked().length>0;};
+  /* While it fades out, the bar keeps what it last said instead of flipping to the empty text. */
+  const barContent=function(){if(barOn()){barLast=barHTML();return barLast;}return barLast||barHTML();};
+  const syncBar=function(){
+    const w=document.getElementById('bpx-barwrap');if(!w)return;
+    const on=barOn();w.classList.toggle('is-off',!on);barWas=on;
+  };
   function barHTML(){
     if(!isNow())return '<span class="wb-muted">Benefits are processed for the current month ('+E(mLabel(nowM()))+'). '+E(mLabel(month()))+' is shown for reference.</span>';
     const m=month(),p=picked();
@@ -319,18 +328,15 @@
     if(open!=null&&!rows.some(function(c){return c.id===open;})){open=null;adjOf=null;act=null;}
     const allOn=okAll.length>0&&okAll.every(function(c){return sel[c.id];});
     const trs=rows.map(function(c,i){
-      const st=status(c,m),e=emp(c),pk=pickable(c),lm=last(c,m),live=st!=='Inactive'&&st!=='No Limit'&&st!=='Not Processed';
-      const en=sum(entOf(c,m)),fin=live?sum(finalOf(c,m)):0,ad=live?fin-en:0;
+      const st=status(c,m),e=emp(c),pk=pickable(c),live=st!=='Inactive'&&st!=='No Limit'&&st!=='Not Processed';
+      const fin=live?sum(finalOf(c,m)):0;
       return '<tr class="bpx-row'+(open===c.id?' lp-row-selected':'')+'" id="bpx-row-'+c.id+'" style="cursor:pointer" onclick="bpxOpen('+c.id+')">'
         +'<td class="bpx-ck" onclick="event.stopPropagation()">'+(pk?'<input type="checkbox" aria-label="Select '+E(empName(c))+'"'+(sel[c.id]?' checked':'')+' onchange="bpxPick('+c.id+',this.checked)">':'')+'</td>'
         +'<td class="lp-c-n">'+(i+1)+'</td>'
         +'<td><div class="lp-c-plain">'+E(empName(c))+'</div><div class="lp-c-sub">'+E(e.empId||'')+'</div></td>'
         +'<td><div class="lp-c-main" style="font-variant-numeric:tabular-nums;letter-spacing:.02em">'+E(cardNo(c))+'</div><div class="lp-c-sub">'+E(keyOf(c))+'</div></td>'
-        +'<td><div class="lp-c-plain">'+E(e.dept||'—')+'</div><div class="lp-c-sub">'+E(branchOf(c))+'</div></td>'
-        +'<td class="bpx-num"><div class="lp-c-plain">'+(lm?money(sum(lm)):'—')+'</div></td>'
-        +'<td class="bpx-num"><div class="lp-c-plain">'+(en?money(en):'—')+'</div></td>'
-        +'<td class="bpx-num"><div class="lp-c-plain"'+(ad?' style="font-weight:600;color:'+(ad>0?'#15803d':'#b45309')+'"':'')+'>'+(ad?signed(ad):'—')+'</div></td>'
-        +'<td class="bpx-num"><div class="lp-c-plain" style="font-weight:600">'+(fin?money(fin):'—')+'</div></td>'
+        +'<td><div class="lp-c-plain">'+E(e.dept||'—')+'</div></td>'
+        +'<td class="bpx-amt"><div class="lp-c-plain" style="font-weight:600">'+(fin?money(fin):'—')+'</div></td>'
         +'<td>'+badge(TONE[st]||'idle',st)+(st==='Inactive'?'<div class="lp-c-sub">'+E(why(c))+'</div>':'')+'</td>'
         +(typeof csuDots==='function'?csuDots('bpxOpen('+c.id+')',empName(c)):'<td></td>')+'</tr>';
     });
@@ -339,18 +345,22 @@
     const tiles=typeof caStat==='function'?words.filter(function(w){return opt.indexOf(w)<0||all.some(function(c){return status(c,m)===w;});}).map(function(w){
       return caStat(w,all.filter(function(c){return status(c,m)===w;}).length,fStatus===w,'bpxStat(\''+w+'\')',TONE[w]);}).join(''):'';
     const years=[String(+today().slice(0,4)-1),today().slice(0,4)];
+    const empty=typeof ccEmpty==='function'?ccEmpty(8,all.length?'No card matches this filter.':'No card has been issued yet.'):'';
+    const pgn=typeof listPage==='function'?listPage('bpx',[q,fBranch,fDept,fStatus,fy,fm].join('|'),trs,empty):{rows:trs.join('')||empty,pager:''};
     const table='<table class="lp-table ax-table cc-table bpx-table"><thead><tr><th class="bpx-ck">'+(okAll.length?'<input type="checkbox" id="bpx-all" aria-label="Select all"'+(allOn?' checked':'')+' onchange="bpxAll(this.checked)">':'')+'</th>'
-      +'<th>S. No</th><th>Employee</th><th>Card Number</th><th>Department</th><th class="bpx-num">Last Month</th><th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">Final Load</th><th>Status</th><th>Action</th></tr></thead><tbody>'
-      +(trs.length?trs.join(''):(typeof ccEmpty==='function'?ccEmpty(11,all.length?'No card matches this filter.':'No card has been issued yet.'):''))+'</tbody></table>';
+      +'<th>S. No</th><th>Employee</th><th>Card Number</th><th>Department</th><th class="bpx-amt">Final Load</th><th>Status</th><th>Action</th></tr></thead><tbody>'
+      +pgn.rows+'</tbody></table>'+pgn.pager;
     const filters=(typeof lpSearchField==='function'?lpSearchField('bpx-q',q,'Search name, ID or card','bpxApply()'):'')
       +(typeof apCS==='function'?apCS('bpx-year',years,String(fy),'Year')+apCS('bpx-month',MON,MON[fm-1],'Month')
         +apCS('bpx-branch',typeof emsBranchNames==='function'?emsBranchNames(ent()):[],fBranch,'All Branches')
         +apCS('bpx-dept',typeof wbDepts==='function'?wbDepts():[],fDept,'All Departments')
         +apCS('bpx-status',words,fStatus,'All Statuses'):'')
       +(typeof clearFiltersBtn==='function'?clearFiltersBtn([q,fBranch,fDept,fStatus],'bpxReset()'):'')+'<button class="lp-pill-search" onclick="bpxApply()">Search</button>';
+    /* Drawn in its previous state; moved to the new one a frame later so a full redraw also slides or fades. */
+    if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(syncBar);});else setTimeout(syncBar,0);
     return '<div class="lp-page">'
       +(typeof ccFilterBar==='function'?ccFilterBar(filters,tiles):'')
-      +'<div class="bpx-bar" id="bpx-bar">'+barHTML()+'</div>'
+      +'<div class="bpx-barwrap'+(barWas?'':' is-off')+'" id="bpx-barwrap"><div class="bpx-barin"><div class="bpx-bar" id="bpx-bar">'+barContent()+'</div></div></div>'
       +(typeof ccSplit==='function'?ccSplit('bpx',table,open!=null,panelHTML):table)
       +'</div>';
   }
@@ -363,8 +373,11 @@
     const fin=Math.max(0,(pl[t]||0)+(d.type==='Entitlement Reduction'?-1:1)*(parseFloat(d.amount)||0));
     const e=emp(c),on=typeof ccCardWallets==='function'?ccCardWallets(c).indexOf(t)>=0:true;
     const v=function(ok,text){return '<div class="bpx-val'+(ok?'':' is-bad')+'"><span>'+(ok?CHECK:CROSS)+'</span>'+E(text)+'</div>';};
-    return '<div class="bpx-adj" id="bpx-adj"><div class="bpx-adj-ttl">Adjust '+E(wName(t))+' Benefit</div>'
-      +'<div class="bpx-adj-sub">Update the wallet amount for '+E(empName(c))+' for '+E(mLabel(m))+'.</div>'
+    return '<div class="ct-modal-overlay" style="z-index:2000" onclick="bpxAdjCancel()"><div class="ct-modal bpx-modal bpx-adj-modal" id="bpx-adj" role="dialog" aria-modal="true" aria-label="Adjust '+E(wName(t))+' benefit" onclick="event.stopPropagation()">'
+      +'<div class="ct-modal-hdr"><div><span class="ct-modal-title">Adjust '+E(wName(t))+' Benefit</span>'
+      +'<div style="font-size:13px;color:#6b7280;margin-top:3px">Update the wallet amount for '+E(empName(c))+' for '+E(mLabel(m))+'.</div></div>'
+      +'<button class="ct-modal-close" onclick="bpxAdjCancel()" aria-label="Close">'+CROSS+'</button></div>'
+      +'<div class="bpx-sum">'
       +'<div class="bpx-adj-ent"><span>Current Entitlement</span><b>'+money(pl[t]||0)+'</b></div>'
       +'<div class="ep-form-grid">'
       +'<div class="ep-form-group"><label class="ep-form-label">Adjustment Type <span class="req">*</span></label>'+(typeof apCS==='function'?apCS('bpx-a-type',['Additional Allocation','Entitlement Reduction'],d.type,'Select','bpxAdjHook'):'')+'</div>'
@@ -374,10 +387,25 @@
       +'</div>'
       +'<div class="bpx-adj-ent is-final"><span>Final Load</span><b id="bpx-a-final">'+money(fin)+'</b></div>'
       +'<div class="ea-hint" style="margin:10px 0 0">This change applies to '+E(mLabel(m))+' only and is included in the total sent for approval. The employee\'s monthly limit is not changed.</div>'
-      +'<div class="lp-sb-form-actions"><button class="ep-cancel-btn" onclick="bpxAdjCancel()">Cancel</button>'
+      +'</div>'
+      +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="bpxAdjCancel()">Cancel</button>'
         +(a?'<button class="ep-cancel-btn" onclick="bpxAdjRemove()">Remove Adjustment</button>':'')
-        +'<button class="ep-save-btn" onclick="bpxAdjSave()">Save Adjustment</button></div></div>';
+        +'<button class="ep-save-btn" onclick="bpxAdjSave()">Save Adjustment</button></div></div></div></div>';
   }
+  /* The standard success view after an adjustment is saved. */
+  function adjDoneHTML(){
+    const d=adjDone,ok='<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    return '<div class="ct-modal-overlay" style="z-index:2000" onclick="bpxAdjDoneClose()"><div class="rr-success-modal" role="dialog" aria-modal="true" aria-label="Adjustment saved" onclick="event.stopPropagation()">'
+      +'<button class="ct-modal-close" style="position:absolute;top:14px;right:14px" onclick="bpxAdjDoneClose()" aria-label="Close">'+CROSS+'</button>'
+      +'<div class="rr-success-ring"><div class="rr-success-check">'+ok+'</div></div>'
+      +'<div class="rr-success-title">Adjustment Saved</div>'
+      +'<div class="rr-success-sub">'+E(d.wallet)+' for '+E(d.name)+' · final load '+E(d.fin)+' for '+E(d.month)+'.</div>'
+      +'</div></div>';
+  }
+  const adjModalHTML=function(){
+    const c=typeof ccCard==='function'?ccCard(open):null;
+    return c&&adjOf&&editable(c,month())?adjFormHTML(c,month()):'';
+  };
   function panelHTML(){
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c)return '';
     const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'history',label:'History'},{id:'workflow',label:'Workflow'}];
@@ -405,7 +433,6 @@
             +(ed?'<td class="csag-td bpx-pen">'+(en!=null?'<button type="button" class="bpx-pen-btn" title="Adjust '+E(wName(t))+'" aria-label="Adjust '+E(wName(t))+'" onclick="bpxAdjOpen(\''+t+'\')">'+(typeof SB_PEN!=='undefined'?SB_PEN:'Edit')+'</button>':'')+'</td>':'')
             +'</tr>';
         }).join('')+'</tbody></table></div>'
-        +(adjOf&&ed?adjFormHTML(c,m):'')
         +'<div class="ea-hint" style="margin-top:10px">'+(loaded?'The balance includes this month\'s load.':live?'The balance goes up by the Final Load once the load is disbursed.':'This card is not processed this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
     }else if(tab==='logs'){
       body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
@@ -432,7 +459,7 @@
         +F(I.fTag,'Employee Status',badge(e.status==='Active'?'ok':'idle',e.status||'—'))+F(I.fTag,'Card Status',badge(cardWord(c)==='Active'?'ok':'idle',cardWord(c)))
         +F(I.fHash,'Card Number',E(cardNo(c)))+F(I.fCal,'Benefit Period',E(mLabel(m)))
         +F(I.fCash,'Last Month',lm?money(sum(lm)):'—')+F(I.fCash,'Monthly Entitlement',money(sum(pl)))
-        +F(I.fCash,'Adjustments',live?signed(sum(fin)-sum(pl)):'—')+F(I.fCash,r?'Loaded':'Final Proposed Load',live?money(sum(fin)):'—')
+        +F(I.fCash,'Adjustments',live?(function(ad){return ad?'<span style="font-weight:600;color:'+(ad>0?'#15803d':'#b45309')+'">'+signed(ad)+'</span>':signed(ad);})(sum(fin)-sum(pl)):'—')+F(I.fCash,r?'Loaded':'Final Proposed Load',live?money(sum(fin)):'—')
         +(k&&k.by&&(st==='Reviewed'||st==='Approved'||r)?F(I.fUser,'Reviewed By',E(k.by)):'')+(k&&k.approvedBy&&(st==='Approved'||r)?F(I.fUser,'Approved By',E(k.approvedBy)):'')
         +(r?F(I.fCal,'Disbursed On',E(r.at))+F(I.fUser,'Disbursed By',E(r.by)):'')
         +(st==='Rejected'&&k?F(I.fTag,'Rejection Reason',E(k.reason||'—')):'')
@@ -499,21 +526,21 @@
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c||!editable(c,month()))return;
     const k=calc(c,month()),a=k&&k.adj?k.adj[t]:null;
     adjOf={wallet:t,draft:a?{type:a.type,amount:String(a.amount),reason:a.reason,notes:a.notes||''}:{type:'Entitlement Reduction',amount:'',reason:'',notes:''}};
-    repanel();
-    const f=document.getElementById('bpx-adj');if(f&&f.scrollIntoView)f.scrollIntoView({block:'nearest'});
+    repanel();paintConfirm();
   };
-  window.bpxAdjCancel=function(){adjOf=null;repanel();};
+  window.bpxAdjCancel=function(){adjOf=null;paintConfirm();repanel();};
+  window.bpxAdjDoneClose=function(){adjDone=null;paintConfirm();};
   /* Type, amount or reason changed: the Final Load preview; picking Other marks Notes as required. */
   window.bpxAdjHook=function(){
     if(!adjOf)return;const was=adjOf.draft.reason;adjRead();
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c)return;
-    if((was==='Other')!==(adjOf.draft.reason==='Other')){repanel();return;}
+    if((was==='Other')!==(adjOf.draft.reason==='Other')){paintConfirm();return;}
     const el=document.getElementById('bpx-a-final'),d=adjOf.draft;
     if(el)el.textContent=money(Math.max(0,(plan(c)[adjOf.wallet]||0)+(d.type==='Entitlement Reduction'?-1:1)*(parseFloat(d.amount)||0)));
   };
   window.bpxAdjSave=function(){
     const c=typeof ccCard==='function'?ccCard(open):null,m=month();if(!c||!adjOf)return;
-    if(!editable(c,m)){adjOf=null;renderADTPage();return;}
+    if(!editable(c,m)){adjOf=null;paintConfirm();renderADTPage();return;}
     adjRead();
     const d=adjOf.draft,t=adjOf.wallet,en=plan(c)[t]||0,n=parseFloat(d.amount);
     if(d.type!=='Additional Allocation'&&d.type!=='Entitlement Reduction'){say('Adjustment Type is required','error');return;}
@@ -526,14 +553,14 @@
     const fin=Math.max(0,en+adjAmt(k.adj[t]));
     addLog(c,status(c,m),'Adjustment','Adjustment '+(was?'changed':'added')+' · '+wName(t)+': '+d.type+' '+money(n)+' ('+money(en)+' → '+money(fin)+'). Reason: '+d.reason+(d.notes?' - '+d.notes.replace(/.+$/,''):'')+'.');
     adjOf=null;saved();renderADTPage();
-    say('Adjustment saved','success',empName(c)+' · '+wName(t)+' · final load '+money(fin)+'.');
+    adjDone={name:empName(c),wallet:wName(t),fin:money(fin),month:mLabel(m)};paintConfirm();
   };
   window.bpxAdjRemove=function(){
     const c=typeof ccCard==='function'?ccCard(open):null,m=month();if(!c||!adjOf||!editable(c,m))return;
-    const k=calc(c,m,true),t=adjOf.wallet;if(!k.adj[t]){adjOf=null;renderADTPage();return;}
+    const k=calc(c,m,true),t=adjOf.wallet;if(!k.adj[t]){adjOf=null;paintConfirm();renderADTPage();return;}
     delete k.adj[t];
     addLog(c,status(c,m),'Adjustment','Adjustment removed · '+wName(t)+': back to the entitlement of '+money(plan(c)[t]||0)+'.');
-    adjOf=null;saved();renderADTPage();
+    adjOf=null;saved();renderADTPage();paintConfirm();
     say('Adjustment removed','success',empName(c)+' · '+wName(t)+'.');
   };
 
@@ -571,7 +598,7 @@
     const tbl=function(head,rows){return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';};
     const types=benefitTypes().filter(function(t){return s.byW[t];});
     const up=s.changes.filter(function(x){return x.now>x.was;}).length,held=s.inactive.reduce(function(a,x){return a+x.amount;},0),net=s.total-s.ent;
-    let h='<div class="ct-modal-overlay" style="z-index:2000" onclick="bpxConfirmClose()"><div class="ct-modal" style="width:min(940px,95vw)" role="dialog" aria-modal="true" aria-label="Benefit load summary" onclick="event.stopPropagation()">'
+    let h='<div class="ct-modal-overlay" style="z-index:2000" onclick="bpxConfirmClose()"><div class="ct-modal bpx-modal" style="width:min(940px,95vw)" role="dialog" aria-modal="true" aria-label="Benefit load summary" onclick="event.stopPropagation()">'
       +'<div class="ct-modal-hdr"><div><span class="ct-modal-title">'+(dis?'Disburse benefit load':ap?'Approve benefit load':'Mark as reviewed')+' · '+E(mLabel(s.month))+'</span>'
       +'<div style="font-size:13px;color:#6b7280;margin-top:3px">'+(dis?'Check the amounts below. Disbursing credits the wallets at once.':ap?'Check the amounts below. Approved cards can then be disbursed; no wallet is credited yet.':'Check the limits, adjustments and statuses below. Finance approves the reviewed cards before any wallet is loaded.')+'</div></div>'
       +'<button class="ct-modal-close" onclick="bpxConfirmClose()" aria-label="Close">'+X+'</button></div>'
@@ -615,11 +642,12 @@
       +'<div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="bpxRejectClose()">Cancel</button><button class="ep-save-btn" onclick="bpxRejectGo()">Reject</button></div></div></div></div>';
   }
   const root=function(){let el=document.getElementById('bpx-confirm-root');if(!el){el=document.createElement('div');el.id='bpx-confirm-root';document.body.appendChild(el);}return el;};
-  const paintConfirm=function(){root().innerHTML=confirm?confirmHTML():reject?rejectHTML():'';};
+  const paintConfirm=function(){root().innerHTML=confirm?confirmHTML():reject?rejectHTML():adjDone?adjDoneHTML():adjOf?adjModalHTML():'';};
 
   /* ── Actions ── */
   const repaintBar=function(){
-    const b=document.getElementById('bpx-bar');if(b)b.innerHTML=barHTML();
+    const b=document.getElementById('bpx-bar');if(b)b.innerHTML=barContent();
+    syncBar();
     const a=document.getElementById('bpx-all');if(a){const ok=shown().filter(pickable);a.checked=ok.length>0&&ok.every(function(c){return sel[c.id];});}
   };
   window.bpxPick=function(id,on){if(on)sel[id]=true;else delete sel[id];repaintBar();};
@@ -737,9 +765,29 @@
     const st=document.createElement('style');st.id='bpx-style';
     st.textContent='.bpx-ck{width:38px;text-align:center}.bpx-ck input{width:15px;height:15px;accent-color:#1a1a1a;cursor:pointer;margin:0;vertical-align:middle}'
       +'.bpx-num{text-align:right!important;white-space:nowrap;font-variant-numeric:tabular-nums}'
+      +'.bpx-amt{text-align:left!important;white-space:nowrap;font-variant-numeric:tabular-nums}'
+      +'.bpx-table th,.bpx-table td{text-align:left}.bpx-table>thead>tr>th{white-space:nowrap!important}'
+      +'.bpx-barwrap{display:grid;grid-template-rows:1fr;opacity:1;transform:translateY(0);transition:grid-template-rows .32s cubic-bezier(.4,0,.2,1),opacity .26s ease,transform .32s cubic-bezier(.4,0,.2,1)}'
+      +'.bpx-barwrap.is-off{grid-template-rows:0fr;opacity:0;transform:translateY(-6px);pointer-events:none}'
+      +'.bpx-barin{overflow:hidden;min-height:0}'
+      +'@media (prefers-reduced-motion:reduce){.bpx-barwrap{transition:none}}'
+      +'.bpx-table>thead>tr>th:nth-child(1){width:44px}.bpx-table>thead>tr>th:nth-child(2){width:80px}'
+      +'.bpx-table>thead>tr>th:nth-child(3){width:21%}.bpx-table>thead>tr>th:nth-child(4){width:20%}'
+      +'.bpx-table>thead>tr>th:nth-child(5){width:19%}.bpx-table>thead>tr>th:nth-child(6){width:14%}'
+      +'.bpx-table>thead>tr>th:nth-child(7){width:13%}.bpx-table>thead>tr>th:nth-child(8){width:72px}'
+      +'.bpx-table .bpx-ck{text-align:center}'
       +'.bpx-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:10px 14px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;font-size:13px;color:var(--navy,#0f172a);min-height:52px}'
       +'.bpx-bar-txt b{font-weight:600}.bpx-bar-btns{display:flex;gap:8px;flex-shrink:0}'
       +'.bpx-sum{max-height:62vh;overflow:auto;padding:16px 0 4px}'
+      /* The summary modal: one scroller (the body), header and footer fixed, every corner clipped to the radius. */
+      +'.ct-modal.bpx-modal{display:flex;flex-direction:column;max-height:88vh;overflow:hidden;border-radius:16px;padding-bottom:0}'
+      +'.bpx-modal>.ct-modal-hdr{flex-shrink:0}'
+      +'.bpx-modal>.bpx-sum{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;margin:0 -28px;padding:4px 28px 20px;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}'
+      +'.bpx-modal>.bpx-sum::-webkit-scrollbar{width:6px}.bpx-modal>.bpx-sum::-webkit-scrollbar-track{background:transparent}'
+      +'.bpx-modal>.bpx-sum::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}'
+      +'.bpx-modal>.ct-modal-foot{position:static;flex-shrink:0;margin:0 -28px;border-radius:0}'
+      +'.ct-modal.bpx-adj-modal{width:min(560px,95vw)}.bpx-adj-modal .bpx-adj-ent{margin-bottom:16px}.bpx-adj-modal .bpx-adj-ent.is-final{margin:16px 0 0}'
+      +'.bpx-adj-modal .ct-modal-close svg{width:12px;height:12px}'
       +'.bpx-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}'
       +'.bpx-tile{border:1px solid var(--border,#e5e7eb);border-radius:12px;padding:12px 14px;background:#f8fafc;min-width:0}'
       +'.bpx-tile-v{font-size:22px;line-height:28px;font-weight:700;color:var(--navy,#0f172a);margin-top:4px}'
@@ -830,6 +878,6 @@
   }
   if(typeof navigatePage==='function'){
     const n0=navigatePage;
-    navigatePage=function(pg){if(pg!==PG){confirm=null;reject=null;paintConfirm();open=null;act=null;adjOf=null;}return n0.apply(this,arguments);};
+    navigatePage=function(pg){if(pg!==PG){confirm=null;reject=null;open=null;act=null;adjOf=null;adjDone=null;paintConfirm();}return n0.apply(this,arguments);};
   }
 })();
