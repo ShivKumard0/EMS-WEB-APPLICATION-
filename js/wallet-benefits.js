@@ -309,12 +309,22 @@ const wbCustomTypes=[];
 function wbType(code){return WB_WALLET_TYPES.find(function(t){return t.code===code;})||wbCustomTypes.find(function(t){return t.code===code;})||null;}
 /* The wallet types this company sees: the platform catalogue and the types it created itself. */
 function wbTypesHere(){const e=wbEntity();return WB_WALLET_TYPES.concat(wbCustomTypes).filter(function(t){return !t.entity||t.entity===e;});}
-const WB_NEW_TYPE='+ Create new wallet type';
+const WB_NEW_TYPE='Custom';
 const WB_NEW_CLASSES=['Flexi Benefit','Company Expense'];
 /* A new wallet type from the wallet form: '' or why not. */
+/* The wallet code is generated from the wallet name (product owner, 16 Nov 2026): its first letters, made unique. */
+function wbAutoTypeCode(name){
+  let b=String(name||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^[0-9]+/,'').slice(0,4);
+  if(b.length<2)b=(b+'WLT').slice(0,4);
+  let c=b,n=2;while(wbType(c)){c=b.slice(0,8-String(n).length)+n;n++;}
+  return c;
+}
 function wbNewTypeCheck(d){
-  const name=String(d.newName||'').trim(),code=String(d.newCode||'').trim().toUpperCase();
-  if(name.length<2||name.length>30)return 'Wallet type name: 2 to 30 characters.';
+  const name=String(d.newName||'').trim();
+  if(name.length<2||name.length>30)return 'Wallet name: 2 to 30 characters.';
+  if(name.toLowerCase()===WB_NEW_TYPE.toLowerCase())return 'Give the wallet a name of its own.';
+  if(!String(d.newCode||'').trim())d.newCode=wbAutoTypeCode(name);
+  const code=String(d.newCode||'').trim().toUpperCase();
   if(!/^[A-Z][A-Z0-9]{1,7}$/.test(code))return 'Wallet code: 2 to 8 letters or digits, starting with a letter.';
   if(wbType(code))return 'Wallet code '+code+' is already used.';
   if(wbTypesHere().some(function(t){return t.name.toLowerCase()===name.toLowerCase();}))return 'A wallet type named '+name+' already exists.';
@@ -322,6 +332,7 @@ function wbNewTypeCheck(d){
   return '';
 }
 function wbNewTypeCreate(d){
+  if(!String(d.newCode||'').trim())d.newCode=wbAutoTypeCode(d.newName);
   const s=stampNow(),cls=d.newCls,t={code:String(d.newCode).trim().toUpperCase(),name:String(d.newName).trim(),cls:cls,owner:cls==='Company Expense'?'Company':'Employee benefit',
     funding:'Employer',eligible:cls==='Flexi Benefit'?'Eligible':'Not eligible',status:'Active',desc:String(d.newDesc||'').trim()||'Created by '+wbEntityName()+'.',
     entity:wbEntity(),custom:true,createdBy:wbActor(),createdById:wbActorId(),createdAt:s.date+' | '+s.time};
@@ -1542,8 +1553,8 @@ function wbFieldsHTML(kind,d,inPanel,rec){
     return wbFG('Entity',wbRO(wbEntityName()),{hint:'The entity you are signed in to.'})
       +(inPanel?wbFG('Wallet Type',wbRO(d.type),{req:true,hint:'The type cannot change once created; add a new configuration instead.'})
         :wbFG('Wallet Type',apCS(F('type'),wbTypesHere().filter(function(x){return x.status==='Active';}).map(function(x){return x.name;}).concat([WB_NEW_TYPE]),d.type,'Select Wallet Type','wbFormHook'),{req:true}))
-      +(nw?wbFG('New Wallet Type Name',wbIn(F('newName'),d.newName,'e.g. Wellness'),{req:true})
-        +wbFG('Wallet Code',wbIn(F('newCode'),d.newCode,'e.g. WELL'),{req:true,hint:'2 to 8 letters or digits.'})
+      +(nw?wbFG('Wallet Name',wbIn(F('newName'),d.newName,'e.g. Wellness'),{req:true})
+        +'<div style="display:none">'+wbIn(F('newCode'),d.newCode,'')+'</div>'
         +wbFG('Classification',apCS(F('newCls'),WB_NEW_CLASSES,d.newCls||'Flexi Benefit','Select'),{req:true,hint:'Flexi Benefit: an employee benefit. Company Expense: company spend.'})
         +wbFG('Wallet Type Description',wbIn(F('newDesc'),d.newDesc,'What the wallet is for'))
       :(!inPanel?'':wbFG('Classification',wbRO(t?t.cls:''),{hint:t&&t.custom?'Created by this company.':'From the platform catalogue.'})
