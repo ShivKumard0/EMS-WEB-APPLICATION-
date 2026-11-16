@@ -911,6 +911,11 @@
     (document.head||document.documentElement).appendChild(st);
   })();
 
+  /* Read-only helpers for Wallet Load History (js/wallet-load-history.js): the same cards, names and month figures. */
+  window.bpxApi={cards:cards,histMonth:histMonth,benefitTypes:benefitTypes,emp:emp,empName:empName,branchOf:branchOf,cardNo:cardNo,keyOf:keyOf,wName:wName,
+    money:money,mLabel:mLabel,nowM:nowM,prevOf:prevOf,runs:runs,financeName:financeName,ent:ent,canSee:function(){return canReview()||canApprove();},HIST_START:HIST_START,MON:MON,
+    prepare:function(){baseline();sampleAdjustments();}};   // what opening Wallet Load does first
+
   /* ── The menu item, right under Card List; the page ── */
   const g=sidebarItems.find(function(x){return x&&x.dropdown==='Corporate Cards';});
   if(g&&!g.children.some(function(c){return c.id===PG;})){
