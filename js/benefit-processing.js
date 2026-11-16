@@ -100,7 +100,7 @@
   }
   const sum=function(o){return Object.keys(o||{}).reduce(function(s,k){return s+(Number(o[k])||0);},0);};
   /* The adjustment of a wallet as a signed amount. */
-  const adjAmt=function(a){return a?(a.type==='Decrease'?-1:1)*(Number(a.amount)||0):0;};
+  const adjAmt=function(a){return a?(a.type==='Entitlement Reduction'?-1:1)*(Number(a.amount)||0):0;};
   const adjs=function(c,m){const it=itemOf(m,c.id);if(it)return it.adj||{};const k=calc(c,m);return (k&&k.adj)||{};};
   /* Entitlement ± adjustment per wallet (never below zero). Once submitted or loaded: what was submitted. */
   function finalOf(c,m){
@@ -155,9 +155,9 @@
     const list=cards().filter(function(c){return status(c,m)==='Pending';});if(list.length<4)return;
     e.bpAdjSeed=m;
     const u=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null,by=u&&typeof idName==='function'?idName(u.userId):'Karan Shah';
-    [[2,'FUEL','Decrease',500,'Leave without pay','On leave without pay for 5 working days.'],
-     [5,'MEAL','Increase',300,'One-time allowance','Client workshop week.'],
-     [8,'TEL','Decrease',200,'Recovery of excess load','Excess load in the previous month.']].forEach(function(x){
+    [[2,'FUEL','Entitlement Reduction',500,'Leave without pay','On leave without pay for 5 working days.'],
+     [5,'MEAL','Additional Allocation',300,'One-time allowance','Client workshop week.'],
+     [8,'TEL','Entitlement Reduction',200,'Recovery of excess load','Excess load in the previous month.']].forEach(function(x){
       const c=list[Math.min(x[0],list.length-1)],en=plan(c)[x[1]]||0;
       if(!c||!(en>x[3]))return;
       const k=calc(c,m,true);if(k.adj[x[1]])return;
@@ -165,7 +165,7 @@
       e.bpLogs=e.bpLogs||{};
       const st=typeof stampNow==='function'?stampNow():{date:'',time:''};
       (e.bpLogs[c.id]=e.bpLogs[c.id]||[]).unshift({date:st.date,time:st.time,user:by,userId:u?u.userId:'',status:'Pending',step:'Adjustment',
-        action:'Adjustment added · '+wName(x[1])+': '+x[2]+' '+money(x[3])+' ('+money(en)+' → '+money(Math.max(0,en+(x[2]==='Decrease'?-1:1)*x[3]))+'). Reason: '+x[4]+' - '+x[5].replace(/\.+$/,'')+'.'});
+        action:'Adjustment added · '+wName(x[1])+': '+x[2]+' '+money(x[3])+' ('+money(en)+' → '+money(Math.max(0,en+(x[2]==='Entitlement Reduction'?-1:1)*x[3]))+'). Reason: '+x[4]+' - '+x[5].replace(/\.+$/,'')+'.'});
     });
     if(typeof presSaveSoon==='function')presSaveSoon();
   }
@@ -360,14 +360,14 @@
   const CROSS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   function adjFormHTML(c,m){
     const t=adjOf.wallet,pl=plan(c),k=calc(c,m),a=(k&&k.adj&&k.adj[t])||null,d=adjOf.draft;
-    const fin=Math.max(0,(pl[t]||0)+(d.type==='Decrease'?-1:1)*(parseFloat(d.amount)||0));
+    const fin=Math.max(0,(pl[t]||0)+(d.type==='Entitlement Reduction'?-1:1)*(parseFloat(d.amount)||0));
     const e=emp(c),on=typeof ccCardWallets==='function'?ccCardWallets(c).indexOf(t)>=0:true;
     const v=function(ok,text){return '<div class="bpx-val'+(ok?'':' is-bad')+'"><span>'+(ok?CHECK:CROSS)+'</span>'+E(text)+'</div>';};
     return '<div class="bpx-adj" id="bpx-adj"><div class="bpx-adj-ttl">Adjust '+E(wName(t))+' Benefit</div>'
       +'<div class="bpx-adj-sub">Update the wallet amount for '+E(empName(c))+' for '+E(mLabel(m))+'.</div>'
       +'<div class="bpx-adj-ent"><span>Current Entitlement</span><b>'+money(pl[t]||0)+'</b></div>'
       +'<div class="ep-form-grid">'
-      +'<div class="ep-form-group"><label class="ep-form-label">Adjustment Type <span class="req">*</span></label>'+(typeof apCS==='function'?apCS('bpx-a-type',['Increase','Decrease'],d.type,'Select','bpxAdjHook'):'')+'</div>'
+      +'<div class="ep-form-group"><label class="ep-form-label">Adjustment Type <span class="req">*</span></label>'+(typeof apCS==='function'?apCS('bpx-a-type',['Additional Allocation','Entitlement Reduction'],d.type,'Select','bpxAdjHook'):'')+'</div>'
       +'<div class="ep-form-group"><label class="ep-form-label" for="bpx-a-amt">Amount <span class="req">*</span></label><div class="ax-currency"><span>INR</span><input class="ep-form-input" id="bpx-a-amt" type="number" min="1" step="1" inputmode="numeric" placeholder="0" value="'+E(d.amount)+'" oninput="bpxAdjHook()"></div></div>'
       +'<div class="ep-form-group ep-form-full"><label class="ep-form-label">Reason <span class="req">*</span></label>'+(typeof apCS==='function'?apCS('bpx-a-reason',REASONS,d.reason,'Select reason','bpxAdjHook'):'')+'</div>'
       +'<div class="ep-form-group ep-form-full"><label class="ep-form-label" for="bpx-a-notes">Notes'+(d.reason==='Other'?' <span class="req">*</span>':'')+'</label><textarea class="ep-form-input ax-notes" id="bpx-a-notes" maxlength="200" placeholder="e.g. '+E(wName(t))+' allowance correction for '+E(MON[+m.slice(5,7)-1])+'.">'+E(d.notes)+'</textarea></div>'
@@ -405,8 +405,6 @@
             +(ed?'<td class="csag-td bpx-pen">'+(en!=null?'<button type="button" class="bpx-pen-btn" title="Adjust '+E(wName(t))+'" aria-label="Adjust '+E(wName(t))+'" onclick="bpxAdjOpen(\''+t+'\')">'+(typeof SB_PEN!=='undefined'?SB_PEN:'Edit')+'</button>':'')+'</td>':'')
             +'</tr>';
         }).join('')+'</tbody></table></div>'
-        +'<div class="bpx-totals"><div><span>Total Entitlement</span><b>'+money(tE)+'</b></div><div><span>Total Adjustments</span><b'+(live&&tF-tE?' style="color:'+(tF-tE>0?'#15803d':'#b45309')+'"':'')+'>'+(live?signed(tF-tE):'—')+'</b></div>'
-          +'<div class="is-final"><span>'+(loaded?'Loaded':'Final Proposed Load')+'</span><b>'+(live?money(tF):'—')+'</b></div></div>'
         +(adjOf&&ed?adjFormHTML(c,m):'')
         +'<div class="ea-hint" style="margin-top:10px">'+(loaded?'The balance includes this month\'s load.':live?'The balance goes up by the Final Load once the load is disbursed.':'This card is not processed this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
     }else if(tab==='logs'){
@@ -493,14 +491,14 @@
   const adjRead=function(){
     if(!adjOf)return;const g=function(id){return typeof getCSValue==='function'?getCSValue(id)||'':'';};
     const t=g('bpx-a-type'),r=g('bpx-a-reason'),a=document.getElementById('bpx-a-amt'),n=document.getElementById('bpx-a-notes');
-    if(t==='Increase'||t==='Decrease')adjOf.draft.type=t;
+    if(t==='Additional Allocation'||t==='Entitlement Reduction')adjOf.draft.type=t;
     if(REASONS.indexOf(r)>=0)adjOf.draft.reason=r;
     if(a)adjOf.draft.amount=a.value.trim();if(n)adjOf.draft.notes=n.value.trim();
   };
   window.bpxAdjOpen=function(t){
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c||!editable(c,month()))return;
     const k=calc(c,month()),a=k&&k.adj?k.adj[t]:null;
-    adjOf={wallet:t,draft:a?{type:a.type,amount:String(a.amount),reason:a.reason,notes:a.notes||''}:{type:'Decrease',amount:'',reason:'',notes:''}};
+    adjOf={wallet:t,draft:a?{type:a.type,amount:String(a.amount),reason:a.reason,notes:a.notes||''}:{type:'Entitlement Reduction',amount:'',reason:'',notes:''}};
     repanel();
     const f=document.getElementById('bpx-adj');if(f&&f.scrollIntoView)f.scrollIntoView({block:'nearest'});
   };
@@ -511,16 +509,16 @@
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c)return;
     if((was==='Other')!==(adjOf.draft.reason==='Other')){repanel();return;}
     const el=document.getElementById('bpx-a-final'),d=adjOf.draft;
-    if(el)el.textContent=money(Math.max(0,(plan(c)[adjOf.wallet]||0)+(d.type==='Decrease'?-1:1)*(parseFloat(d.amount)||0)));
+    if(el)el.textContent=money(Math.max(0,(plan(c)[adjOf.wallet]||0)+(d.type==='Entitlement Reduction'?-1:1)*(parseFloat(d.amount)||0)));
   };
   window.bpxAdjSave=function(){
     const c=typeof ccCard==='function'?ccCard(open):null,m=month();if(!c||!adjOf)return;
     if(!editable(c,m)){adjOf=null;renderADTPage();return;}
     adjRead();
     const d=adjOf.draft,t=adjOf.wallet,en=plan(c)[t]||0,n=parseFloat(d.amount);
-    if(d.type!=='Increase'&&d.type!=='Decrease'){say('Adjustment Type is required','error');return;}
+    if(d.type!=='Additional Allocation'&&d.type!=='Entitlement Reduction'){say('Adjustment Type is required','error');return;}
     if(!(n>0)){say('Amount is required','error','Enter an amount greater than 0.');return;}
-    if(d.type==='Decrease'&&n>en){say('Decrease is too large','error',wName(t)+' cannot go below zero: the entitlement is '+money(en)+'.');return;}
+    if(d.type==='Entitlement Reduction'&&n>en){say('Entitlement Reduction is too large','error',wName(t)+' cannot go below zero: the entitlement is '+money(en)+'.');return;}
     if(!d.reason){say('Reason is required','error','Pick why the load is adjusted.');return;}
     if(d.reason==='Other'&&!d.notes){say('Notes are required','error','Say what the adjustment is for.');return;}
     const k=calc(c,m,true),was=k.adj[t];
@@ -779,6 +777,26 @@
     if(at<0)at=g.children.findIndex(function(c){return c.id==='card-products';});
     g.children.splice(at<0?g.children.length:at+1,0,{id:PG,label:TITLE,color:'green',icon:I.wallet||I.card||''});
   }
+  /* What a browser saved earlier: the old menu label and the old adjustment words (product owner, 16 Nov 2026:
+     Increase is Additional Allocation, Decrease is Entitlement Reduction). Wording only, no amount changes. */
+  function bpxTidy(){
+    try{
+      let ch=false;
+      sidebarItems.forEach(function(x){(x&&x.children||[]).forEach(function(c){if(c.id===PG&&c.label!==TITLE){c.label=TITLE;ch=true;}});});
+      const W={Increase:'Additional Allocation',Decrease:'Entitlement Reduction'};
+      const walk=function(o,d){if(!o||typeof o!=='object'||d>6)return;
+        if(typeof o.type==='string'&&W[o.type]&&'amount' in o){o.type=W[o.type];ch=true;}
+        Object.keys(o).forEach(function(k){walk(o[k],d+1);});};
+      (typeof entitiesData!=='undefined'?entitiesData:[]).forEach(function(e){
+        if(!e)return;walk(e.bpCalc,0);walk(e.bpRuns,0);
+        Object.keys(e.bpLogs||{}).forEach(function(id){(e.bpLogs[id]||[]).forEach(function(l){
+          if(l&&typeof l.action==='string'){const n=l.action.replace(/: Increase /g,': Additional Allocation ').replace(/: Decrease /g,': Entitlement Reduction ');if(n!==l.action){l.action=n;ch=true;}}});});
+      });
+      return ch;
+    }catch(e){return false;}
+  }
+  bpxTidy();
+  Promise.resolve(window.PRES_READY).then(function(){try{if(bpxTidy()){if(typeof buildSidebar==='function')buildSidebar();if(typeof presSaveSoon==='function')presSaveSoon();}}catch(e){}});
   if(typeof supportPageMeta!=='undefined')supportPageMeta[PG]={title:TITLE,context:TITLE,filters:[],columns:[],rows:[]};
   if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[PG]='cards';
   if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(PG)<0)EMS_CLIENT_PAGES.push(PG);
