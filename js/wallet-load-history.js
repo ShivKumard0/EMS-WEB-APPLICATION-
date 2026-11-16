@@ -71,7 +71,7 @@
     const tabs=[{id:'details',label:'Details'},{id:'employees',label:'Employee Loads'}];
     if(!tabs.some(function(t){return t.id===tab;}))tab='details';
     const i=I(),hero=typeof sbHero==='function'?sbHero({icon:(typeof sbIco!=='undefined'&&(sbIco.wallet||sbIco.card))||'',name:E(A.mLabel(x.month)),meta:[E(x.ref),E(fBranch||'All branches'),x.rows.length+' card'+(x.rows.length===1?'':'s')],status:badge('ok','Disbursed')}):'';
-    const dl='<button type="button" class="btn-outline btn-sm wlh-ibtn" onclick="wlhDownload(\''+x.month+'\')">'+DL+'<span>Download Excel</span></button>';
+    const dl='<button type="button" class="btn-outline btn-sm wlh-ibtn" onclick="wlhDownload(\''+x.month+'\')">'+DL+'<span>Export</span></button>';
     let body='';
     if(tab==='employees'){
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Employee Loads · '+E(A.mLabel(x.month))+'</span>'+dl+'</div>'
@@ -123,11 +123,11 @@
         +'<td class="wlh-amt"><div class="lp-c-plain">'+money(x.spent)+'</div></td>'
         +'<td><div class="lp-c-plain">'+E(x.on)+'</div></td>'
         +'<td>'+badge('ok','Disbursed')+'</td>'
-        +'<td onclick="event.stopPropagation()"><button type="button" class="wlh-dl" title="Download '+E(A.mLabel(x.month))+' in Excel" aria-label="Download '+E(A.mLabel(x.month))+' in Excel" onclick="wlhDownload(\''+x.month+'\')">'+DL+'</button></td>'
+        +'<td onclick="event.stopPropagation()"><button type="button" class="wlh-dl" title="Export '+E(A.mLabel(x.month))+' to Excel" aria-label="Export '+E(A.mLabel(x.month))+' to Excel" onclick="wlhDownload(\''+x.month+'\')">'+DL+'</button></td>'
         +(typeof csuDots==='function'?csuDots('wlhOpen(\''+x.month+'\')',A.mLabel(x.month)):'<td></td>')+'</tr>';
     }).join('');
     const none=fMonth?'No wallet load was processed in '+MON[fMonth-1]+' '+y+(fBranch?' for '+fBranch:'')+'.':'No wallet load was processed in '+y+(fBranch?' for '+fBranch:'')+'.';
-    const table='<table class="lp-table ax-table cc-table wlh-table wlh-months"><thead><tr><th>S. No</th><th>Load Month</th><th>Employees</th><th>Cards</th><th>Total Loaded</th><th>Total Spent</th><th>Disbursed On</th><th>Status</th><th>Download</th><th>Action</th></tr></thead><tbody>'
+    const table='<table class="lp-table ax-table cc-table wlh-table wlh-months"><thead><tr><th>S. No</th><th>Load Month</th><th>Employees</th><th>Cards</th><th>Total Loaded</th><th>Total Spent</th><th>Disbursed On</th><th>Status</th><th>Export</th><th>Action</th></tr></thead><tbody>'
       +(trs||(typeof ccEmpty==='function'?ccEmpty(10,none):''))+'</tbody></table>';
     const cap=!ms.length?'':fMonth?'Wallet load of '+A.mLabel(ms[0].month):'Last '+ms.length+' month'+(ms.length===1?'':'s')+' of wallet loads · '+A.mLabel(ms[ms.length-1].month)+' – '+A.mLabel(ms[0].month);
     return '<div class="lp-page wlh-page">'
@@ -183,8 +183,8 @@
   window.wlhEmp=function(m,id){pop={month:m,id:id};paintPop();};
   window.wlhEmpClose=function(){pop=null;paintPop();};
   window.wlhDownload=function(m){
-    const x=monthOf(m);if(!x){say('Nothing to download','info','No wallet load was processed for '+A.mLabel(m)+'.');return;}
-    if(typeof tsxWorkbook!=='function'||typeof tsxSave!=='function'){say('Download is not available','error');return;}
+    const x=monthOf(m);if(!x){say('Nothing to export','info','No wallet load was processed for '+A.mLabel(m)+'.');return;}
+    if(typeof tsxWorkbook!=='function'||typeof tsxSave!=='function'){say('Export is not available','error');return;}
     const ws=x.wOrder,head=['S. No','Employee','Employee ID','Card Reference','Card Number','Department','Branch'].concat(ws.map(function(t){return A.wName(t)+' Loaded';})).concat(['Total Loaded','Total Spent','Opening Balance','Closing Balance','Status']);
     const rows=x.rows.map(function(r,i){const c=r.card,e=A.emp(c);
       return [i+1,A.empName(c),e.empId||'',A.keyOf(c),A.cardNo(c),e.dept||'',A.branchOf(c)||''].concat(ws.map(function(t){return r.h[t]?r.h[t].loaded:0;})).concat([r.loaded,r.spent,r.open,r.close,'Disbursed']);});
@@ -193,7 +193,7 @@
     tsxSave(tsxWorkbook([{name:A.mLabel(m),title:'Wallet Load · '+A.mLabel(m),
       meta:[(ename?ename+' · ':'')+x.ref+' · '+(fBranch||'All branches')+' · disbursed on '+x.on,'Amounts in INR. Card numbers are masked.'+(who?' Downloaded by '+who+'.':'')],
       columns:head.map(function(h,i){return {label:h,w:i===1?24:i===0?7:Math.max(12,Math.min(22,h.length+3))};}),rows:rows}]),'wallet-load-'+m+(fBranch?'-'+fBranch.toLowerCase().replace(/[^a-z0-9]+/g,'-'):'')+'.xlsx');
-    say('Download ready','success',A.mLabel(m)+' · '+x.rows.length+' card'+(x.rows.length===1?'':'s')+' · '+money(x.loaded)+'.');
+    say('Export ready','success',A.mLabel(m)+' · '+x.rows.length+' card'+(x.rows.length===1?'':'s')+' · '+money(x.loaded)+'.');
   };
 
   /* ── Look ── */
