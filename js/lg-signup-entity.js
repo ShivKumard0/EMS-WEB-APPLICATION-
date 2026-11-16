@@ -236,7 +236,8 @@
       F('orgType','Organisation Type',{ic:'flash'}),F('pan','Company / Entity PAN',{ic:'id'}),F('gstStatus','GST Registration Status',{opts:['Registered','Not Registered'],ic:'doc'}),
       F('gstin','GSTIN',{ic:'id'}),F('cin','CIN / LLPIN',{ic:'id'}),F('baseCurrency','Base Currency',{opts:CUR,ic:'dollar'}),F('timeZone','Time Zone',{opts:TZ,ic:'globe'}),
       F('address','Address',{wide:1,area:1,ic:'map'}),F('city','City',{ic:'city'}),F('owner','Owner',{ic:'person'}),F('email','Email',{top:1,req:1,ic:'mail'}),
-      F('mobile','Mobile Number',{top:1,ic:'phone'}),F('created','Created Time',{ro:1,ic:'cal'}),F('createdBy','Created By',{ro:1,ic:'person'}),
+      /* no Mobile Number: sign up no longer asks for it; Email stays (product owner, 16 Nov 2026) */
+      F('created','Created Time',{ro:1,ic:'cal'}),F('createdBy','Created By',{ro:1,ic:'person'}),
       F('updated','Last Updated',{ro:1,ic:'cal'}),F('empPrefix','Employee ID Prefix',{ic:'id'}),F('logo','Entity Logo',{file:1,ic:'img'}),
       F('header','Header',{file:1,ic:'doc'}),F('footer','Footer',{file:1,ic:'doc'})]}],
     'banking-details':[{title:'Banking Details',fields:[F('bkCountry','Country / Location',{opts:COUNTRIES,ic:'globe'}),F('payName','Pay Name',{ic:'person'}),F('payBank','Pay Bank',{ic:'bank'}),
