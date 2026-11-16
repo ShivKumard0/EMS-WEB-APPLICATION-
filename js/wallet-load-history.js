@@ -23,6 +23,7 @@
   const badge=function(tone,t){return typeof axBadge==='function'?axBadge(tone,t):E(t);};
   const say=function(a,t,b){if(typeof showToast==='function')showToast(a,t,b);};
   const lastDone=function(){return A.prevOf(A.nowM());};
+  const adjHTML=function(n){return n?'<span style="font-weight:600;color:'+(n>0?'#15803d':'#b45309')+'">'+A.signed(n)+'</span>':money(0);};
   const DL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
   const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
@@ -40,7 +41,7 @@
       const h=A.histMonth(c,m);if(!h)return;
       const ks=types.filter(function(t){return h[t];}).concat(Object.keys(h).filter(function(t){return types.indexOf(t)<0;}));
       const T=function(k){return ks.reduce(function(a,t){return a+h[t][k];},0);};
-      rows.push({card:c,h:h,ks:ks,open:T('open'),loaded:T('loaded'),spent:T('spent'),close:T('close')});
+      rows.push({card:c,h:h,ks:ks,open:T('open'),ent:T('ent'),adj:T('adj'),adjN:ks.filter(function(t){return h[t].adj;}).length,loaded:T('loaded'),spent:T('spent'),close:T('close')});
     });
     if(!rows.length)return (cache[key]=null);
     const S=function(k){return rows.reduce(function(a,r){return a+r[k];},0);},byW={},wOrder=[];
@@ -52,7 +53,7 @@
     const run=A.runs().find(function(r){return r.month===m;});
     const day=p2(d.getDate())+' '+MON[d.getMonth()].slice(0,3)+' '+d.getFullYear();
     const admin=(function(){const u=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null;return u&&typeof idName==='function'?idName(u.userId):'Company Admin';})();
-    return (cache[key]={month:m,ref:'WL-'+t[0]+'-'+t[1],rows:rows,emps:Object.keys(emps).length,open:S('open'),loaded:S('loaded'),spent:S('spent'),close:S('close'),
+    return (cache[key]={month:m,ref:'WL-'+t[0]+'-'+t[1],rows:rows,emps:Object.keys(emps).length,open:S('open'),ent:S('ent'),adj:S('adj'),adjN:S('adjN'),loaded:S('loaded'),spent:S('spent'),close:S('close'),
       byW:byW,wOrder:wOrder,on:run&&run.at?String(run.at).split(' | ')[0]:day,by:run&&run.by?run.by:A.financeName(),reviewedBy:admin,approvedBy:A.financeName()});
   }
   function months(){
@@ -81,7 +82,7 @@
           return '<tr style="cursor:pointer" onclick="wlhEmp(\''+x.month+'\','+c.id+')"><td class="csag-td">'+(n+1)+'</td>'
             +'<td class="csag-td"><div class="lp-c-main">'+E(A.empName(c))+'</div><div class="lp-c-sub">'+E([e.empId,A.keyOf(c)].filter(Boolean).join(' · '))+'</div></td>'
             +'<td class="csag-td"><div class="lp-c-plain">'+E(e.dept||'—')+'</div><div class="lp-c-sub">'+E(A.branchOf(c)||'')+'</div></td>'
-            +'<td class="csag-td wlh-num" style="font-weight:600">'+money(r.loaded)+'</td><td class="csag-td wlh-num">'+money(r.spent)+'</td><td class="csag-td wlh-num">'+money(r.close)+'</td>'
+            +'<td class="csag-td wlh-num"><div style="font-weight:600">'+money(r.loaded)+'</div>'+(r.adj||r.adjN?'<div class="lp-c-sub">'+adjHTML(r.adj)+'</div>':'')+'</td><td class="csag-td wlh-num">'+money(r.spent)+'</td><td class="csag-td wlh-num">'+money(r.close)+'</td>'
             +(typeof csuDots==='function'?csuDots('wlhEmp(\''+x.month+'\','+c.id+')',A.empName(c)).replace('<td ','<td class="csag-td" '):'<td class="csag-td"></td>')+'</tr>';
         }).join('')
         +'<tr class="wlh-tot"><td class="csag-td"></td><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td"></td><td class="csag-td wlh-num">'+money(x.loaded)+'</td><td class="csag-td wlh-num">'+money(x.spent)+'</td><td class="csag-td wlh-num">'+money(x.close)+'</td><td class="csag-td"></td></tr>'
@@ -89,8 +90,9 @@
     }else{
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Load Summary</span>'+dl+'</div><div class="lp-sb-detail-grid">'
         +F(i.fCal,'Load Month',E(A.mLabel(x.month)))+F(i.fHash,'Reference',E(x.ref))
-        +F(i.fCash,'Total Load','<b>'+money(x.loaded)+'</b>')+F(i.fBuild,'Branch',E(fBranch||'All branches'))
-        +F(i.fUser,'Employees',x.emps)+F(i.fHash,'Cards Loaded',x.rows.length)
+        +F(i.fBuild,'Branch',E(fBranch||'All branches'))+F(i.fUser,'Employees',x.emps)
+        +F(i.fHash,'Cards Loaded',x.rows.length)+F(i.fCash,'Total Entitlement',money(x.ent))
+        +F(i.fCash,'Adjustments',adjHTML(x.adj)+(x.adjN?' <span class="wb-muted" style="font-weight:400">· '+x.adjN+' wallet'+(x.adjN===1?'':'s')+'</span>':''))+F(i.fCash,'Total Load','<b>'+money(x.loaded)+'</b>')
         +'</div><div class="lp-sb-view-header"><span class="lp-sb-section-title">Load by Wallet</span></div><div class="lp-sb-detail-grid">'
         +x.wOrder.map(function(t){return F(i.fCash,A.wName(t)+' Wallet',money(x.byW[t]));}).join('')
         +'</div><div class="lp-sb-view-header"><span class="lp-sb-section-title">Balances</span></div><div class="lp-sb-detail-grid">'
@@ -119,7 +121,7 @@
         +'<td><div class="lp-c-main">'+E(A.mLabel(x.month))+'</div><div class="lp-c-sub">'+E(x.ref)+'</div></td>'
         +'<td><div class="lp-c-plain">'+x.emps+'</div></td>'
         +'<td><div class="lp-c-plain">'+x.rows.length+'</div></td>'
-        +'<td class="wlh-amt"><div class="lp-c-plain" style="font-weight:600">'+money(x.loaded)+'</div></td>'
+        +'<td class="wlh-amt"><div class="lp-c-plain" style="font-weight:600">'+money(x.loaded)+'</div>'+(x.adjN?'<div class="lp-c-sub">'+x.adjN+' adjustment'+(x.adjN===1?'':'s')+' · '+A.signed(x.adj)+'</div>':'')+'</td>'
         +'<td class="wlh-amt"><div class="lp-c-plain">'+money(x.spent)+'</div></td>'
         +'<td><div class="lp-c-plain">'+E(x.on)+'</div></td>'
         +'<td>'+badge('ok','Disbursed')+'</td>'
@@ -147,9 +149,9 @@
       +'<button class="ct-modal-close" onclick="wlhEmpClose()" aria-label="Close">'+X+'</button></div>'
       +'<div class="wlh-modal-body">'
       +'<div class="wlh-hts">'+tile('Opening Balance',money(r.open))+tile('Loaded',money(r.loaded),'#15803d')+tile('Spent',money(r.spent),'#b45309')+tile('Closing Balance',money(r.close))+'</div>'
-      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table wlh-st"><thead><tr><th>Wallet</th><th class="wlh-num">Opening Balance</th><th class="wlh-num">Loaded</th><th class="wlh-num">Spent</th><th class="wlh-num">Closing Balance</th></tr></thead><tbody>'
-      +r.ks.map(function(t){const w=r.h[t];return '<tr><td class="csag-td"><div class="lp-c-main">'+E(A.wName(t))+'</div></td><td class="csag-td wlh-num">'+money(w.open)+'</td><td class="csag-td wlh-num">'+money(w.loaded)+'</td><td class="csag-td wlh-num">'+money(w.spent)+'</td><td class="csag-td wlh-num" style="font-weight:600">'+money(w.close)+'</td></tr>';}).join('')
-      +'<tr class="wlh-tot"><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td wlh-num">'+money(r.open)+'</td><td class="csag-td wlh-num">'+money(r.loaded)+'</td><td class="csag-td wlh-num">'+money(r.spent)+'</td><td class="csag-td wlh-num">'+money(r.close)+'</td></tr>'
+      +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table wlh-st"><thead><tr><th>Wallet</th><th class="wlh-num">Opening<br>Balance</th><th class="wlh-num">Entitlement</th><th class="wlh-num">Adjustment</th><th class="wlh-num">Loaded</th><th class="wlh-num">Spent</th><th class="wlh-num">Closing<br>Balance</th></tr></thead><tbody>'
+      +r.ks.map(function(t){const w=r.h[t];return '<tr><td class="csag-td"><div class="lp-c-main">'+E(A.wName(t))+'</div>'+(w.adj?'<div class="lp-c-sub">'+E(w.reason)+'</div>':'')+'</td><td class="csag-td wlh-num">'+money(w.open)+'</td><td class="csag-td wlh-num">'+money(w.ent)+'</td><td class="csag-td wlh-num">'+adjHTML(w.adj)+'</td><td class="csag-td wlh-num">'+money(w.loaded)+'</td><td class="csag-td wlh-num">'+money(w.spent)+'</td><td class="csag-td wlh-num" style="font-weight:600">'+money(w.close)+'</td></tr>';}).join('')
+      +'<tr class="wlh-tot"><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td wlh-num">'+money(r.open)+'</td><td class="csag-td wlh-num">'+money(r.ent)+'</td><td class="csag-td wlh-num">'+adjHTML(r.adj)+'</td><td class="csag-td wlh-num">'+money(r.loaded)+'</td><td class="csag-td wlh-num">'+money(r.spent)+'</td><td class="csag-td wlh-num">'+money(r.close)+'</td></tr>'
       +'</tbody></table></div>'
       +'<div class="wlh-meta">Disbursed on '+E(x.on)+' by '+E(x.by)+' · '+E(x.ref)+'</div>'
       +'</div><div class="ct-modal-foot"><span></span><div class="ct-modal-btns"><button class="ep-cancel-btn" onclick="wlhEmpClose()">Close</button></div></div></div></div>';
@@ -185,14 +187,14 @@
   window.wlhDownload=function(m){
     const x=monthOf(m);if(!x){say('Nothing to export','info','No wallet load was processed for '+A.mLabel(m)+'.');return;}
     if(typeof tsxWorkbook!=='function'||typeof tsxSave!=='function'){say('Export is not available','error');return;}
-    const ws=x.wOrder,head=['S. No','Employee','Employee ID','Card Reference','Card Number','Department','Branch'].concat(ws.map(function(t){return A.wName(t)+' Loaded';})).concat(['Total Loaded','Total Spent','Opening Balance','Closing Balance','Status']);
+    const ws=x.wOrder,head=['S. No','Employee','Employee ID','Card Reference','Card Number','Department','Branch'].concat(ws.map(function(t){return A.wName(t)+' Loaded';})).concat(['Total Entitlement','Adjustment','Adjustment Reason','Total Loaded','Total Spent','Opening Balance','Closing Balance','Status']);
     const rows=x.rows.map(function(r,i){const c=r.card,e=A.emp(c);
-      return [i+1,A.empName(c),e.empId||'',A.keyOf(c),A.cardNo(c),e.dept||'',A.branchOf(c)||''].concat(ws.map(function(t){return r.h[t]?r.h[t].loaded:0;})).concat([r.loaded,r.spent,r.open,r.close,'Disbursed']);});
-    rows.push(['','Total','','','','',''].concat(ws.map(function(t){return x.byW[t];})).concat([x.loaded,x.spent,x.open,x.close,'']));
+      return [i+1,A.empName(c),e.empId||'',A.keyOf(c),A.cardNo(c),e.dept||'',A.branchOf(c)||''].concat(ws.map(function(t){return r.h[t]?r.h[t].loaded:0;})).concat([r.ent,r.adj,r.ks.filter(function(t){return r.h[t].adj;}).map(function(t){return A.wName(t)+': '+r.h[t].reason;}).join('; '),r.loaded,r.spent,r.open,r.close,'Disbursed']);});
+    rows.push(['','Total','','','','',''].concat(ws.map(function(t){return x.byW[t];})).concat([x.ent,x.adj,'',x.loaded,x.spent,x.open,x.close,'']));
     const who=typeof idMeName==='function'?idMeName():'',ename=typeof idEntityName==='function'?idEntityName(A.ent()):'';
     tsxSave(tsxWorkbook([{name:A.mLabel(m),title:'Wallet Load · '+A.mLabel(m),
       meta:[(ename?ename+' · ':'')+x.ref+' · '+(fBranch||'All branches')+' · disbursed on '+x.on,'Amounts in INR. Card numbers are masked.'+(who?' Downloaded by '+who+'.':'')],
-      columns:head.map(function(h,i){return {label:h,w:i===1?24:i===0?7:Math.max(12,Math.min(22,h.length+3))};}),rows:rows}]),'wallet-load-'+m+(fBranch?'-'+fBranch.toLowerCase().replace(/[^a-z0-9]+/g,'-'):'')+'.xlsx');
+      columns:head.map(function(h,i){return {label:h,w:i===1?24:i===0?7:h==='Adjustment Reason'?34:Math.max(12,Math.min(22,h.length+3))};}),rows:rows}]),'wallet-load-'+m+(fBranch?'-'+fBranch.toLowerCase().replace(/[^a-z0-9]+/g,'-'):'')+'.xlsx');
     say('Export ready','success',A.mLabel(m)+' · '+x.rows.length+' card'+(x.rows.length===1?'':'s')+' · '+money(x.loaded)+'.');
   };
 
@@ -206,14 +208,14 @@
       +'.wlh-dl{width:32px;height:32px;border:1px solid var(--border,#e5e7eb);border-radius:9px;background:#fff;color:var(--navy,#0f172a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}'
       +'.wlh-dl:hover{background:#f1f5f9}.wlh-ibtn{display:inline-flex;align-items:center;gap:7px}'
       +'.wlh-emp th,.wlh-emp td{padding-left:8px!important;padding-right:8px!important}.wlh-emp td:last-child,.wlh-emp th:last-child{width:52px;text-align:center}.wlh-emp .lp-c-sub{white-space:normal}.wlh-emp td:first-child,.wlh-emp th:first-child{padding-left:14px!important;width:40px;white-space:nowrap}'
-      +'.ct-modal.wlh-modal{width:min(760px,95vw);display:flex;flex-direction:column;max-height:88vh;overflow:hidden;border-radius:16px;padding-bottom:0}'
+      +'.ct-modal.wlh-modal{width:min(900px,95vw);display:flex;flex-direction:column;max-height:88vh;overflow:hidden;border-radius:16px;padding-bottom:0}'
       +'.wlh-modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 0 20px}'
       +'.wlh-modal>.ct-modal-foot{position:static;flex-shrink:0;margin:0 -28px;border-radius:0}'
       +'.wlh-hts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 16px}'
       +'.wlh-ht{border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;padding:12px 14px;min-width:0}'
       +'.wlh-ht-l{font-size:12px;color:var(--gray,#6a7282);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       +'.wlh-ht-v{font-size:16px;font-weight:600;color:var(--navy,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}'
-      +'table.wlh-st{min-width:0!important;width:100%}.wlh-num{text-align:right!important;white-space:nowrap;font-variant-numeric:tabular-nums}'
+      +'table.wlh-st{min-width:0!important;width:100%}.wlh-st thead th{vertical-align:bottom;line-height:1.3}.wlh-num{text-align:right!important;white-space:nowrap;font-variant-numeric:tabular-nums}'
       +'.wlh-tot td{background:#f8fafc;font-weight:600;border-top:1px solid var(--border,#e5e7eb)}'
       +'.wlh-meta{margin-top:12px;font-size:12.5px;color:var(--gray,#6a7282)}'
       +'@media(max-width:900px){.wlh-hts{grid-template-columns:repeat(2,minmax(0,1fr))}}';

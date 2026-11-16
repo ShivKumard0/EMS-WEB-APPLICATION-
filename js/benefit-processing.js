@@ -207,19 +207,33 @@
     const e=entRec(),b=e&&e.bpBase;
     return b&&b.limits[c.id]&&m<=b.month&&m>=HIST_START?b.limits[c.id]:null;
   }
+  /* An earlier month's adjustment of one wallet (product owner, 16 Nov 2026: "include adjustments in between as well in
+     some places in all the months so that it looks realistic"): about one wallet in eleven carries one, worked out once
+     from the card, wallet and month - a reduction (leave without pay, recovery, pro-rata) or an additional allocation
+     (one-time allowance, correction). Only for the months before the baseline month: that month's load is the figure
+     the current month already shows and compares with, so it is left as it is. View only, like the rest. */
+  function histAdj(c,t,x,en,b){
+    if(!b||x>=b.month||!(en>0))return null;
+    const h=hash(c.id+'|'+t+'|'+x+'|adj');if(h>=0.09)return null;
+    const k=hash(x+'|'+t+'|'+c.id+'|amt'),up=hash(t+'|'+c.id+'|'+x+'|way')<0.4;
+    let amt=[100,200,300,500,250,400][Math.floor(k*6)%6];
+    if(!up)amt=Math.min(amt,Math.round(en*0.4/50)*50||50);
+    const why=up?['One-time allowance','Policy-approved correction']:['Leave without pay','Recovery of excess load','Joined or left mid-month (pro-rata)'];
+    return {type:up?'Additional Allocation':'Entitlement Reduction',amount:amt,signed:up?amt:-amt,reason:why[Math.floor(k*97)%why.length]};
+  }
   function histMonth(c,m){
     if(m<HIST_START||m>=nowM())return null;
     const e=entRec(),b=e&&e.bpBase;
     let open={},out=null;
     for(let x=HIST_START;x<=m;x=nextOf(x)){
-      const L=histLoaded(c,x);
+      const L=histLoaded(c,x),it0=itemOf(x,c.id);
       if(!L){out=null;continue;}
       const known=!b||x>=b.month?spentLast(c,nextOf(x)):null,rows={};
       Object.keys(L).forEach(function(t){
-        const o=open[t]||0,l=Number(L[t])||0;
-        let sp=known?Number(known[t])||0:Math.round(l*(0.74+0.38*hash(c.id+'|'+t+'|'+x))/10)*10;
+        const o=open[t]||0,en=Number(L[t])||0,a=it0?null:histAdj(c,t,x,en,b),l=Math.max(0,en+(a?a.signed:0));
+        let sp=known?Number(known[t])||0:Math.round(en*(0.74+0.38*hash(c.id+'|'+t+'|'+x))/10)*10;
         if(!known)sp=Math.min(sp,o+l);
-        rows[t]={open:o,loaded:l,spent:sp,close:o+l-sp};
+        rows[t]={open:o,ent:en,adj:a?a.signed:0,reason:a?a.reason:'',loaded:l,spent:sp,close:o+l-sp};
       });
       open={};Object.keys(rows).forEach(function(t){open[t]=rows[t].close;});
       out=rows;
@@ -489,8 +503,8 @@
               return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc bpx-hist"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pn)+'<br>Loaded</th><th class="bpx-num">'+E(pn)+'<br>Spent</th>'
                 +'<th class="bpx-num">'+E(cn)+'<br>Loaded</th><th class="bpx-num">'+E(cn)+'<br>Spent</th><th class="bpx-num">Balance</th></tr></thead><tbody>'
                 +ks.map(function(t){const r=h[t];
-                  return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div></td><td class="csag-td bpx-num">'+P(t,'loaded')+'</td><td class="csag-td bpx-num">'+P(t,'spent')+'</td>'
-                    +'<td class="csag-td bpx-num">'+money(r.loaded)+'</td><td class="csag-td bpx-num">'+money(r.spent)+'</td><td class="csag-td bpx-num" style="font-weight:600">'+money(r.close)+'</td></tr>';}).join('')
+                  return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div>'+(r.adj?'<div class="lp-c-sub">'+E(r.reason)+'</div>':'')+'</td><td class="csag-td bpx-num">'+P(t,'loaded')+'</td><td class="csag-td bpx-num">'+P(t,'spent')+'</td>'
+                    +'<td class="csag-td bpx-num">'+money(r.loaded)+(r.adj?'<div class="lp-c-sub" style="font-weight:600;color:'+(r.adj>0?'#15803d':'#b45309')+'">'+signed(r.adj)+'</div>':'')+'</td><td class="csag-td bpx-num">'+money(r.spent)+'</td><td class="csag-td bpx-num" style="font-weight:600">'+money(r.close)+'</td></tr>';}).join('')
                 +'<tr class="bpx-hist-tot"><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td bpx-num">'+PT('loaded')+'</td><td class="csag-td bpx-num">'+PT('spent')+'</td>'
                 +'<td class="csag-td bpx-num">'+money(T('loaded'))+'</td><td class="csag-td bpx-num">'+money(T('spent'))+'</td><td class="csag-td bpx-num">'+money(T('close'))+'</td></tr>'
                 +'</tbody></table></div>';
@@ -913,7 +927,7 @@
 
   /* Read-only helpers for Wallet Load History (js/wallet-load-history.js): the same cards, names and month figures. */
   window.bpxApi={cards:cards,histMonth:histMonth,benefitTypes:benefitTypes,emp:emp,empName:empName,branchOf:branchOf,cardNo:cardNo,keyOf:keyOf,wName:wName,
-    money:money,mLabel:mLabel,nowM:nowM,prevOf:prevOf,runs:runs,financeName:financeName,ent:ent,canSee:function(){return canReview()||canApprove();},HIST_START:HIST_START,MON:MON,
+    money:money,signed:signed,mLabel:mLabel,nowM:nowM,prevOf:prevOf,runs:runs,financeName:financeName,ent:ent,canSee:function(){return canReview()||canApprove();},HIST_START:HIST_START,MON:MON,
     prepare:function(){baseline();sampleAdjustments();}};   // what opening Wallet Load does first
 
   /* ── The menu item, right under Card List; the page ── */
