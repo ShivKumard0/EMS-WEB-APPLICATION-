@@ -37,6 +37,9 @@
   const entRec=function(){return typeof entitiesData!=='undefined'?entitiesData.find(function(e){return e.entityId===ent();})||null:null;};
   const role=function(){return typeof emsRole==='function'?emsRole():'';};
   const canSubmit=function(){return ['Super Admin','Company Admin'].indexOf(role())>=0;};
+  /* Reviewing (product owner, 16 Nov 2026: "reviewed can be done by company admin or manager, and approved company admin
+     or finance"). Adjustments and Start again stay with the admins. */
+  const canReview=function(){return canSubmit()||role()==='Reporting Manager';};
   const canApprove=function(){return ['Super Admin','Company Admin','Finance','Finance Admin'].indexOf(role())>=0;};
   const money=function(n){return typeof expMoney==='function'?expMoney(Math.round(n*100)/100,'INR'):String(n);};
   const signed=function(n){return n===0?money(0):(n>0?'+ ':'− ')+money(Math.abs(n));};
@@ -48,7 +51,7 @@
   const prevOf=function(m){const t=m.split('-');let y=+t[0],k=+t[1]-1;if(k<1){k=12;y--;}return y+'-'+p2(k);};
   const SKIP=['CORP','REIMB'];
   const wName=function(t){return typeof wbTypeName==='function'?wbTypeName(t):t;};
-  const TONE={'Pending':'wait','Reviewed':'info','Rejected':'bad','Approved':'ok','Disbursed':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
+  const TONE={'Ready for Review':'wait','Reviewed':'info','Rejected':'bad','Approved':'ok','Disbursed':'ok','Inactive':'idle','No Limit':'wait','Not Processed':'idle'};
   const REASONS=['Policy-approved correction','Joined or left mid-month (pro-rata)','Leave without pay','One-time allowance','Recovery of excess load','Other'];
   const meName=function(){return typeof idMeName==='function'?idMeName():'';};
   const financeName=function(){const u=typeof idUserByEmail==='function'?idUserByEmail('rohan.mehta@opendhi.in'):null;return u&&typeof idName==='function'?idName(u.userId):'Finance';};
@@ -69,8 +72,8 @@
     const e=entRec();if(!e)return null;
     if(!e.bpCalc){if(!make)return null;e.bpCalc={};}
     if(!e.bpCalc[m]){if(!make)return null;e.bpCalc[m]={};}
-    if(!e.bpCalc[m][c.id]){if(!make)return null;e.bpCalc[m][c.id]={status:'Pending',adj:{}};}
-    const k=e.bpCalc[m][c.id],OLD={'Draft':'Pending','Pending Approval':'Reviewed','Loaded':'Disbursed'};
+    if(!e.bpCalc[m][c.id]){if(!make)return null;e.bpCalc[m][c.id]={status:'Ready for Review',adj:{}};}
+    const k=e.bpCalc[m][c.id],OLD={'Draft':'Ready for Review','Pending':'Ready for Review','Pending Approval':'Reviewed','Loaded':'Disbursed'};
     if(OLD[k.status])k.status=OLD[k.status];
     return k;
   }
@@ -134,9 +137,9 @@
     if(k&&k.status==='Approved'&&k.wallets)return 'Approved';
     if(why(c))return 'Inactive';
     if(k&&k.status==='Rejected')return 'Rejected';
-    return sum(plan(c))>0?'Pending':'No Limit';
+    return sum(plan(c))>0?'Ready for Review':'No Limit';
   }
-  const editable=function(c,m){const s=status(c,m);return m===nowM()&&canSubmit()&&(s==='Pending'||s==='Rejected');};
+  const editable=function(c,m){const s=status(c,m);return m===nowM()&&canSubmit()&&(s==='Ready for Review'||s==='Rejected');};
 
   /* Once: last month's limits, so the first summary has something to compare with. Three cards had a lower limit. */
   function baseline(){
@@ -153,7 +156,7 @@
   }
   function sampleAdjustments(){
     const e=entRec(),m=nowM();if(!e||e.bpAdjSeed||(typeof presBuilding!=='undefined'&&presBuilding))return;
-    const list=cards().filter(function(c){return status(c,m)==='Pending';});if(list.length<4)return;
+    const list=cards().filter(function(c){return status(c,m)==='Ready for Review';});if(list.length<4)return;
     e.bpAdjSeed=m;
     const u=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null,by=u&&typeof idName==='function'?idName(u.userId):'Karan Shah';
     [[2,'FUEL','Entitlement Reduction',500,'Leave without pay','On leave without pay for 5 working days.'],
@@ -165,7 +168,7 @@
       k.adj[x[1]]={type:x[2],amount:x[3],reason:x[4],notes:x[5],by:by,at:today()};
       e.bpLogs=e.bpLogs||{};
       const st=typeof stampNow==='function'?stampNow():{date:'',time:''};
-      (e.bpLogs[c.id]=e.bpLogs[c.id]||[]).unshift({date:st.date,time:st.time,user:by,userId:u?u.userId:'',status:'Pending',step:'Adjustment',
+      (e.bpLogs[c.id]=e.bpLogs[c.id]||[]).unshift({date:st.date,time:st.time,user:by,userId:u?u.userId:'',status:'Ready for Review',step:'Adjustment',
         action:'Adjustment added · '+wName(x[1])+': '+x[2]+' '+money(x[3])+' ('+money(en)+' → '+money(Math.max(0,en+(x[2]==='Entitlement Reduction'?-1:1)*x[3]))+'). Reason: '+x[4]+' - '+x[5].replace(/\.+$/,'')+'.'});
     });
     if(typeof presSaveSoon==='function')presSaveSoon();
@@ -191,11 +194,11 @@
   /* ── Logs ── */
   function logsOf(c){
     const e=entRec(),kept=(e&&e.bpLogs&&e.bpLogs[c.id])||[],m=nowM(),t=m.split('-'),done=!!runOf(m,c.id);
-    const st0=!done&&status(c,m)==='Inactive'?'Inactive':(done||sum(plan(c))>0?'Pending':'No Limit'),pl=entOf(c,m);
+    const st0=!done&&status(c,m)==='Inactive'?'Inactive':(done||sum(plan(c))>0?'Ready for Review':'No Limit'),pl=entOf(c,m);
     const text=st0==='Inactive'?why(c)+' - not processed for '+mLabel(m)+'. '+money(sum(plan(c)))+' is held back.'
       :st0==='No Limit'?'No wallet limit is set - nothing to load for '+mLabel(m)+'.'
       :'Benefits calculated for '+mLabel(m)+': '+Object.keys(pl).map(function(k){return wName(k)+' '+money(pl[k]);}).join(', ')+'.';
-    const first={date:'01 '+MON[+t[1]-1].slice(0,3)+' '+t[0],time:'09:00:00 AM',user:'System',status:st0,step:st0==='Pending'?'Benefits calculated':st0,action:text};
+    const first={date:'01 '+MON[+t[1]-1].slice(0,3)+' '+t[0],time:'09:00:00 AM',user:'System',status:st0,step:st0==='Ready for Review'?'Benefits calculated':st0,action:text};
     const when=function(l){return typeof wfStepTime==='function'?(wfStepTime(l,0)||0):0;};
     return kept.concat([first]).map(function(l,i){return {l:l,i:i,t:when(l)};}).sort(function(x,y){return (y.t-x.t)||(x.i-y.i);}).map(function(x){return x.l;});
   }
@@ -230,8 +233,8 @@
   /* ── What each step does ── */
   function submit(c,note){
     const m=nowM(),st=status(c,m);
-    if(!canSubmit())return 'Only the Company Admin reviews a benefit load.';
-    if(st!=='Pending'&&st!=='Rejected')return empName(c)+' is '+st+' for '+mLabel(m)+'.';
+    if(!canReview())return 'Only the Company Admin or the Manager reviews a wallet load.';
+    if(st!=='Ready for Review'&&st!=='Rejected')return empName(c)+' is '+st+' for '+mLabel(m)+'.';
     const fin=finalOf(c,m),tot=sum(fin),en=plan(c);
     if(!(tot>0))return 'Nothing to load for '+empName(c)+': the final load is 0.';
     const k=calc(c,m,true),a=tot-sum(en);
@@ -297,7 +300,7 @@
     if(!isNow())return false;
     const s=status(c,month());
     if(s==='Reviewed'||s==='Approved')return canApprove();
-    return canSubmit()&&s!=='Disbursed';
+    return canReview()&&s!=='Disbursed';
   }
   const picked=function(){return shown().filter(function(c){return sel[c.id]&&pickable(c);});};
   /* The bar shows once a card is selected; a past month keeps its reference note. */
@@ -311,7 +314,7 @@
   function barHTML(){
     if(!isNow())return '<span class="wb-muted">Benefits are processed for the current month ('+E(mLabel(nowM()))+'). '+E(mLabel(month()))+' is shown for reference.</span>';
     const m=month(),p=picked();
-    const sub=p.filter(function(c){const s=status(c,m);return s==='Pending'||s==='Rejected';}),pen=p.filter(function(c){return status(c,m)==='Reviewed';}),apr=p.filter(function(c){return status(c,m)==='Approved';});
+    const sub=p.filter(function(c){const s=status(c,m);return s==='Ready for Review'||s==='Rejected';}),pen=p.filter(function(c){return status(c,m)==='Reviewed';}),apr=p.filter(function(c){return status(c,m)==='Approved';});
     const tot=function(l){return money(l.reduce(function(a,c){return a+sum(finalOf(c,m));},0));};
     const txt=p.length?'<b>'+p.length+'</b> selected'+(sub.length?' · <b>'+sub.length+'</b> to review · <b>'+tot(sub)+'</b>':'')+(pen.length?' · <b>'+pen.length+'</b> reviewed · <b>'+tot(pen)+'</b>':'')+(apr.length?' · <b>'+apr.length+'</b> approved · <b>'+tot(apr)+'</b>':'')
       :'Select the cards to process for '+E(mLabel(m));
@@ -319,7 +322,7 @@
     let btn='';
     if(canApprove()&&pen.length)btn+='<button class="ep-cancel-btn" onclick="bpxRejectOpen()">Reject</button><button class="ep-save-btn" onclick="bpxConfirmOpen(\'approve\')">Approve</button>';
     if(canApprove()&&apr.length)btn+='<button class="ep-save-btn" onclick="bpxConfirmOpen(\'disburse\')">Disburse</button>';
-    if(canSubmit()&&(sub.length||(!pen.length&&!apr.length)))btn+='<button class="ep-save-btn"'+(p.length?'':off)+' onclick="bpxConfirmOpen(\'submit\')">Mark Reviewed</button>';
+    if(canReview()&&(sub.length||(!pen.length&&!apr.length)))btn+='<button class="ep-save-btn"'+(p.length?'':off)+' onclick="bpxConfirmOpen(\'submit\')">Mark Reviewed</button>';
     return '<span class="bpx-bar-txt">'+txt+'</span><span class="bpx-bar-btns">'+btn+'</span>';
   }
   function pageHTML(){
@@ -340,7 +343,7 @@
         +'<td>'+badge(TONE[st]||'idle',st)+(st==='Inactive'?'<div class="lp-c-sub">'+E(why(c))+'</div>':'')+'</td>'
         +(typeof csuDots==='function'?csuDots('bpxOpen('+c.id+')',empName(c)):'<td></td>')+'</tr>';
     });
-    const words=isNow()?['Pending','Reviewed','Rejected','Approved','Disbursed','Inactive','No Limit']:['Disbursed','Not Processed'];
+    const words=isNow()?['Ready for Review','Reviewed','Rejected','Approved','Disbursed','Inactive','No Limit']:['Disbursed','Not Processed'];
     const opt=['Rejected','No Limit'];
     const tiles=typeof caStat==='function'?words.filter(function(w){return opt.indexOf(w)<0||all.some(function(c){return status(c,m)===w;});}).map(function(w){
       return caStat(w,all.filter(function(c){return status(c,m)===w;}).length,fStatus===w,'bpxStat(\''+w+'\')',TONE[w]);}).join(''):'';
@@ -438,8 +441,8 @@
       body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
     }else if(tab==='workflow'){
       const done=logsOf(c).map(function(l){return {title:l.step||l.status||'',user:l.user||'System',date:l.date||'',time:l.time||'',description:l.action||''};});
-      const S1={title:'Review',owner:'Company Admin'},S2={title:'Approval',owner:financeName()+' (Finance)'},S3={title:'Disbursement',owner:financeName()+' (Finance)'};
-      const steps=st==='Pending'?[S1,S2,S3]:st==='Reviewed'?[S2,S3]:st==='Approved'?[S3]:st==='Rejected'?[{title:'Edit and review again',owner:'Company Admin'},S2,S3]
+      const S1={title:'Review',owner:'Company Admin or Manager'},S2={title:'Approval',owner:financeName()+' (Finance)'},S3={title:'Disbursement',owner:financeName()+' (Finance)'};
+      const steps=st==='Ready for Review'?[S1,S2,S3]:st==='Reviewed'?[S2,S3]:st==='Approved'?[S3]:st==='Rejected'?[{title:'Edit and review again',owner:'Company Admin'},S2,S3]
         :st==='Inactive'?[{title:'Make the '+(/^Employee/.test(why(c))?'employee':'card')+' Active',owner:'Company Admin'},S1,S2,S3]
         :st==='No Limit'?[{title:'Set the wallet limits',owner:'Company Admin'},S1,S2,S3]:[];
       body=typeof wfTimelineHTML==='function'?wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done):'';
@@ -475,7 +478,7 @@
   function movesOf(c){
     if(!isNow())return [];
     const s=status(c,month());
-    if((s==='Pending'||s==='Rejected')&&canSubmit())return ['Reviewed'];
+    if((s==='Ready for Review'||s==='Rejected')&&canReview())return ['Reviewed'];
     if(s==='Reviewed'&&canApprove())return ['Approved','Rejected'];
     if(s==='Approved'&&canApprove())return ['Disbursed'];
     return [];
@@ -573,7 +576,7 @@
       if(mode==='submit'){
         if(st==='Inactive'){inactive.push({c:c,why:why(c),amount:sum(plan(c))});return;}
         if(st==='Reviewed'||st==='Approved'){skip++;return;}
-        if(st!=='Pending'&&st!=='Rejected'){other.push(c);return;}
+        if(st!=='Ready for Review'&&st!=='Rejected'){other.push(c);return;}
       }else{
         if(st!==(mode==='disburse'?'Approved':'Reviewed')){skip++;return;}
         if(why(c)){inactive.push({c:c,why:why(c),amount:sum(finalOf(c,m))});return;}
@@ -592,7 +595,7 @@
   const CAP='font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#6b7280';
   function confirmHTML(){
     const s=confirm;if(!s)return '';
-    const ap=s.mode!=='submit',dis=s.mode==='disburse',FROM=dis?'Approved':ap?'Reviewed':'Pending',TO=dis?'Disbursed':ap?'Approved':'Reviewed';
+    const ap=s.mode!=='submit',dis=s.mode==='disburse',FROM=dis?'Approved':ap?'Reviewed':'Ready for Review',TO=dis?'Disbursed':ap?'Approved':'Reviewed';
     const tile=function(l,v,sub){return '<div class="bpx-tile"><div style="'+CAP+'">'+l+'</div><div class="bpx-tile-v">'+v+'</div><div class="bpx-tile-s">'+sub+'</div></div>';};
     const sec=function(t,n){return '<div style="'+CAP+';margin:18px 0 8px">'+t+(n!=null?' · '+n:'')+'</div>';};
     const tbl=function(head,rows){return '<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table"><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';};
@@ -672,7 +675,7 @@
   window.bpxClose=function(){open=null;act=null;adjOf=null;tab='details';const sb=document.getElementById('bpx-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
   window.bpxNav=function(t){tab=t;if(t!=='wallets')adjOf=null;if(t!=='logs')act=null;repanel();};
   window.bpxConfirmOpen=function(mode){
-    if(!isNow()||(mode==='submit'?!canSubmit():!canApprove()))return;
+    if(!isNow()||(mode==='submit'?!canReview():!canApprove()))return;
     if(!picked().length){say('Select cards','error','Tick the cards to process, or Select all.');return;}
     reject=null;confirm=summary(mode);paintConfirm();
   };
@@ -733,8 +736,8 @@
     e.bpRuns=(e.bpRuns||[]).filter(function(r){return r.month!==m;});
     const cm=(e.bpCalc&&e.bpCalc[m])||{};
     let n=0;
-    Object.keys(cm).forEach(function(id){const k=cm[id];if(k.status!=='Pending')n++;
-      k.status='Pending';delete k.wallets;delete k.ent;delete k.by;delete k.at;delete k.approvedBy;delete k.approvedAt;delete k.reason;});
+    Object.keys(cm).forEach(function(id){const k=cm[id];if(k.status!=='Ready for Review')n++;
+      k.status='Ready for Review';delete k.wallets;delete k.ent;delete k.by;delete k.at;delete k.approvedBy;delete k.approvedAt;delete k.reason;});
     Object.keys(e.bpLogs||{}).forEach(function(id){
       e.bpLogs[id]=e.bpLogs[id].filter(function(l){return l.step==='Adjustment'||String(l.date||'').slice(-tag.length)!==tag;});});
     /* the line each disbursement wrote to the card's own Logs */
@@ -742,7 +745,7 @@
     if(keys.length)cards().forEach(function(c){if(Array.isArray(c.logs))c.logs=c.logs.filter(function(l){const a=String(l.action||'');return !keys.some(function(k){return a.indexOf(k)===0;});});});
     sel={};act=null;adjOf=null;confirm=null;reject=null;paintConfirm();fStatus='';
     saved();renderADTPage();
-    say('Started again','success',mLabel(m)+': every card is Pending'+(gone.length?'; wallet balances are back to before the load':'')+'.');
+    say('Started again','success',mLabel(m)+': every card is Ready for Review'+(gone.length?'; wallet balances are back to before the load':'')+'.');
   };
   const RESET_ICO='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
   function resetBtn(){
@@ -752,7 +755,7 @@
       if(!show)return;
       const w=document.getElementById('role-dd-wrap');if(!w||!w.parentNode)return;
       b=document.createElement('button');b.type='button';b.id='bpx-reset';b.className='bpx-reset';
-      b.title='Start again: set every card to Pending for this month';b.setAttribute('aria-label',b.title);
+      b.title='Start again: set every card to Ready for Review for this month';b.setAttribute('aria-label',b.title);
       b.innerHTML=RESET_ICO;b.onclick=function(){window.bpxResetMonth();};
       w.parentNode.insertBefore(b,w);
     }
@@ -838,6 +841,7 @@
       (typeof entitiesData!=='undefined'?entitiesData:[]).forEach(function(e){
         if(!e)return;walk(e.bpCalc,0);walk(e.bpRuns,0);
         Object.keys(e.bpLogs||{}).forEach(function(id){(e.bpLogs[id]||[]).forEach(function(l){
+          if(l&&l.status==='Pending'){l.status='Ready for Review';ch=true;}
           if(l&&typeof l.action==='string'){const n=l.action.replace(/: Increase /g,': Additional Allocation ').replace(/: Decrease /g,': Entitlement Reduction ');if(n!==l.action){l.action=n;ch=true;}}});});
       });
       return ch;
@@ -852,7 +856,7 @@
     const p0=appPagePermitted;
     appPagePermitted=function(pg){
       if(pg!==PG)return p0.apply(this,arguments);
-      return p0('cards')&&(canSubmit()||canApprove());
+      return p0('cards')&&(canReview()||canApprove());
     };
   }
   const r0=renderPageContent;
