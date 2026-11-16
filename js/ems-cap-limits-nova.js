@@ -19,18 +19,18 @@
      are changed once (the change is written to each limit's Logs); limits created after that are left as created.
      old name, name, level, category, sub category, department, amount per request */
   const LIMITS=[
-    ['Travel - monthly limit','Travel limit','Category-Wide','Travel Reimbursement','','',15000,'Local and intercity travel on one request.'],
-    ['Air travel - per claim','Air travel limit','Category-Wide','Travel Reimbursement','Intercity Travel - Air','',12000,'Economy fare for one trip.'],
+    ['Travel - monthly limit','Travel limit','Category-Wide','Travel & Transport','','',15000,'Local and intercity travel on one request.'],
+    ['Air travel - per claim','Air travel limit','Category-Wide','Travel & Transport','Intercity Travel - Air','',12000,'Economy fare for one trip.'],
     ['Accommodation - per stay','Accommodation limit','Category-Wide','Accommodation','','',6000,'Hotel stay on one request.'],
-    ['Fuel - monthly limit','Fuel limit','Category-Wide','Fuel Reimbursement','','',4000,'Fuel for business travel in own vehicle.'],
+    ['Fuel - monthly limit','Fuel limit','Category-Wide','Fuel & Vehicle Expenses','','',4000,'Fuel for business travel in own vehicle.'],
     ['Telephone & internet - monthly limit','Telephone & internet limit','Category-Wide','Telephone & Internet','','',1500,'Mobile and broadband bills.'],
     ['Team outing - quarterly limit','Team outing limit','Category-Wide','Team Outing','','',10000,'Per employee, for one team outing.'],
     ['Office events - annual limit','Office events limit','Category-Wide','Office Events','','',10000,'One event or festival.'],
-    ['Stationery - monthly limit','Stationery limit','Category-Wide','Office Stationery','','',2000,'Office supplies bought by the employee.'],
-    ['Books & learning - annual limit','Books & learning limit','Category-Wide','Books & Learning','','',8000,'A book, course or certification.'],
-    ['Sales - field travel','Sales - field travel limit','Department','Travel Reimbursement','','Sales',20000,'Field sales travel to client sites.'],
-    ['Operations - fuel','Operations - fuel limit','Department','Fuel Reimbursement','','Operations',6000,'Site visits by the operations team.'],
-    ['Meal - monthly limit','Meal limit','Category-Wide','Meal Allowance','','',2500,'']];
+    ['Stationery - monthly limit','Stationery limit','Category-Wide','Office Supplies & Services','','',2000,'Office supplies bought by the employee.'],
+    ['Books & learning - annual limit','Books & learning limit','Category-Wide','Learning & Development','','',8000,'A book, course or certification.'],
+    ['Sales - field travel','Sales - field travel limit','Department','Travel & Transport','','Sales',20000,'Field sales travel to client sites.'],
+    ['Operations - fuel','Operations - fuel limit','Department','Fuel & Vehicle Expenses','','Operations',6000,'Site visits by the operations team.'],
+    ['Meal - monthly limit','Meal limit','Category-Wide','Meals & Refreshments','','',2500,'']];
   const actor=function(){
     const u=typeof idUserByEmail==='function'?idUserByEmail('karan.shah@opendhi.in'):null;
     return {by:u?(typeof idName==='function'?idName(u.userId):'Karan Shah'):'Karan Shah',id:u?u.userId:''};

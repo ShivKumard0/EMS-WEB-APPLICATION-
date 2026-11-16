@@ -52,6 +52,8 @@ const EXP_SUBCATS={
 };
 /* More categories and expense types (product owner, 16 Nov 2026): ten groups added next to the ones above. Nothing
    above is removed; where a group has the name of an existing category its types are added to that category. */
+const EXP_CAT_RENAMED={'Travel Reimbursement':'Travel & Transport','Meal Allowance':'Meals & Refreshments','Fuel Reimbursement':'Fuel & Vehicle Expenses',
+  'Office Stationery':'Office Supplies & Services','Books & Learning':'Learning & Development'};
 const EXP_OTHER_SUB='Other - Specify';   // an item of this type must carry a Description
 (function(){
   const MORE=[
@@ -70,7 +72,15 @@ const EXP_OTHER_SUB='Other - Specify';   // an item of this type must carry a De
     const subs=EXP_SUBCATS[m[0]]=EXP_SUBCATS[m[0]]||[];
     m[1].forEach(function(x){if(subs.indexOf(x)<0)subs.push(x);});
   });
+  /* A pair of look-alike categories is one category under the newer name, with the types of both. The older name
+     reads the same list until js/ems-cat-rename.js has moved the records and drops it. */
+  Object.keys(EXP_CAT_RENAMED).forEach(function(o){
+    const n=EXP_CAT_RENAMED[o],subs=EXP_SUBCATS[n];
+    (EXP_SUBCATS[o]||[]).forEach(function(x){if(subs.indexOf(x)<0)subs.push(x);});
+    EXP_SUBCATS[o]=subs;
+  });
 })();
+function expCatNew(c){return EXP_CAT_RENAMED[c]||c;}
 const EXP_CURRENCIES=['INR','GBP','USD','EUR','AED'];
 const EXP_CLAIM_FOR=['Self','Others'];
 const EXP_APP_TYPES=['Reimbursement','Advance'];

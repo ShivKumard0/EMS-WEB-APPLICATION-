@@ -66,7 +66,7 @@
       {title:'Cab from Mysuru station to vendor site',amount:1200,back:7,merchant:'Namma Cabs',decision:'Partially Approve',approved:800,reason:'Fare is above the policy rate for the distance - approved at the standard rate.'}]}];
   function line(l){
     const cols={};(typeof EXP_CUSTOM_COLS!=='undefined'?EXP_CUSTOM_COLS:[]).forEach(function(c){cols[c]='';});
-    return {title:l.title,amount:String(l.amount),category:'Travel Reimbursement',subCat:'One Way',start:dayBack(l.back),end:dayBack(l.back),proof:'receipt.pdf',proofUrl:'',comments:'',
+    return {title:l.title,amount:String(l.amount),category:'Travel & Transport',subCat:'One Way',start:dayBack(l.back),end:dayBack(l.back),proof:'receipt.pdf',proofUrl:'',comments:'',
       cols:cols,paidBy:'Employee',merchant:l.merchant,invoice:'',advanceId:'',advAmount:'',cardId:'',cardAmount:''};
   }
   function make(s){

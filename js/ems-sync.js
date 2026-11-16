@@ -92,7 +92,7 @@
     if(EXP_CUSTOM_COLS.indexOf('Vendor GSTIN')>=0)cols['Vendor GSTIN']=String(l.gstin||'').trim();
     if(EXP_CUSTOM_COLS.indexOf('GST Amount')>=0)cols['GST Amount']=l.gst!=null&&l.gst!==''?String(l.gst):'';
     const paid=l.paidBy||'Employee';
-    return {title:String(l.title||'').trim(),amount:String(l.amount),category:l.category||'',subCat:l.subCat||'',start:l.start||'',end:l.end||l.start||'',
+    return {title:String(l.title||'').trim(),amount:String(l.amount),category:typeof expCatNew==='function'?expCatNew(l.category||''):(l.category||''),subCat:l.subCat||'',start:l.start||'',end:l.end||l.start||'',
       proof:l.proof||'',proofUrl:l.proofUrl||'',comments:String(l.comments||'').trim(),cols:cols,paidBy:paid,merchant:String(l.merchant||'').trim(),invoice:String(l.invoice||'').trim(),
       advanceId:paid==='Company Advance'?(l.advanceId||''):'',advAmount:paid==='Company Advance'?String(l.advAmount||l.amount):'',
       cardId:paid==='Corporate Card'?(l.cardId||''):'',cardAmount:paid==='Corporate Card'?String(l.amount):''};
