@@ -1,0 +1,36 @@
+/* ══ NEW REQUEST, WIDER AND FLATTER (product owner, 16 Nov 2026) ══════════
+   "Increase the width of the request form, widen the fields above the expense items, and show the expense item's
+   details in a horizontal section; a second box comes when another item is added."
+   Layout only - no field, value, check or button is added, removed or changed:
+   - the form uses a wider column;
+   - Request: four fields to a row, the two dates sharing the second row with Expense Type and Currency;
+   - each expense item is one wide box: five fields to a row, the proof and the description side by side.
+   On a narrow window the form falls back to the two-column layout it had. */
+.fp-page>.ct-modal.ct-modal--form:has(#exp-m-claim),
+.fp-page>.ct-modal.ct-modal--form.adv-modal:has(#csw-ems-req-cat){
+  padding-left:max(var(--pg-gutter,32px),calc((100% - 1280px)/2));padding-right:max(var(--pg-gutter,32px),calc((100% - 1280px)/2))}
+
+@media (min-width:1180px){
+  /* Request */
+  #exp-m-claim{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:16px}
+  #exp-m-claim>#exp-e-policy,#exp-m-claim>#exp-e-dup,#exp-m-claim>#exp-e-budget{order:9}   /* notices, under the fields */
+  #exp-m-claim>.ep-form-full:has(>.rqd-pair){grid-column:span 2}
+
+  /* An expense item */
+  #exp-m-items .exp-line{padding:16px 18px}
+  #exp-m-items .exp-line>.ep-form-grid{grid-template-columns:repeat(5,minmax(0,1fr));column-gap:14px;row-gap:14px;align-items:start}
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-group:has(#exp-l-merch){grid-column:span 2}
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-full:has(.att-zone),
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-full:has(.exp-proof-row){grid-column:span 2}
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-full:has(>textarea){grid-column:span 3}
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-full:has(>textarea) textarea{min-height:87px;height:87px}
+  #exp-m-items .exp-line>.ep-form-grid>.ep-form-group:has(#csw-exp-l-paid)>.ea-hint{display:none}
+  #exp-m-items .exp-line>.ep-form-grid .ep-form-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #exp-m-items .exp-line>.ep-form-grid .cs-value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+  /* The same request as an Advance: four fields to a row; purpose beside the last date, document and notes side by side */
+  .adv-modal:has(#csw-ems-req-cat) .fp-card>.ep-form-grid{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:16px}
+  .adv-modal:has(#csw-ems-req-cat) .fp-card>.ep-form-grid>.ep-form-full{grid-column:span 2}
+  .adv-modal:has(#csw-ems-req-cat) .fp-card>.ep-form-grid>.ep-form-full:has(>textarea):not(:last-child){grid-column:span 3}
+  .adv-modal:has(#csw-ems-req-cat) .fp-card>.ep-form-grid>.ep-form-full:empty{display:none}
+}
