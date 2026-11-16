@@ -236,7 +236,7 @@
       F('orgType','Organisation Type',{ic:'flash'}),F('pan','Company / Entity PAN',{ic:'id'}),F('gstStatus','GST Registration Status',{opts:['Registered','Not Registered'],ic:'doc'}),
       F('gstin','GSTIN',{ic:'id'}),F('cin','CIN / LLPIN',{ic:'id'}),F('baseCurrency','Base Currency',{opts:CUR,ic:'dollar'}),F('timeZone','Time Zone',{opts:TZ,ic:'globe'}),
       F('address','Address',{wide:1,area:1,ic:'map'}),F('city','City',{ic:'city'}),F('owner','Owner',{ic:'person'}),F('email','Email',{top:1,req:1,ic:'mail'}),
-      F('mobile','Mobile Number',{top:1,req:1,ic:'phone'}),F('created','Created Time',{ro:1,ic:'cal'}),F('createdBy','Created By',{ro:1,ic:'person'}),
+      F('mobile','Mobile Number',{top:1,ic:'phone'}),F('created','Created Time',{ro:1,ic:'cal'}),F('createdBy','Created By',{ro:1,ic:'person'}),
       F('updated','Last Updated',{ro:1,ic:'cal'}),F('empPrefix','Employee ID Prefix',{ic:'id'}),F('logo','Entity Logo',{file:1,ic:'img'}),
       F('header','Header',{file:1,ic:'doc'}),F('footer','Footer',{file:1,ic:'doc'})]}],
     'banking-details':[{title:'Banking Details',fields:[F('bkCountry','Country / Location',{opts:COUNTRIES,ic:'globe'}),F('payName','Pay Name',{ic:'person'}),F('payBank','Pay Bank',{ic:'bank'}),
@@ -428,7 +428,7 @@
     for(const k in vals){const f=fieldOf(k);if(f.req&&!vals[k]){showToast(f.l+' is required','error');return;}}
     if(vals.email!=null&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email)){showToast('Check the email','error','"'+vals.email+'" is not an email address.');return;}
     if(vals.bkEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.bkEmail)){showToast('Check the email','error','"'+vals.bkEmail+'" is not an email address.');return;}
-    if(vals.mobile!=null){vals.mobile=vals.mobile.replace(/[\s-]/g,'');if(!/^\d{7,15}$/.test(vals.mobile)){showToast('Enter a valid mobile number','error');return;}}
+    if(vals.mobile!=null){vals.mobile=vals.mobile.replace(/[\s-]/g,'');if(vals.mobile&&!/^\d{7,15}$/.test(vals.mobile)){showToast('Enter a valid mobile number','error');return;}}
     if(vals.email&&vals.email.toLowerCase()!==r.email.toLowerCase()&&find(vals.email)){showToast('Email already used','error','Another sign-up uses '+vals.email+'.');return;}
     const st=r.tabs[tab]=r.tabs[tab]||{};
     Object.keys(vals).forEach(function(k){const f=fieldOf(k),old=f.top?(r[k]||''):(k==='owner'?ownerOf(r):(st[k]||''));
