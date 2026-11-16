@@ -57,7 +57,7 @@ function expEditModalLine(i){
   expSyncBasic();expSyncLine();
   const d=expDraft;if(!d||!d.lines[i])return;
   if(expLineTouched(d.line)){
-    if(!expWithLine(function(){return expCheckLine(d.line,d.category);}))return;   // the item being typed is added first
+    if(!expWithLine(function(){return expCheckLine(d.line,d.line.category||d.category);}))return;   // the item being typed is added first (checked against its own category, as Add Expense Item does)
     d.lines.push(Object.assign({},d.line,{cols:Object.assign({},d.line.cols)}));
   }
   const l=d.lines.splice(i,1)[0];
