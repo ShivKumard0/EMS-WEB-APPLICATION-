@@ -91,13 +91,13 @@ const ccpBook={};
      no card number, no name and no expiry (product owner, 13 Nov 2026). */
   function cardImage(r){
     const p=programme(r.entity);
-    return '<div class="emsvc-modal" style="margin:4px 0 16px;display:flex;justify-content:center"><div class="emsvc-card" role="img" aria-label="'+E(r.name)+'" style="cursor:default">'
+    return '<div class="emsvc-modal" style="margin:4px 0 16px"><div class="emsvc-pair"><div class="emsvc-card" role="img" aria-label="'+E(r.name)+'" style="cursor:default">'
       +(typeof EMS_CARD_WAVES!=='undefined'?EMS_CARD_WAVES:'')
       +'<div class="emsvc-top"><span class="emsvc-brand"><span class="emsvc-mark">O</span>OpenDhi</span><span class="emsvc-bank">'+E(String(r.bank||'').toUpperCase())+'</span></div>'
       +'<div class="emsvc-prog">'+E(p&&p.name?p.name:r.name)+'</div>'
       +'<div class="emsvc-mid"><span class="emsvc-chip"></span>'+(typeof EMS_CONTACTLESS!=='undefined'?EMS_CONTACTLESS:'')+'</div>'
       +'<div class="emsvc-row" style="justify-content:flex-end"><div class="emsvc-net"><span class="emsvc-rupay">RuPay<i></i></span><span class="emsvc-prepaid">PREPAID</span></div></div>'
-      +'</div></div>';
+      +'</div>'+(typeof emsCardBackHTML==='function'?emsCardBackHTML('•••',''):'')+'</div></div>';
   }
   /* Settings (product owner, 13 Nov 2026): where the card works - Online, POS, ATM - International use, and the card's
      Effective From / Effective To. Display only, like the Wallets switches. */
@@ -249,7 +249,7 @@ const ccpBook={};
       let vis=typeof emsCardVisual==='function'?emsCardVisual(c):'';
       if(fullNo())vis=vis.replace('class="emsvc-card','class="emsvc-card is-shown');   // name and number in full
       const ws=typeof ccCardWallets==='function'?ccCardWallets(c):[];
-      body='<div class="emsvc-modal" style="margin:4px 0 16px;display:flex;justify-content:center">'+vis+'</div>'
+      body='<div class="emsvc-modal" style="margin:4px 0 16px">'+vis+'</div>'
         +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Details</span>'+badge(LTONE[stOf(c)]||'idle',stOf(c))+'</div>'
         +'<div class="lp-sb-detail-grid">'
         +fcI('tag','Card ID',E(typeof expKey==='function'?expKey(c):c.id))+fc('Card Number',E(cardNo(c)))

@@ -64,3 +64,32 @@
 .emsvc-row>div:nth-child(2) .emsvc-lbl{font-size:0;margin:0;opacity:.95}
 .emsvc-row>div:nth-child(2) .emsvc-lbl::before{content:"VALID\A UPTO";white-space:pre;display:block;text-align:right;font-size:6.5px;line-height:7.5px;font-weight:700;letter-spacing:.3px}
 .emsvc-exp{font-size:14.5px;font-weight:600;letter-spacing:.6px}
+
+/* ══ FRONT AND BACK, SIDE BY SIDE (product owner, 16 Nov 2026) ════════════
+   The two faces share the width they are given, so they stay side by side in a narrow panel; every size on a face
+   follows that face's width (cqw). The CVV on the back is blurred like the number. */
+.emsvc-modal{display:block}
+.emsvc-pair{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:16px;justify-content:center;align-items:start;width:100%}
+.emsvc-pair .emsvc-card,.emsvb{width:100%;height:auto;aspect-ratio:340/214;container-type:inline-size;border-radius:4.7cqw}
+.emsvc-pair .emsvc-card{border-radius:clamp(8px,2.2vw,16px)}
+.emsvb{position:relative;box-sizing:border-box;overflow:hidden;border-radius:clamp(8px,2.2vw,16px);cursor:pointer;outline:none;
+  background:#3a0c40 url(../assets/card-back.svg?v=20261116a) center/100% 100% no-repeat;
+  box-shadow:0 10px 24px rgba(58,12,64,.28),inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .2s ease,box-shadow .2s ease}
+.emsvb:hover,.emsvb:focus-visible{transform:translateY(-2px);box-shadow:0 16px 32px rgba(58,12,64,.36),inset 0 0 0 1px rgba(255,255,255,.08)}
+.emsvb.is-dim{filter:grayscale(.55) brightness(.92)}
+.emsvb.is-ended{filter:grayscale(1) brightness(.85)}
+.emsvb-cvv{position:absolute;left:61.7cqw;top:19.3cqw;width:9.3cqw;height:6.8cqw;display:flex;align-items:center;justify-content:center;
+  font-family:Arial,Helvetica,sans-serif;font-size:3.9cqw;font-weight:500;letter-spacing:.1cqw;color:#26262a}
+.emsvb:hover .emsvc-secret,.emsvb:focus-visible .emsvc-secret,.emsvb.is-shown .emsvc-secret,.emsvc-card.is-shown+.emsvb .emsvc-secret{filter:none;user-select:text}
+.emsvb .emsvc-secret{filter:blur(1.5cqw)}
+.emsvc-pair .emsvc-mid{right:4.7cqw;top:12.6cqw}
+.emsvc-pair .emsvc-flag{font-size:3cqw;padding:.7cqw 2.4cqw;line-height:1.3}
+.emsvc-pair .emsvc-num{left:10.3cqw;top:30.6cqw;font-size:6.47cqw;letter-spacing:.35cqw;word-spacing:1.76cqw}
+.emsvc-pair .emsvc-row>div:first-child{left:10.3cqw;top:49.7cqw}
+.emsvc-pair .emsvc-name{max-width:58cqw;font-size:3.97cqw;letter-spacing:.2cqw}
+.emsvc-pair .emsvc-row>div:nth-child(2){left:45.6cqw;top:41.5cqw;gap:1.5cqw}
+.emsvc-pair .emsvc-row>div:nth-child(2) .emsvc-lbl::before{font-size:1.9cqw;line-height:2.2cqw;letter-spacing:.1cqw}
+.emsvc-pair .emsvc-exp{font-size:4.26cqw;letter-spacing:.18cqw}
+.emsvc-pair .emsvc-card .emsvc-secret{filter:blur(1.8cqw)}
+.emsvc-pair .emsvc-card:hover .emsvc-secret,.emsvc-pair .emsvc-card:focus-visible .emsvc-secret,.emsvc-pair .emsvc-card.is-shown .emsvc-secret{filter:none}
+.emsvc-item{width:auto;max-width:696px}
