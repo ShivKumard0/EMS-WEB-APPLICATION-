@@ -34,7 +34,7 @@
     oncCheckField=function(f,v,mandatory){
       if(f&&f.k==='aadhaar'){
         const s=digits(v);if(!s)return mandatory?f.label+' is required':'';
-        if(!/^[2-9][0-9]{11}$/.test(s))return 'Aadhaar Number must be 12 digits';
+        if(!/^[0-9]{12}$/.test(s))return 'Aadhaar Number must be 12 digits';   // any 12 digits (product owner, 16 Nov 2026)
         return '';
       }
       return k0.apply(this,arguments);
