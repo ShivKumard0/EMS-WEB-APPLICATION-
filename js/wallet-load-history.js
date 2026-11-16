@@ -4,11 +4,12 @@
    see the list of all the people below with the action button to see that particular month's load; on the line item a
    download button so that I can download the list in Excel format."
    Corporate Cards → Wallet Load History, right under Wallet Load, for the same people who see Wallet Load.
-   - Filters: Year, Month, Branch. The list is the six months ending with the month picked, newest first.
-   - A line is one month's load: employees, cards, loaded, spent, closing balance, disbursed on. Clicking it opens a
-     quick summary (totals, each wallet's load, who reviewed, approved and disbursed) with View Load and Download.
-   - View Load lists every employee's card of that month under the table; the action button opens that employee's
-     wallet statement for the month.
+   - Filters: Year, Month, Branch. With a month picked the list is that month alone; with no month it is the last six
+     months of the year picked, newest first (product owner, 16 Nov 2026, later: "if I select a month show me that
+     particular month, or else show the previous 6 to 7 months").
+   - A line is one month's load. Its action button opens the usual side panel ("make it work like our regular action
+     button"): Details (totals, each wallet's load, who reviewed, approved and disbursed), then Employee Loads (every
+     employee's card of that month; the action button on an employee opens their wallet statement for the month).
    - Download gives the month's list as an Excel workbook.
    Read only. The figures are the ones Wallet Load shows for an earlier month (js/benefit-processing.js, histMonth), so
    a month here and the same month in a card's Wallets tab always agree. Nothing is stored and no load, review,
@@ -23,11 +24,10 @@
   const say=function(a,t,b){if(typeof showToast==='function')showToast(a,t,b);};
   const lastDone=function(){return A.prevOf(A.nowM());};
   const DL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-  const CH='<svg class="wlh-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
   const X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
-  let fEnd=null,fBranch='',openM=null,viewM=null,pop=null;   // fEnd: the month picked (the list ends with it)
-  const end=function(){const v=fEnd||lastDone();return v>A.nowM()?A.nowM():v;};
+  let fYear=null,fMonth=0,fBranch='',openM=null,tab='details',pop=null;   // fMonth 0: no month picked, the last six months
+  const year=function(){return fYear||+lastDone().slice(0,4);};
 
   /* ── One month ── */
   let cache={};
@@ -56,62 +56,66 @@
       byW:byW,wOrder:wOrder,on:run&&run.at?String(run.at).split(' | ')[0]:day,by:run&&run.by?run.by:A.financeName(),reviewedBy:admin,approvedBy:A.financeName()});
   }
   function months(){
-    const out=[];let m=end();
+    const out=[],y=year();
+    if(fMonth){const x=monthOf(y+'-'+p2(fMonth));if(x)out.push(x);return out;}
+    let m=y===+A.nowM().slice(0,4)?lastDone():y+'-12';
     for(let i=0;i<SPAN;i++){const x=monthOf(m);if(x)out.push(x);m=A.prevOf(m);}
     return out;
   }
 
   /* ── The page ── */
-  function summaryHTML(x){
-    const F=function(l,v,strong){return '<div class="wlh-f"><span class="wlh-f-l">'+E(l)+'</span><span class="wlh-f-v'+(strong?' is-strong':'')+'">'+v+'</span></div>';};
-    return '<div class="wlh-sum">'
-      +'<div class="wlh-sum-hd"><div><div class="wlh-sum-ttl">Load Summary · '+E(A.mLabel(x.month))+'</div><div class="wlh-sum-sub">'+E(x.ref)+(fBranch?' · '+E(fBranch):' · All branches')+'</div></div>'
-      +'<div class="wlh-sum-btns"><button type="button" class="btn-outline btn-sm wlh-ibtn" onclick="event.stopPropagation();wlhDownload(\''+x.month+'\')">'+DL+'<span>Download Excel</span></button>'
-      +'<button type="button" class="ep-save-btn" onclick="event.stopPropagation();wlhView(\''+x.month+'\')">'+(viewM===x.month?'Hide Load':'View Load')+'</button></div></div>'
-      +'<div class="wlh-grid">'
-      +F('Total Load',money(x.loaded),true)+F('Employees',x.emps)+F('Cards Loaded',x.rows.length)
-      +x.wOrder.map(function(t){return F(A.wName(t)+' Wallet',money(x.byW[t]));}).join('')
-      +F('Opening Balance',money(x.open))+F('Total Spent',money(x.spent))+F('Closing Balance',money(x.close))
-      +F('Disbursed On',E(x.on))+F('Reviewed By',E(x.reviewedBy))+F('Approved By',E(x.approvedBy))+F('Disbursed By',E(x.by))+F('Status',badge('ok','Disbursed'))
-      +'</div></div>';
-  }
-  function listHTML(x){
-    const trs=x.rows.map(function(r,i){
-      const c=r.card,e=A.emp(c);
-      return '<tr class="wlh-erow" style="cursor:pointer" onclick="wlhEmp(\''+x.month+'\','+c.id+')">'
-        +'<td class="lp-c-n">'+(i+1)+'</td>'
-        +'<td><div class="lp-c-plain">'+E(A.empName(c))+'</div><div class="lp-c-sub">'+E(e.empId||'')+'</div></td>'
-        +'<td><div class="lp-c-main" style="font-variant-numeric:tabular-nums;letter-spacing:.02em">'+E(A.cardNo(c))+'</div><div class="lp-c-sub">'+E(A.keyOf(c))+'</div></td>'
-        +'<td><div class="lp-c-plain">'+E(e.dept||'—')+'</div><div class="lp-c-sub">'+E(A.branchOf(c)||'')+'</div></td>'
-        +'<td class="wlh-amt"><div class="lp-c-plain" style="font-weight:600">'+money(r.loaded)+'</div></td>'
-        +'<td class="wlh-amt"><div class="lp-c-plain">'+money(r.spent)+'</div></td>'
-        +'<td class="wlh-amt"><div class="lp-c-plain">'+money(r.close)+'</div></td>'
-        +'<td>'+badge('ok','Disbursed')+'</td>'
-        +(typeof csuDots==='function'?csuDots('wlhEmp(\''+x.month+'\','+c.id+')',A.empName(c)):'<td></td>')+'</tr>';
-    });
-    const pg=typeof listPage==='function'?listPage('wlh-emp',[x.month,fBranch].join('|'),trs,''):{rows:trs.join(''),pager:''};
-    return '<div class="wlh-list" id="wlh-list"><div class="wlh-list-hd"><div><div class="wlh-sum-ttl">'+E(A.mLabel(x.month))+' · Employees</div>'
-      +'<div class="wlh-sum-sub">'+x.rows.length+' card'+(x.rows.length===1?'':'s')+' · '+money(x.loaded)+' loaded</div></div>'
-      +'<div class="wlh-sum-btns"><button type="button" class="btn-outline btn-sm wlh-ibtn" onclick="wlhDownload(\''+x.month+'\')">'+DL+'<span>Download Excel</span></button>'
-      +'<button type="button" class="btn-outline btn-sm" onclick="wlhView(\''+x.month+'\')">Close</button></div></div>'
-      +'<table class="lp-table ax-table cc-table wlh-table"><thead><tr><th>S. No</th><th>Employee</th><th>Card Number</th><th>Department</th><th>Loaded</th><th>Spent</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>'
-      +pg.rows+'</tbody></table>'+pg.pager+'</div>';
+  const I=function(){return typeof AX_ICO!=='undefined'?AX_ICO:{};};
+  const F=function(ico,l,v){return typeof axField==='function'?axField(ico||'',l,v):'';};
+  function panelHTML(){
+    const x=openM?monthOf(openM):null;if(!x)return '';
+    const tabs=[{id:'details',label:'Details'},{id:'employees',label:'Employee Loads'}];
+    if(!tabs.some(function(t){return t.id===tab;}))tab='details';
+    const i=I(),hero=typeof sbHero==='function'?sbHero({icon:(typeof sbIco!=='undefined'&&(sbIco.wallet||sbIco.card))||'',name:E(A.mLabel(x.month)),meta:[E(x.ref),E(fBranch||'All branches'),x.rows.length+' card'+(x.rows.length===1?'':'s')],status:badge('ok','Disbursed')}):'';
+    const dl='<button type="button" class="btn-outline btn-sm wlh-ibtn" onclick="wlhDownload(\''+x.month+'\')">'+DL+'<span>Download Excel</span></button>';
+    let body='';
+    if(tab==='employees'){
+      body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Employee Loads · '+E(A.mLabel(x.month))+'</span>'+dl+'</div>'
+        +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table wlh-st wlh-emp"><thead><tr><th>#</th><th>Employee</th><th>Department</th><th class="wlh-num">Loaded</th><th class="wlh-num">Spent</th><th class="wlh-num">Balance</th><th>Action</th></tr></thead><tbody>'
+        +x.rows.map(function(r,n){
+          const c=r.card,e=A.emp(c);
+          return '<tr style="cursor:pointer" onclick="wlhEmp(\''+x.month+'\','+c.id+')"><td class="csag-td">'+(n+1)+'</td>'
+            +'<td class="csag-td"><div class="lp-c-main">'+E(A.empName(c))+'</div><div class="lp-c-sub">'+E([e.empId,A.keyOf(c)].filter(Boolean).join(' · '))+'</div></td>'
+            +'<td class="csag-td"><div class="lp-c-plain">'+E(e.dept||'—')+'</div><div class="lp-c-sub">'+E(A.branchOf(c)||'')+'</div></td>'
+            +'<td class="csag-td wlh-num" style="font-weight:600">'+money(r.loaded)+'</td><td class="csag-td wlh-num">'+money(r.spent)+'</td><td class="csag-td wlh-num">'+money(r.close)+'</td>'
+            +(typeof csuDots==='function'?csuDots('wlhEmp(\''+x.month+'\','+c.id+')',A.empName(c)).replace('<td ','<td class="csag-td" '):'<td class="csag-td"></td>')+'</tr>';
+        }).join('')
+        +'<tr class="wlh-tot"><td class="csag-td"></td><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td"></td><td class="csag-td wlh-num">'+money(x.loaded)+'</td><td class="csag-td wlh-num">'+money(x.spent)+'</td><td class="csag-td wlh-num">'+money(x.close)+'</td><td class="csag-td"></td></tr>'
+        +'</tbody></table></div>';
+    }else{
+      body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Load Summary</span>'+dl+'</div><div class="lp-sb-detail-grid">'
+        +F(i.fCal,'Load Month',E(A.mLabel(x.month)))+F(i.fHash,'Reference',E(x.ref))
+        +F(i.fCash,'Total Load','<b>'+money(x.loaded)+'</b>')+F(i.fBuild,'Branch',E(fBranch||'All branches'))
+        +F(i.fUser,'Employees',x.emps)+F(i.fHash,'Cards Loaded',x.rows.length)
+        +'</div><div class="lp-sb-view-header"><span class="lp-sb-section-title">Load by Wallet</span></div><div class="lp-sb-detail-grid">'
+        +x.wOrder.map(function(t){return F(i.fCash,A.wName(t)+' Wallet',money(x.byW[t]));}).join('')
+        +'</div><div class="lp-sb-view-header"><span class="lp-sb-section-title">Balances</span></div><div class="lp-sb-detail-grid">'
+        +F(i.fCash,'Opening Balance',money(x.open))+F(i.fCash,'Total Loaded',money(x.loaded))
+        +F(i.fCash,'Total Spent',money(x.spent))+F(i.fCash,'Closing Balance',money(x.close))
+        +'</div><div class="lp-sb-view-header"><span class="lp-sb-section-title">Processing</span></div><div class="lp-sb-detail-grid">'
+        +F(i.fTag,'Status',badge('ok','Disbursed'))+F(i.fCal,'Disbursed On',E(x.on))
+        +F(i.fUser,'Reviewed By',E(x.reviewedBy))+F(i.fUser,'Approved By',E(x.approvedBy))+F(i.fUser,'Disbursed By',E(x.by))
+        +'</div>';
+    }
+    return (typeof axTabBar==='function'?axTabBar('wlh',tabs,tab,'wlhNav','wlhClose'):'')+'<div class="lp-isb-body">'+body+'</div>';
   }
   function pageHTML(){
     cache={};if(A.prepare)A.prepare();
-    const ms=months(),ny=+A.nowM().slice(0,4),nm=+A.nowM().slice(5,7),ev=end(),y=+ev.slice(0,4),years=[];
-    for(let i=+A.HIST_START.slice(0,4);i<=ny;i++)years.push(String(i));
+    const ms=months(),ny=+A.nowM().slice(0,4),nm=+A.nowM().slice(5,7),y=year(),years=[];
+    for(let k=+A.HIST_START.slice(0,4);k<=ny;k++)years.push(String(k));
     if(openM&&!ms.some(function(x){return x.month===openM;}))openM=null;
-    if(viewM&&!ms.some(function(x){return x.month===viewM;}))viewM=null;
-    const filters=(typeof apCS==='function'?apCS('wlh-year',years,String(y),'Year')+apCS('wlh-month',y===ny?MON.slice(0,nm):MON,MON[+ev.slice(5,7)-1],'Month')
+    const filters=(typeof apCS==='function'?apCS('wlh-year',years,String(y),'Year')+apCS('wlh-month',y===ny?MON.slice(0,nm):MON,fMonth?MON[fMonth-1]:'','All Months')
         +apCS('wlh-branch',typeof emsBranchNames==='function'?emsBranchNames(A.ent()):[],fBranch,'All Branches'):'')
-      +(typeof clearFiltersBtn==='function'?clearFiltersBtn([fBranch,fEnd&&fEnd!==lastDone()?'x':''],'wlhReset()'):'')+'<button class="lp-pill-search" onclick="wlhApply()">Search</button>';
+      +(typeof clearFiltersBtn==='function'?clearFiltersBtn([fBranch,fMonth?'x':''],'wlhReset()'):'')+'<button class="lp-pill-search" onclick="wlhApply()">Search</button>';
     const tot=ms.reduce(function(a,x){return a+x.loaded;},0);
     const tiles=typeof caStat==='function'?caStat('Months',ms.length,false,'','info')+caStat('Total Loaded',money(tot).replace(/\s*INR$/,''),false,'','ok'):'';
-    const trs=ms.map(function(x,i){
-      const on=openM===x.month;
-      return '<tr class="wlh-row'+(on?' is-open':'')+'" style="cursor:pointer" onclick="wlhOpen(\''+x.month+'\')">'
-        +'<td class="lp-c-n">'+(i+1)+'</td>'
+    const trs=ms.map(function(x,n){
+      return '<tr class="wlh-row'+(openM===x.month?' lp-row-selected':'')+'" id="wlh-row-'+x.month+'" style="cursor:pointer" onclick="wlhOpen(\''+x.month+'\')">'
+        +'<td class="lp-c-n">'+(n+1)+'</td>'
         +'<td><div class="lp-c-main">'+E(A.mLabel(x.month))+'</div><div class="lp-c-sub">'+E(x.ref)+'</div></td>'
         +'<td><div class="lp-c-plain">'+x.emps+'</div></td>'
         +'<td><div class="lp-c-plain">'+x.rows.length+'</div></td>'
@@ -120,18 +124,16 @@
         +'<td><div class="lp-c-plain">'+E(x.on)+'</div></td>'
         +'<td>'+badge('ok','Disbursed')+'</td>'
         +'<td onclick="event.stopPropagation()"><button type="button" class="wlh-dl" title="Download '+E(A.mLabel(x.month))+' in Excel" aria-label="Download '+E(A.mLabel(x.month))+' in Excel" onclick="wlhDownload(\''+x.month+'\')">'+DL+'</button></td>'
-        +'<td><button type="button" class="wlh-dl wlh-tog" title="'+(on?'Hide':'Show')+' the summary" aria-label="'+(on?'Hide':'Show')+' the summary of '+E(A.mLabel(x.month))+'">'+CH+'</button></td></tr>'
-        +(on?'<tr class="wlh-sumrow"><td colspan="10">'+summaryHTML(x)+'</td></tr>':'');
+        +(typeof csuDots==='function'?csuDots('wlhOpen(\''+x.month+'\')',A.mLabel(x.month)):'<td></td>')+'</tr>';
     }).join('');
-    const span=ms.length?A.mLabel(ms[ms.length-1].month)+' – '+A.mLabel(ms[0].month):'';
+    const none=fMonth?'No wallet load was processed in '+MON[fMonth-1]+' '+y+(fBranch?' for '+fBranch:'')+'.':'No wallet load was processed in '+y+(fBranch?' for '+fBranch:'')+'.';
     const table='<table class="lp-table ax-table cc-table wlh-table wlh-months"><thead><tr><th>S. No</th><th>Load Month</th><th>Employees</th><th>Cards</th><th>Total Loaded</th><th>Total Spent</th><th>Disbursed On</th><th>Status</th><th>Download</th><th>Action</th></tr></thead><tbody>'
-      +(trs||(typeof ccEmpty==='function'?ccEmpty(10,'No wallet load was processed in the six months up to '+A.mLabel(ev)+(fBranch?' for '+fBranch:'')+'.'):''))+'</tbody></table>';
-    const vx=viewM?ms.find(function(x){return x.month===viewM;}):null;
+      +(trs||(typeof ccEmpty==='function'?ccEmpty(10,none):''))+'</tbody></table>';
+    const cap=!ms.length?'':fMonth?'Wallet load of '+A.mLabel(ms[0].month):'Last '+ms.length+' month'+(ms.length===1?'':'s')+' of wallet loads · '+A.mLabel(ms[ms.length-1].month)+' – '+A.mLabel(ms[0].month);
     return '<div class="lp-page wlh-page">'
       +(typeof ccFilterBar==='function'?ccFilterBar(filters,tiles):'')
-      +(span?'<div class="wlh-cap">Last '+ms.length+' month'+(ms.length===1?'':'s')+' of wallet loads · '+E(span)+(fBranch?' · '+E(fBranch):'')+'</div>':'')
-      +'<div class="wlh-card">'+table+'</div>'
-      +(vx?listHTML(vx):'')
+      +(cap?'<div class="wlh-cap">'+E(cap)+(fBranch?' · '+E(fBranch):'')+'</div>':'')
+      +(typeof ccSplit==='function'?ccSplit('wlh',table,openM!=null,panelHTML):table)
       +'</div>';
   }
   /* One employee's month, over the page. */
@@ -160,17 +162,24 @@
   window.wlhApply=function(){
     if(typeof getCSValue==='function'){
       const y=+getCSValue('wlh-year'),mo=MON.indexOf(getCSValue('wlh-month')),b=getCSValue('wlh-branch');
-      if(y&&mo>=0){let v=y+'-'+p2(mo+1);if(v>A.nowM())v=A.nowM();fEnd=v;}
+      if(y)fYear=y;
+      fMonth=mo>=0?mo+1:0;
+      if(fMonth&&fYear+'-'+p2(fMonth)>A.nowM())fMonth=+A.nowM().slice(5,7);
       fBranch=b&&b!=='All Branches'?b:'';
     }
     redraw();
   };
-  window.wlhReset=function(){fEnd=null;fBranch='';openM=null;viewM=null;redraw();};
-  window.wlhOpen=function(m){openM=openM===m?null:m;redraw();};
-  window.wlhView=function(m){
-    viewM=viewM===m?null:m;redraw();
-    if(viewM)setTimeout(function(){const l=document.getElementById('wlh-list');if(l&&l.scrollIntoView)l.scrollIntoView({behavior:'smooth',block:'start'});},60);
+  window.wlhReset=function(){fYear=null;fMonth=0;fBranch='';openM=null;tab='details';redraw();};
+  const repanel=function(){if(typeof isbTab==='function'&&document.getElementById('wlh-split-sb'))isbTab('wlh',panelHTML);else redraw();};
+  window.wlhOpen=function(m){
+    if(openM!==m)tab='details';
+    openM=m;
+    const sb=document.getElementById('wlh-split-sb');if(!sb||typeof isbTab!=='function'){redraw();return;}
+    sb.classList.add('open');isbTab('wlh',panelHTML);
+    document.querySelectorAll('.wlh-row').forEach(function(r){r.classList.toggle('lp-row-selected',r.id==='wlh-row-'+m);});
   };
+  window.wlhClose=function(){openM=null;tab='details';const sb=document.getElementById('wlh-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.wlh-row').forEach(function(r){r.classList.remove('lp-row-selected');});};
+  window.wlhNav=function(t){tab=t;repanel();};
   window.wlhEmp=function(m,id){pop={month:m,id:id};paintPop();};
   window.wlhEmpClose=function(){pop=null;paintPop();};
   window.wlhDownload=function(m){
@@ -192,21 +201,11 @@
     if(document.getElementById('wlh-style'))return;
     const st=document.createElement('style');st.id='wlh-style';
     st.textContent='.wlh-cap{margin:16px 2px 10px;font-size:13px;color:var(--gray,#6a7282)}'
-      +'.wlh-card,.wlh-list{border:1px solid var(--border,#e5e7eb);border-radius:14px;background:#fff;overflow:hidden}'
+      +'#wlh-split-sb .lp-sb-detail-grid+.lp-sb-view-header{margin-top:20px}'
       +'.wlh-table{margin:0}.wlh-table th,.wlh-table td{text-align:left}.wlh-table>thead>tr>th{white-space:nowrap}.wlh-amt{white-space:nowrap;font-variant-numeric:tabular-nums}'
-      +'.wlh-row.is-open>td{background:#f8fafc}.wlh-row.is-open .wlh-chev{transform:rotate(180deg)}.wlh-chev{transition:transform .18s ease}'
       +'.wlh-dl{width:32px;height:32px;border:1px solid var(--border,#e5e7eb);border-radius:9px;background:#fff;color:var(--navy,#0f172a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}'
-      +'.wlh-dl:hover{background:#f1f5f9}.wlh-tog{pointer-events:none}'
-      +'.wlh-sumrow>td{padding:0!important;background:#f8fafc;border-top:0!important}'
-      +'.wlh-sum{margin:4px 18px 18px;padding:18px 20px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff}'
-      +'.wlh-sum-hd,.wlh-list-hd{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}'
-      +'.wlh-sum-hd{padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border,#e5e7eb)}.wlh-list-hd{padding:16px 18px}'
-      +'.wlh-sum-ttl{font-size:15px;font-weight:600;color:var(--navy,#0f172a)}.wlh-sum-sub{font-size:12.5px;color:var(--gray,#6a7282);margin-top:3px}'
-      +'.wlh-sum-btns{display:flex;align-items:center;gap:8px}.wlh-ibtn{display:inline-flex;align-items:center;gap:7px}'
-      +'.wlh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 32px}'
-      +'.wlh-f{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;padding:7px 0;border-bottom:1px dashed #eef0f3;font-size:13.5px}'
-      +'.wlh-f-l{color:var(--gray,#6a7282);white-space:nowrap}.wlh-f-v{font-weight:600;color:var(--navy,#0f172a);text-align:right;font-variant-numeric:tabular-nums}.wlh-f-v.is-strong{font-size:15px}'
-      +'.wlh-list{margin-top:18px}.wlh-list .lp-pager,.wlh-list .list-pager{padding:0 18px}'
+      +'.wlh-dl:hover{background:#f1f5f9}.wlh-ibtn{display:inline-flex;align-items:center;gap:7px}'
+      +'.wlh-emp th,.wlh-emp td{padding-left:8px!important;padding-right:8px!important}.wlh-emp td:last-child,.wlh-emp th:last-child{width:52px;text-align:center}.wlh-emp .lp-c-sub{white-space:normal}.wlh-emp td:first-child,.wlh-emp th:first-child{padding-left:14px!important;width:40px;white-space:nowrap}'
       +'.ct-modal.wlh-modal{width:min(760px,95vw);display:flex;flex-direction:column;max-height:88vh;overflow:hidden;border-radius:16px;padding-bottom:0}'
       +'.wlh-modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:6px 0 20px}'
       +'.wlh-modal>.ct-modal-foot{position:static;flex-shrink:0;margin:0 -28px;border-radius:0}'
@@ -217,7 +216,7 @@
       +'table.wlh-st{min-width:0!important;width:100%}.wlh-num{text-align:right!important;white-space:nowrap;font-variant-numeric:tabular-nums}'
       +'.wlh-tot td{background:#f8fafc;font-weight:600;border-top:1px solid var(--border,#e5e7eb)}'
       +'.wlh-meta{margin-top:12px;font-size:12.5px;color:var(--gray,#6a7282)}'
-      +'@media(max-width:900px){.wlh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wlh-hts{grid-template-columns:repeat(2,minmax(0,1fr))}}';
+      +'@media(max-width:900px){.wlh-hts{grid-template-columns:repeat(2,minmax(0,1fr))}}';
     (document.head||document.documentElement).appendChild(st);
   })();
 
