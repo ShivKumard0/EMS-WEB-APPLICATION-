@@ -44,3 +44,23 @@
 /* Wallets Requested: a wallet already on the card is shown, greyed out, and cannot be picked. */
 .cs-option.ems-ms-off{opacity:.45;cursor:not-allowed;pointer-events:none}
 .ems-ms-tag{margin-left:auto;padding-left:10px;font-size:11px;color:var(--gray)}
+
+/* ══ THE CARD FACE (product owner, 16 Nov 2026) ═══════════════════════════
+   The OpenDhi x RBL Bank Multi+ Corporate Card as designed, drawn as a vector (assets/card-face.svg) so it is sharp at
+   any size: logos, chip, contactless, RuPay Prepaid and the wave are in the drawing. The card's own details - number,
+   valid upto, cardholder name, a status flag - are written over it. */
+.emsvc-card{padding:0;background:#3a0c40 url(../assets/card-face.svg?v=20261116a) center/100% 100% no-repeat;
+  box-shadow:0 10px 24px rgba(58,12,64,.28),inset 0 0 0 1px rgba(255,255,255,.06)}
+.emsvc-card:hover,.emsvc-card:focus-visible{box-shadow:0 16px 32px rgba(58,12,64,.36),inset 0 0 0 1px rgba(255,255,255,.08)}
+.emsvc-waves,.emsvc-top,.emsvc-prog,.emsvc-chip,.emsvc-mid>svg,.emsvc-net{display:none}
+.emsvc-mid{position:absolute;right:16px;top:44px;margin:0}
+.emsvc-num{position:absolute;left:35px;top:104px;margin:0;font-family:Consolas,'SFMono-Regular',Menlo,'Roboto Mono','Courier New',monospace;
+  font-size:22px;font-weight:600;letter-spacing:1.2px;word-spacing:6px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.emsvc-row{position:static}
+.emsvc-row>div:first-child{position:absolute;left:35px;top:169px}
+.emsvc-row>div:first-child .emsvc-lbl{display:none}
+.emsvc-name{max-width:200px;font-size:13.5px;font-weight:600;letter-spacing:.7px}
+.emsvc-row>div:nth-child(2){position:absolute;left:155px;top:141px;display:flex;align-items:center;gap:5px}
+.emsvc-row>div:nth-child(2) .emsvc-lbl{font-size:0;margin:0;opacity:.95}
+.emsvc-row>div:nth-child(2) .emsvc-lbl::before{content:"VALID\A UPTO";white-space:pre;display:block;text-align:right;font-size:6.5px;line-height:7.5px;font-weight:700;letter-spacing:.3px}
+.emsvc-exp{font-size:14.5px;font-weight:600;letter-spacing:.6px}
