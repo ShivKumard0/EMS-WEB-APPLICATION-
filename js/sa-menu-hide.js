@@ -23,12 +23,20 @@
   const inHome=function(){return typeof ID_HOME_ENTITY!=='undefined'&&!!ID_HOME_ENTITY&&ent()===ID_HOME_ENTITY;};
   const inNova=function(){const n=typeof presNova==='function'?presNova():null;return !!n&&ent()===(n.entityId||n.id);};
   const CARD_OFF=['card-statements','card-setup'];
+  const HOME_GROUPS_OFF=['Contracts','Time & Attendance','Payroll Management','Compliance Hub','Admin Access'];
+  const HOME_IDS_OFF=['hr-docs','announcements','chats','support-tickets'];
+  /* Super Admin in Dhi Hyperlocal: only the Opendhi Super Admin dashboard (product owner, 16 Nov 2026: "in the dashboard
+     just keep Opendhi Super Admin dashboard, rest remove all the dashboards"). The tab strip goes with it. */
+  if(typeof emsDashTabsAllowed==='function'){
+    const d0=emsDashTabsAllowed;
+    emsDashTabsAllowed=function(){if(isSA()&&inHome())return ['super-admin'];return d0.apply(this,arguments);};
+  }
   let building=false;
   const b0=buildSidebar;
   buildSidebar=function(){building=true;try{return b0.apply(this,arguments);}finally{building=false;}};
   const g0=window.getSidebarItems;
   window.getSidebarItems=function(){
-    const out=g0.apply(this,arguments);
+    let out=g0.apply(this,arguments);
     if(!building)return out;
     let rbacOff=false,cardOff=[],expOff=[];
     if(isSA()){rbacOff=inHome();if(rbacOff||inNova())cardOff=CARD_OFF;}
@@ -38,6 +46,11 @@
     /* Opendhi, every role: no Workspaces and no Templates in the side panel (product owner, 15 Nov 2026: "in open dhi
        entity hide workspace and templates from the side panel"). Menu only, like the rest of this file. */
     const allOff=inNova()?['rbac-workspaces','rbac-templates']:[];
+    /* Super Admin in Dhi Hyperlocal: no Contracts, HR Docs, Time & Attendance, Payroll Management, Compliance Hub,
+       Admin Access, Announcements, Chats or Tickets in the side panel (product owner, 16 Nov 2026). Menu only. */
+    const home=isSA()&&inHome();
+    if(home)out=out.filter(function(g){return !(g&&(HOME_GROUPS_OFF.indexOf(g.dropdown)>=0||HOME_IDS_OFF.indexOf(g.id)>=0));})
+      .filter(function(g,i,a){return !(g&&g.section&&!g.id&&!g.dropdown&&(i===a.length-1||(a[i+1]&&a[i+1].section&&!a[i+1].id&&!a[i+1].dropdown)));});
     if(!rbacOff&&!cardOff.length&&!expOff.length&&!allOff.length)return out;
     const OFF={'Corporate Cards':cardOff,'Expense Management':expOff};
     /* Opendhi, every role: no Finance group in the side panel (product owner, 15 Nov 2026: "remove finance from the
