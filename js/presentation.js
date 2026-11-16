@@ -23,11 +23,12 @@ const PRES_COMPANY='Nova Retail Pvt Ltd';
 const PRES_SHOWN='Opendhi';
 /* The card's shown name (product owner, 14 Nov 2026: "change the card name as well OpenDhi x RBL"): the card programme
    (prepared as Nova Multi Wallet Card, CPG-103) and the card itself (Corporate Cards → Cards). Codes stay. */
-const PRES_CARD='OpenDhi x RBL';
+/* 16 Nov 2026 (product owner): "wherever OpenDhi x RBL is written replace it with OpenDhi Multi+ Corporate Card". */
+const PRES_CARD='OpenDhi Multi+ Corporate Card';
 /* Bumped when a rename is added: a copy renamed by an earlier version is renamed once more. 3: every other "Nova" too -
    funding accounts, codes (NOVA-MULTI → OPENDHI-MULTI …) and e-mail addresses (@novaretail.in → @opendhi.in), product
    owner, 14 Nov 2026: "replace every nova with Opendhi everywhere". */
-const PRES_SHOWN_V=3;
+const PRES_SHOWN_V=4;   // 4: the card reads OpenDhi Multi+ Corporate Card (was OpenDhi x RBL)
 
 /* ── What is kept ─────────────────────────────────────────────────────── */
 /* Screen state, caches and values rebuilt from other records are never kept. */
@@ -889,11 +890,12 @@ function presShowName(){
   const n=presNova();if(!n||n.presShown===PRES_SHOWN_V)return false;
   const RULES=[[/\b([Aa]) (Nova Multi Wallet Card|NOVA X RBL Multiwallet Card)/g,'$1n '+PRES_CARD],
     [/Nova Multi Wallet Card|NOVA X RBL Multiwallet Card/g,PRES_CARD],[/\bNova card\b/g,PRES_CARD+' card'],
+    [/OpenDhi x RBL card\b/g,PRES_CARD],[/OpenDhi x RBL(?! Bank)/g,PRES_CARD],
     [/Nova Retail Pvt Ltd|Nova Retail/g,PRES_SHOWN],[/@novaretail\.in/gi,'@opendhi.in'],[/\bNOVA-/g,'OPENDHI-'],[/\bNova\b/g,PRES_SHOWN]];
   const fix=function(x){RULES.forEach(function(r){x=x.replace(r[0],r[1]);});return x;},seen=new Set();
   const walk=function(v,d){
     if(!v||typeof v!=='object'||v.nodeType||seen.has(v)||d>14)return;seen.add(v);
-    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(/nova/i.test(x))v[k]=fix(x);}else walk(x,d+1);});
+    Object.keys(v).forEach(function(k){const x=v[k];if(typeof x==='string'){if(/nova|OpenDhi x RBL/i.test(x))v[k]=fix(x);}else walk(x,d+1);});
   };
   presCandidates().forEach(function(name){try{walk(presGet(name),0);}catch(e){}});
   if(n.initials==='NR')n.initials=(PRES_SHOWN[0]+(PRES_SHOWN[1]||'')).toUpperCase();
