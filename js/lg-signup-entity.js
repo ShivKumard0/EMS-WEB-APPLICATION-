@@ -38,6 +38,7 @@
     if(el&&el.classList){el.classList.add('is-bad');if(el.focus)el.focus();setTimeout(function(){el.classList.remove('is-bad');},1600);}};
   /* Get OTP (product owner, 13 Nov 2026): the message as before, then four boxes under the mobile number; any four
      digits verify it. Changing the number asks again. Sign up needs the number verified. */
+  const EMAIL_OK=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const otpOk=function(){const b=document.getElementById('su-otp');return !!(b&&b.dataset.ok==='1');};
   const otpReset=function(){const b=document.getElementById('su-otp');if(b)b.remove();const g=document.getElementById('su-otp-get');if(g){g.disabled=false;g.style.opacity='';}};
   const otpCheck=function(){
@@ -47,9 +48,9 @@
     box.dataset.ok='1';
     ds.forEach(function(x){x.readOnly=true;x.style.background='var(--bg,#f9fafb)';});
     const ok=document.getElementById('su-otp-ok');if(ok)ok.style.display='';
-    const h=document.getElementById('su-otp-hint');if(h)h.textContent='Mobile number verified.';
+    const h=document.getElementById('su-otp-hint');if(h)h.textContent='Email verified.';
     const g=document.getElementById('su-otp-get');if(g){g.disabled=true;g.style.opacity='.55';}
-    const n=document.getElementById('su-fname');if(n&&!n.value)n.focus();
+    const n=document.getElementById('su-pass');if(n&&!n.value)n.focus();
   };
   window.suOtpKey=function(e,i){
     const ds=document.querySelectorAll('#su-otp .su-otp-d');
@@ -65,53 +66,51 @@
   if(typeof window.lgSuOtp==='function'){
     const o0=window.lgSuOtp;
     window.lgSuOtp=function(){
-      const m=val('su-mobile').replace(/[\s-]/g,'');
-      if(!m)return bad('su-mobile','Enter your mobile number');
-      if(!/^\d{7,15}$/.test(m))return bad('su-mobile','Enter a valid mobile number');
+      const m=val('su-email');
+      if(!m)return bad('su-email','Enter your official work email');
+      if(!EMAIL_OK.test(m))return bad('su-email','Enter a valid email address');
       if(otpOk())return;
       o0.apply(this,arguments);
       let box=document.getElementById('su-otp');
-      const dial=val('su-dial').replace(/^\w+\(|\)$/g,'');
       if(!box){
-        const row=document.getElementById('su-mobile').parentElement;
+        const row=document.getElementById('su-email').parentElement;
         box=document.createElement('div');box.id='su-otp';box.style.margin='2px 0 14px';
         let d='';for(let i=0;i<4;i++)d+='<input class="lg-input su-otp-d" type="text" inputmode="numeric" maxlength="4" autocomplete="one-time-code" aria-label="OTP digit '+(i+1)+'"'
           +' style="width:48px;height:46px;flex:none;margin:0;padding:0;text-align:center;font-size:18px;font-weight:600" oninput="suOtpIn(this,'+i+')" onkeydown="suOtpKey(event,'+i+')">';
-        box.innerHTML='<label class="lg-label">Enter OTP <span class="req">*</span></label>'
+        box.innerHTML='<label class="lg-label">Verification Code <span class="req">*</span></label>'
           +'<div style="display:flex;align-items:center;gap:10px">'+d+'<span id="su-otp-ok" style="display:none">'+(typeof axBadge==='function'?axBadge('ok','Verified'):'<span class="lp-status-badge tone-ok">Verified</span>')+'</span></div>'
           +'<p class="lg-sub" id="su-otp-hint" style="text-align:left;margin:8px 0 0;font-size:12.5px"></p>';
         row.parentNode.insertBefore(box,row.nextSibling);
         const g=row.querySelector('button');if(g)g.id='su-otp-get';
         /* A different number is verified again. */
-        ['su-mobile','su-dial'].forEach(function(id){const el=document.getElementById(id);if(el&&!el.dataset.otpWatch){el.dataset.otpWatch='1';el.addEventListener(id==='su-dial'?'change':'input',otpReset);}});
+        ['su-email'].forEach(function(id){const el=document.getElementById(id);if(el&&!el.dataset.otpWatch){el.dataset.otpWatch='1';el.addEventListener('input',otpReset);}});
       }else box.querySelectorAll('.su-otp-d').forEach(function(x){x.value='';});
-      const h=document.getElementById('su-otp-hint');if(h)h.textContent='Enter the 4-digit code sent to '+(dial?dial+' ':'')+m+'.';
+      const h=document.getElementById('su-otp-hint');if(h)h.textContent='Enter the 4-digit code sent to '+m+'.';
       const f=box.querySelector('.su-otp-d');if(f)f.focus();
     };
   }
+  /* Create Account (product owner, 16 Nov 2026): Organisation Name, Administrator's Full Name, Official Work Email
+     (verified), Password and Confirm Password, and the acceptance. The line in Company Settings keeps its fields: the
+     organisation is its name, the administrator its owner; what sign up no longer asks (mobile, country) is blank. */
   window.lgSuGo=function(){
-    const d={dial:val('su-dial'),mobile:val('su-mobile').replace(/[\s-]/g,''),first:val('su-fname'),last:val('su-lname'),email:val('su-email'),
-      store:val('su-store'),cat:val('su-cat'),country:val('su-country')};
+    const full=val('su-name').replace(/\s+/g,' '),sp=full.indexOf(' ');
+    const d={dial:'',mobile:'',first:sp<0?full:full.slice(0,sp),last:sp<0?'':full.slice(sp+1),email:val('su-email'),
+      store:val('su-org'),cat:'Expense Management',country:''};
     const p1=(document.getElementById('su-pass')||{}).value||'',p2=(document.getElementById('su-pass2')||{}).value||'';
-    if(!d.mobile)return bad('su-mobile','Enter your mobile number');
-    if(!/^\d{7,15}$/.test(d.mobile))return bad('su-mobile','Enter a valid mobile number');
-    if(!otpOk()){const b=document.querySelector('#su-otp .su-otp-d');if(b){showToast('Verify your mobile number','error','Enter the 4-digit OTP.');b.focus();return;}return bad('su-mobile','Verify your mobile number: click Get OTP');}
-    if(!d.first)return bad('su-fname','Enter your first name');
-    if(!d.last)return bad('su-lname','Enter your last name');
-    if(!d.email)return bad('su-email','Enter your email address');
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))return bad('su-email','Enter a valid email address');
+    if(!d.store)return bad('su-org','Enter your organisation name');
+    if(!full)return bad('su-name','Enter the administrator\'s full name');
+    if(!d.email)return bad('su-email','Enter your official work email');
+    if(!EMAIL_OK.test(d.email))return bad('su-email','Enter a valid email address');
+    if(!otpOk()){const b=document.querySelector('#su-otp .su-otp-d');if(b){showToast('Verify your email','error','Enter the 4-digit code.');b.focus();return;}return bad('su-email','Verify your email: click Verify');}
     if(!p1)return bad('su-pass','Enter a password');
-    if(!p2)return bad('su-pass2','Re-enter the password');
+    if(!p2)return bad('su-pass2','Confirm the password');
     if(p1!==p2)return bad('su-pass2','The two passwords do not match');
-    if(!d.store)return bad('su-store','Enter your store name');
-    if(!d.cat)return bad('su-cat','Choose the store category');
-    if(!d.country)return bad('su-country','Choose the country');
-    if(!(document.getElementById('su-tc')||{}).checked)return bad('su-tc','Accept the Terms & Conditions');
-    if(!(document.getElementById('su-msa')||{}).checked)return bad('su-msa','Accept the MSA');
-    const now=new Date(),t=stamp(now),who=d.first+' '+d.last;
+    if(!(document.getElementById('su-tc')||{}).checked){showToast('Agree to the Terms & Conditions','error','Tick the first box to create the account.');return;}
+    if(!(document.getElementById('su-pn')||{}).checked){showToast('Acknowledge the Privacy Notice','error','Tick the second box to create the account.');return;}
+    const now=new Date(),t=stamp(now),who=full;
     let r=find(d.email);
-    const log={date:t.date,time:t.time,user:who,status:'Pending',action:'Signed up. '+d.store+' · '+d.cat+' · '+d.country+'.'};
-    if(r){Object.assign(r,d,{pass:hash(d.email,p1),status:'Pending',entityId:'',updated:now.toISOString()});r.logs.unshift(Object.assign(log,{action:'Signed up again. '+d.store+' · '+d.cat+' · '+d.country+'.'}));}
+    const log={date:t.date,time:t.time,user:who,status:'Pending',action:'Signed up. '+d.store+'.'};
+    if(r){Object.assign(r,d,{pass:hash(d.email,p1),status:'Pending',entityId:'',updated:now.toISOString()});r.logs.unshift(Object.assign(log,{action:'Signed up again. '+d.store+'.'}));}
     else{r=Object.assign({},d,{pass:hash(d.email,p1),status:'Pending',entityId:'',created:now.toISOString(),updated:now.toISOString(),logs:[log]});recs.push(r);norm(r);}
     save();
     if(typeof lgSuBack==='function')lgSuBack();
@@ -142,7 +141,7 @@
       setTimeout(function(){
         if(btn){btn.disabled=false;btn.textContent='Sign in';}
         if(typeof lgEnter==='function')lgEnter();
-        showToast('Welcome to Bhaiyaa','success','You are in Dhi Hyperlocal as the Super Admin.');
+        showToast('Welcome to ONC','success','You are in Dhi Hyperlocal as the Super Admin.');
       },450);
     };
   });
@@ -188,15 +187,11 @@
     });
     if(added)save();
   })();
-  /* No sign up on the sign-in page (product owner, 15 Nov 2026: "now i dont want to show sign up, directly i want to show
-     sign in"): the "Don't have an account? Sign up" line is hidden; signing in is unchanged. */
-  (function(){
-    const st=document.createElement('style');st.id='lg-no-signup';st.textContent='#v-login .lg-foot{display:none!important}';
-    (document.head||document.documentElement).appendChild(st);
-  })();
+  /* The "Don't have an account? Sign up" line is back under Sign in (product owner, 16 Nov 2026: "after signing out I
+     want to give a sign up button at the bottom"); it was hidden on 15 Nov. Signing in is unchanged. */
   const recOfRow=function(n){if(!inDhi())return null;const i=Number(n)-2;return i>=0&&i<recs.length?norm(recs[i]):null;};
   const updatedCell=function(iso){const d=new Date(iso),n=new Date();return d.toDateString()===n.toDateString()?'Today':d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();};
-  const ownerOf=function(r){return (r.tabs&&r.tabs['basic-details']&&r.tabs['basic-details'].owner)||(r.first+' '+r.last);};
+  const ownerOf=function(r){return (r.tabs&&r.tabs['basic-details']&&r.tabs['basic-details'].owner)||(r.first+' '+r.last).trim();};
   let listing=false;   // true while the list itself is drawn: the sign-ups go first
   if(typeof csEntityRows==='function'){
     const e0=csEntityRows;
@@ -294,7 +289,7 @@
   function valOf(r,tab,f,forForm){
     if(f.k==='entityId')return r.entityId||'';
     if(f.k==='created')return when(r.created);
-    if(f.k==='createdBy')return r.first+' '+r.last;
+    if(f.k==='createdBy')return (r.first+' '+r.last).trim();
     if(f.k==='updated')return when(r.updated);
     if(f.k==='owner')return ownerOf(r);
     if(f.k==='mobile')return forForm?r.mobile:(dialOf(r)+' '+r.mobile).trim();
@@ -338,7 +333,7 @@
     }).join('');
   }
   function rolesHTML(r){
-    const rows=[{name:r.first+' '+r.last,email:r.email,role:'Company Admin',added:when(r.created).split(' | ')[0],owner:true}].concat(r.roles);
+    const rows=[{name:(r.first+' '+r.last).trim(),email:r.email,role:'Company Admin',added:when(r.created).split(' | ')[0],owner:true}].concat(r.roles);
     const add=suAdd&&suAdd===r.uid;
     const head=sectionTitle('Roles & Access',add?'':'<button class="lp-sb-view-edit-btn" onclick="suRoleAdd()">+ Add Member</button>');
     const form=add?'<div class="lp-sb-edit-form ax-sb-edit" style="margin-bottom:14px"><div class="lp-sb-edit-section"><div class="ep-form-grid">'

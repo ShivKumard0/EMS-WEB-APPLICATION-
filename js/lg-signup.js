@@ -20,33 +20,53 @@
     +opts.map(function(o){return '<option>'+o+'</option>';}).join('')+'</select>';};
   const chk=function(id,text){return '<label style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:13px;color:var(--gray,#6a7282);cursor:pointer">'
     +'<input type="checkbox" id="'+id+'"> '+text+'</label>';};
+  /* The fields of the sign-up page (product owner, 16 Nov 2026): Organisation Name, Administrator's Full Name, Official
+     Work Email (verified with a code), Password and Confirm Password, two acceptances (the Terms & Conditions; the
+     Privacy Notice), both needed, and Create Account. */
+  const tick=function(id,html){return '<label style="display:flex;align-items:flex-start;gap:8px;margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--gray,#6a7282);cursor:pointer">'
+    +'<input type="checkbox" id="'+id+'" style="margin-top:3px;flex:none"> <span>'+html+'</span></label>';};
+  const doc=function(k,text){return '<a href="#" class="lg-link" style="font-size:13px" onclick="event.preventDefault();event.stopPropagation();lgSuDoc(\''+k+'\')">'+text+'</a>';};
   function formHTML(){
     return '<div style="margin-bottom:14px"><button type="button" class="lg-link" style="text-decoration:none" onclick="lgSuBack()">&larr; Back</button></div>'
-      +'<h2 style="text-align:left">Welcome to Bhaiyaa!</h2>'
-      +'<p class="lg-sub" style="text-align:left;margin-bottom:22px">Create your account to get started.</p>'
-      +lbl('su-mobile','Mobile Number')
+      +'<h2 style="text-align:left">Create your account</h2>'
+      +'<p class="lg-sub" style="text-align:left;margin-bottom:22px">Set up your organisation on ONC.</p>'
+      +lbl('su-org','Organisation Name')+inp('su-org','text','Enter your organisation name')
+      +lbl('su-name','Administrator&rsquo;s Full Name')+inp('su-name','text','Enter the administrator&rsquo;s full name')
+      +lbl('su-email','Official Work Email')
       +'<div style="display:flex;gap:8px;align-items:flex-start">'
-        +'<select class="lg-input" id="su-dial" style="width:96px;flex:none;padding:0 8px"><option>IN(+91)</option><option>AE(+971)</option><option>SG(+65)</option><option>UK(+44)</option><option>US(+1)</option></select>'
-        +'<input class="lg-input" id="su-mobile" type="tel" placeholder="Mobile Number" autocomplete="off" style="flex:1;min-width:0">'
-        +'<button type="button" class="lg-google" style="flex:none;height:42px;padding:0 14px;border-radius:12px" onclick="lgSuOtp()">Get OTP</button>'
+        +'<input class="lg-input" id="su-email" type="email" placeholder="name@company.com" autocomplete="off" style="flex:1;min-width:0">'
+        +'<button type="button" class="lg-google" id="su-otp-get" style="flex:none;height:42px;padding:0 16px;border-radius:12px" onclick="lgSuOtp()">Verify</button>'
       +'</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-        +'<div>'+lbl('su-fname','First Name')+inp('su-fname','text','Enter Your First Name')+'</div>'
-        +'<div>'+lbl('su-lname','Last Name')+inp('su-lname','text','Enter Your Last Name')+'</div>'
-      +'</div>'
-      +lbl('su-email','Email ID')+inp('su-email','email','Enter Your Email Address')
-      +lbl('su-pass','Password')+pass('su-pass','Enter Password')
-      +lbl('su-pass2','Re-Enter Password')+pass('su-pass2','Re-Enter Password')
-      +lbl('su-store','Enter Your Store Name')+inp('su-store','text','Store Name')
-      +lbl('su-cat','Choose Store Category')+sel('su-cat',CATS,'Select Store Category')
-      +lbl('su-country','Country')+sel('su-country',COUNTRIES,'Select Country')
+      +lbl('su-pass','Password')+pass('su-pass','Enter password')
+      +lbl('su-pass2','Confirm Password')+pass('su-pass2','Re-enter password')
       +'<div style="margin:4px 0 18px">'
-        +chk('su-tc','I accept the <span class="lg-link" style="font-size:13px">Terms &amp; Conditions</span>')
-        +chk('su-msa','I accept the <span class="lg-link" style="font-size:13px">MSA</span>')
+        +tick('su-tc','I agree to the OpenDhi ONC '+doc('terms','Terms &amp; Conditions')+' on behalf of my organisation and confirm that I am authorised to do so.')
+        +tick('su-pn','I acknowledge that I have read the '+doc('privacy','Privacy Notice')+'.')
       +'</div>'
-      +'<button type="button" class="lg-btn" onclick="lgSuGo()">Sign up</button>'
+      +'<button type="button" class="lg-btn" onclick="lgSuGo()">Create Account</button>'
       +'<p class="lg-foot">Already have an account? <button type="button" class="lg-link" onclick="lgSuBack()">Sign in</button></p>';
   }
+  /* The Terms & Conditions and the Privacy Notice open over the form to read; the wording is the company's to supply. */
+  const DOCS={terms:['Terms &amp; Conditions',['These Terms &amp; Conditions govern your organisation&rsquo;s use of the ONC platform.',
+      'By creating an account you confirm that you are authorised to act for your organisation, that the details you give are accurate, and that the people you invite will use the platform for your organisation&rsquo;s business only.',
+      'Your organisation remains responsible for the activity under its account, for keeping sign-in details confidential, and for the requests and approvals its users make.',
+      'The full Terms &amp; Conditions are shared with your organisation at onboarding.']],
+    privacy:['Privacy Notice',['This Privacy Notice explains how ONC handles the information you provide.',
+      'We use your organisation&rsquo;s name, the administrator&rsquo;s name and the official work email to create and secure the account, to verify the email address, and to contact you about the service.',
+      'Information about your employees is used only to provide the services your organisation switches on, and is not sold or shared for advertising.',
+      'The full Privacy Notice is shared with your organisation at onboarding.']]};
+  window.lgSuDoc=function(k){
+    const d=DOCS[k];if(!d)return;lgSuDocClose();
+    const o=document.createElement('div');o.id='su-doc';
+    o.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:24px';
+    o.onclick=function(e){if(e.target===o)lgSuDocClose();};
+    o.innerHTML='<div role="dialog" aria-modal="true" style="background:#fff;border-radius:16px;max-width:520px;width:100%;padding:26px 28px;box-shadow:0 20px 50px rgba(15,23,42,.25)">'
+      +'<h3 style="margin:0 0 12px;font-size:18px;font-weight:600;color:var(--navy,#0f172a)">'+d[0]+'</h3>'
+      +d[1].map(function(t){return '<p style="margin:0 0 10px;font-size:13.5px;line-height:1.6;color:var(--gray,#6a7282)">'+t+'</p>';}).join('')
+      +'<div style="display:flex;justify-content:flex-end;margin-top:16px"><button type="button" class="lg-btn" style="width:auto;padding:0 22px;height:40px" onclick="lgSuDocClose()">Close</button></div></div>';
+    document.body.appendChild(o);
+  };
+  window.lgSuDocClose=function(){const o=document.getElementById('su-doc');if(o)o.remove();};
   window.lgSignUp=function(){
     const c=card();if(!c)return;
     if(signInHTML==null)signInHTML=c.innerHTML;
@@ -60,8 +80,8 @@
   };
   window.lgSuEye=function(id){const e=document.getElementById(id);if(e)e.type=e.type==='password'?'text':'password';};
   window.lgSuOtp=function(){
-    const m=(document.getElementById('su-mobile')||{}).value||'';
-    showToast('OTP sent','success',m.trim()?'A code was sent to '+(document.getElementById('su-dial')||{}).value.replace(/^\w+/,'')+' '+m.trim()+'.':'A code was sent to your mobile number.');
+    const m=(document.getElementById('su-email')||{}).value||'';
+    showToast('Verification code sent','success',m.trim()?'A code was sent to '+m.trim()+'.':'A code was sent to your email.');
   };
   /* Whatever is entered: in as the OpenDhi Super Admin, in Dhi Hyperlocal. Nothing is created or kept. */
   window.lgSuGo=function(){
@@ -72,6 +92,6 @@
     if(dh){seSelectedEntity=dh.id;if(typeof appEntityChanged==='function')appEntityChanged();}
     lgSuBack();   // the next Sign Out shows the sign-in card again
     if(typeof lgEnter==='function')lgEnter();
-    showToast('Welcome to Bhaiyaa','success','You are in Dhi Hyperlocal as the Super Admin.');
+    showToast('Welcome to ONC','success','You are in Dhi Hyperlocal as the Super Admin.');
   };
 })();
