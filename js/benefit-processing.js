@@ -57,7 +57,7 @@
   const financeName=function(){const u=typeof idUserByEmail==='function'?idUserByEmail('rohan.mehta@opendhi.in'):null;return u&&typeof idName==='function'?idName(u.userId):'Finance';};
 
   let fy=+today().slice(0,4),fm=+today().slice(5,7),fBranch='',fDept='',fStatus='',q='';
-  let sel={},open=null,tab='details',confirm=null,act=null,adjOf=null,reject=null;
+  let sel={},open=null,tab='details',confirm=null,act=null,adjOf=null,reject=null,wm=null;   // wm: the month picked in the Wallets tab
   let barWas=false,barLast='',adjDone=null;   // the bar's last shown state and content, so it can slide in and fade out
   const month=function(){return fy+'-'+p2(fm);};
   const nowM=function(){return today().slice(0,7);};
@@ -189,6 +189,42 @@
       b.spent[c.id]=o;if(typeof presSaveSoon==='function')presSaveSoon();
     }
     return b.spent[c.id];
+  }
+
+  /* ── An earlier month's wallet statement (product owner, 16 Nov 2026) ──
+     "Last month what was the wallet balance, how much she got, how much she spent, and before last month like that ...
+     in the Wallets tab a month and a year drop-down ... the numbers should match": the month picked in the Wallets tab
+     shows, per wallet, the opening balance, what was loaded, what was spent and the closing balance.
+     - Loaded and Spent of a month are the same figures the following month shows as "<month> Loaded / Spent"
+       (the month's own load and card spend where they exist; the baseline for the month before records begin).
+     - Months before that, back to April 2026, carry the same entitlement and a spend worked out once from the card
+       and the month, never above what the wallet held. Each month opens with what the month before closed with.
+     Read only: nothing is stored, and no load, review, approval or balance is changed by looking. */
+  const HIST_START='2026-04';
+  const nextOf=function(m){const t=m.split('-');let y=+t[0],k=+t[1]+1;if(k>12){k=1;y++;}return y+'-'+p2(k);};
+  function histLoaded(c,m){
+    const it=itemOf(m,c.id);if(it)return it.wallets;
+    const e=entRec(),b=e&&e.bpBase;
+    return b&&b.limits[c.id]&&m<=b.month&&m>=HIST_START?b.limits[c.id]:null;
+  }
+  function histMonth(c,m){
+    if(m<HIST_START||m>=nowM())return null;
+    const e=entRec(),b=e&&e.bpBase;
+    let open={},out=null;
+    for(let x=HIST_START;x<=m;x=nextOf(x)){
+      const L=histLoaded(c,x);
+      if(!L){out=null;continue;}
+      const known=!b||x>=b.month?spentLast(c,nextOf(x)):null,rows={};
+      Object.keys(L).forEach(function(t){
+        const o=open[t]||0,l=Number(L[t])||0;
+        let sp=known?Number(known[t])||0:Math.round(l*(0.74+0.38*hash(c.id+'|'+t+'|'+x))/10)*10;
+        if(!known)sp=Math.min(sp,o+l);
+        rows[t]={open:o,loaded:l,spent:sp,close:o+l-sp};
+      });
+      open={};Object.keys(rows).forEach(function(t){open[t]=rows[t].close;});
+      out=rows;
+    }
+    return out;
   }
 
   /* ── Logs ── */
@@ -409,6 +445,24 @@
     const c=typeof ccCard==='function'?ccCard(open):null;
     return c&&adjOf&&editable(c,month())?adjFormHTML(c,month()):'';
   };
+  /* The Wallets tab's own month and year (never later than this month). */
+  function periodHTML(v){
+    const ny=+nowM().slice(0,4),nm=+nowM().slice(5,7),y=+v.slice(0,4),years=[];
+    for(let i=+HIST_START.slice(0,4);i<=ny;i++)years.push(String(i));
+    const months=y===ny?MON.slice(0,nm):MON;
+    return '<div class="bpx-wm"><span class="bpx-wm-l">Period</span>'
+      +(typeof apCS==='function'?apCS('bpx-wm-month',months,MON[+v.slice(5,7)-1],'Month','bpxWmPick')+apCS('bpx-wm-year',years,String(y),'Year','bpxWmPick'):'')
+      +(v!==nowM()?'<button type="button" class="btn-outline btn-sm" onclick="bpxWmNow()">This Month</button>':'')+'</div>';
+  }
+  window.bpxWmPick=function(){
+    if(typeof getCSValue!=='function')return;
+    const mo=MON.indexOf(getCSValue('bpx-wm-month')),y=+getCSValue('bpx-wm-year');
+    if(mo<0||!y)return;
+    let v=y+'-'+p2(mo+1);if(v>nowM())v=nowM();
+    if(v===(wm||month()))return;
+    wm=v;adjOf=null;paintConfirm();repanel();
+  };
+  window.bpxWmNow=function(){wm=nowM();repanel();};
   function panelHTML(){
     const c=typeof ccCard==='function'?ccCard(open):null;if(!c)return '';
     const tabs=[{id:'details',label:'Details'},{id:'wallets',label:'Wallets'},{id:'logs',label:'Logs'},{id:'history',label:'History'},{id:'workflow',label:'Workflow'}];
@@ -418,11 +472,28 @@
     const I=typeof AX_ICO!=='undefined'?AX_ICO:{},F=function(ico,l,v){return typeof axField==='function'?axField(ico||'',l,v):'';};
     const hero=typeof sbHero==='function'?sbHero({icon:(typeof sbIco!=='undefined'&&sbIco.card)||'',name:E(empName(c)),meta:[E(keyOf(c)),E(cardNo(c)),E(mLabel(m))],status:badge(TONE[st]||'idle',st)}):'';
     let body='';
-    if(tab==='wallets'){
+    const wv=wm&&wm<=nowM()?wm:m;
+    if(tab==='wallets'&&wv!==nowM()){
+      const types=benefitTypes(),h=histMonth(c,wv),ks=h?types.filter(function(t){return h[t];}).concat(Object.keys(h).filter(function(t){return types.indexOf(t)<0;})):[];
+      const T=function(k){return ks.reduce(function(a,t){return a+h[t][k];},0);};
+      const tile=function(l,v,tone){return '<div class="bpx-ht"><div class="bpx-ht-l">'+l+'</div><div class="bpx-ht-v"'+(tone?' style="color:'+tone+'"':'')+'>'+v+'</div></div>';};
+      body=hero+periodHTML(wv)
+        +'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Wallet Statement · '+E(mLabel(wv))+'</span><span class="wb-muted">View only</span></div>'
+        +(ks.length
+          ?'<div class="bpx-hts">'+tile('Opening Balance',money(T('open')))+tile('Loaded',money(T('loaded')),'#15803d')+tile('Spent',money(T('spent')),'#b45309')+tile('Closing Balance',money(T('close')))+'</div>'
+            +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc bpx-hist"><thead><tr><th>Wallet</th><th class="bpx-num">Opening Balance</th><th class="bpx-num">Loaded</th><th class="bpx-num">Spent</th><th class="bpx-num">Closing Balance</th></tr></thead><tbody>'
+            +ks.map(function(t){const r=h[t];
+              return '<tr><td class="csag-td"><div class="lp-c-main">'+E(wName(t))+'</div></td><td class="csag-td bpx-num">'+money(r.open)+'</td><td class="csag-td bpx-num">'+money(r.loaded)+'</td>'
+                +'<td class="csag-td bpx-num">'+money(r.spent)+'</td><td class="csag-td bpx-num" style="font-weight:600">'+money(r.close)+'</td></tr>';}).join('')
+            +'<tr class="bpx-hist-tot"><td class="csag-td"><div class="lp-c-main">Total</div></td><td class="csag-td bpx-num">'+money(T('open'))+'</td><td class="csag-td bpx-num">'+money(T('loaded'))+'</td><td class="csag-td bpx-num">'+money(T('spent'))+'</td><td class="csag-td bpx-num">'+money(T('close'))+'</td></tr>'
+            +'</tbody></table></div>'
+            +'<div class="ea-hint" style="margin-top:12px">Closing balance = opening balance + loaded − spent.'+(nextOf(wv)<nowM()?' It is the opening balance of '+E(mLabel(nextOf(wv)))+'.':'')+'</div>'
+          :'<div class="bpx-hist-none">No wallet load was processed for this card in '+E(mLabel(wv))+'.</div>');
+    }else if(tab==='wallets'){
       const types=benefitTypes(),bal=typeof emsLedgerWallets==='function'?emsLedgerWallets(c.employeeEid,c.id):{};
       const sp=spentLast(c,m),loaded=!!it,pm=mLabel(prevOf(m)).split(' ')[0],ed=editable(c,m),A=adjs(c,m);
       const tE=sum(pl),tF=live?sum(fin):0;
-      body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Reviewed'||st==='Approved'?st+' - cannot be edited':loaded?'Disbursed - cannot be edited':'')+'</span></div>'
+      body=hero+periodHTML(m)+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Benefit Calculation · '+E(mLabel(m))+'</span><span class="wb-muted">'+(ed?'Use the pencil to adjust a wallet':st==='Reviewed'||st==='Approved'?st+' - cannot be edited':loaded?'Disbursed - cannot be edited':'')+'</span></div>'
         +'<div class="att-table-wrap csag-table-wrap"><table class="att-table csag-table bpx-calc"><thead><tr><th>Wallet</th><th class="bpx-num">'+E(pm)+' Loaded</th><th class="bpx-num">'+E(pm)+' Spent</th>'
         +'<th class="bpx-num">Entitlement</th><th class="bpx-num">Adjustment</th><th class="bpx-num">Balance</th>'+(ed?'<th></th>':'')+'</tr></thead><tbody>'
         +types.map(function(t){
@@ -672,7 +743,7 @@
     sb.classList.add('open');isbTab('bpx',panelHTML);
     document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.toggle('lp-row-selected',x.id==='bpx-row-'+id);});
   };
-  window.bpxClose=function(){open=null;act=null;adjOf=null;tab='details';const sb=document.getElementById('bpx-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
+  window.bpxClose=function(){open=null;act=null;adjOf=null;wm=null;tab='details';const sb=document.getElementById('bpx-split-sb');if(sb)sb.classList.remove('open');document.querySelectorAll('.bpx-row').forEach(function(x){x.classList.remove('lp-row-selected');});};
   window.bpxNav=function(t){tab=t;if(t!=='wallets')adjOf=null;if(t!=='logs')act=null;repanel();};
   window.bpxConfirmOpen=function(mode){
     if(!isNow()||(mode==='submit'?!canReview():!canApprove()))return;
@@ -801,6 +872,15 @@
       +'.bpx-step{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;margin-bottom:12px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;font-size:13px;color:var(--navy,#0f172a)}'
       +'.bpx-step-arrow{color:#6b7280;font-size:15px}.bpx-step-txt{margin-left:6px}.bpx-step-txt b{font-weight:700}'
       +'.bpx-calc tr.bpx-on td{background:#f1f5f9}'
+      +'.bpx-wm{display:flex;align-items:center;gap:10px;margin:18px 0 18px;padding:10px 14px;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff}'
+      +'.bpx-wm-l{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray,#6a7282);margin-right:4px}'
+      +'.bpx-wm>[id^="csw-bpx-wm-month"]{width:150px;flex:none}.bpx-wm>[id^="csw-bpx-wm-year"]{width:104px;flex:none}.bpx-wm>button{margin-left:auto}'
+      +'.bpx-hts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 16px}'
+      +'.bpx-ht{border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;padding:12px 14px;min-width:0}'
+      +'.bpx-ht-l{font-size:12px;color:var(--gray,#6a7282);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      +'.bpx-ht-v{font-size:16px;font-weight:600;color:var(--navy,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}'
+      +'.bpx-hist td,.bpx-hist th{padding-top:13px;padding-bottom:13px}.bpx-hist-tot td{background:#f8fafc;font-weight:600;border-top:1px solid var(--border,#e5e7eb)}'
+      +'.bpx-hist-none{margin-top:14px;padding:28px 16px;border:1px dashed var(--border,#e5e7eb);border-radius:12px;text-align:center;font-size:13px;color:var(--gray,#6a7282)}'
       +'.bpx-pen{width:40px;text-align:right}.bpx-pen-btn{width:28px;height:28px;border:1px solid var(--border,#e5e7eb);border-radius:8px;background:#fff;color:var(--navy,#0f172a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}'
       +'.bpx-pen-btn:hover{background:#f1f5f9}.bpx-pen-btn svg{width:13px;height:13px}'
       +'.bpx-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px;border:1px solid var(--border,#e5e7eb);border-radius:12px;overflow:hidden;background:#fff}'
