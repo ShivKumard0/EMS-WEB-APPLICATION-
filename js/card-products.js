@@ -460,11 +460,11 @@ const ccpBook={};
     /* Card List also as its own item, right under it (product owner, 13 Nov 2026: "unable to see the card list"). */
     if(g&&!g.children.some(function(c){return c.id===PGL;})){
       const I=typeof sbIco!=='undefined'?sbIco:{},at=g.children.findIndex(function(c){return c.id===PG;});
-      g.children.splice(at<0?g.children.length:at+1,0,{id:PGL,label:'Card List',color:'green',icon:I.fileText||I.card||''});
+      g.children.splice(at<0?g.children.length:at+1,0,{id:PGL,label:'Card Management',color:'green',icon:I.fileText||I.card||''});
     }
   }
   [PG,PGL].forEach(function(id){
-    if(typeof supportPageMeta!=='undefined')supportPageMeta[id]={title:id===PGL?'Card List':'Cards',context:id===PGL?'Card List':'Cards',filters:[],columns:[],rows:[]};
+    if(typeof supportPageMeta!=='undefined')supportPageMeta[id]={title:id===PGL?'Card Management':'Cards',context:id===PGL?'Card Management':'Cards',filters:[],columns:[],rows:[]};
     if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[id]='cards';
     if(typeof EMS_CLIENT_PAGES!=='undefined'&&EMS_CLIENT_PAGES.indexOf(id)<0)EMS_CLIENT_PAGES.push(id);
   });
@@ -487,7 +487,7 @@ const ccpBook={};
   }
   if(typeof getPageTitle==='function'){
     const t0=getPageTitle;
-    getPageTitle=function(pg){return pg===PG?'Cards':pg===PGL?'Card List':t0.apply(this,arguments);};
+    getPageTitle=function(pg){return pg===PG?'Cards':pg===PGL?'Card Management':t0.apply(this,arguments);};
   }
   if(typeof renderADTPage==='function'){
     const a0=renderADTPage;
