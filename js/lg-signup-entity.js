@@ -524,9 +524,10 @@
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="lp-sb-section-title">Card Setup</span>'
         +(d?(typeof axBadge==='function'?axBadge('wait','Unsaved changes'):'Unsaved changes'):'')+'</div>'
       +'<div style="font-size:11.5px;color:var(--gray,#6a7282);margin-top:6px">The bank that issues the company\'s cards, and the wallets on its card. One bank at a time.</div>'
-      +'<div class="mcs-h">Banks</div>'
+      +'<div class="mcs-h">'+(c.bank?'Bank':'Banks')+'</div>'
       /* A toggle per bank (product owner, 13 Nov 2026): while one is on, the other two are locked until it is turned off. */
-      +CCS_BANKS.map(function(b){const on=c.bank===b[0],locked=!!c.bank&&!on,cur=locked?(CCS_BANKS.find(function(x){return x[0]===c.bank;})||[0,''])[1]:'';
+      /* Once a bank is on, the other two are not shown; turning it off brings all three back (product owner, 17 Nov 2026). */
+      +CCS_BANKS.filter(function(b){return !c.bank||c.bank===b[0];}).map(function(b){const on=c.bank===b[0],locked=!!c.bank&&!on,cur=locked?(CCS_BANKS.find(function(x){return x[0]===c.bank;})||[0,''])[1]:'';
         return '<div class="mcs-card"><div class="mcs-row"><div class="mcs-txt"><div class="mcs-name">'+esc(b[1])+'</div><div class="mcs-sub">'+esc(b[2])+'</div></div>'
           +'<label class="cs-toggle"'+(locked?' title="Turn off '+attrSafe(cur)+' first" style="cursor:not-allowed"':' title="'+(on?'Turn off':'Turn on')+' '+attrSafe(b[1])+'"')+'>'
             +'<input type="checkbox" aria-label="'+attrSafe(b[1])+'"'+(on?' checked':'')+(locked?' disabled':'')+' onchange="ccsBank(this.checked?\''+b[0]+'\':\'\')">'
