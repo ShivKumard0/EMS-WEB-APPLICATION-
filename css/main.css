@@ -159,7 +159,8 @@ body{font-family:'Inter',sans-serif;background:var(--light);color:var(--navy);ov
    logo. Back to ordinary topbar spacing: the 20px gutter and one 12px gap. */
 .view.sb-collapsed .adt-logo{margin-left:0;margin-right:var(--pg-gutter, 32px);min-width:0}
 /* Bhaiyaa logo (product owner, 11 Nov 2026): 32px tall in the 56px header - about 107px wide, centred over the rail. */
-.adt-logo img{height:32px;width:auto;display:block}
+/* Full ONC logo with its "powered by OpenDhi" line (product owner, 17 Nov 2026): 46px tall in the 56px header, about 126px wide. */
+.adt-logo img{height:46px;width:auto;display:block}
 .adt-logo svg{width:28px;height:28px}
 .adt-logo-text{font-weight:800;font-size:18px;color:var(--navy);letter-spacing:-.5px}
 .topbar-page{font-size:14px;font-weight:600;color:var(--navy);white-space:nowrap}
