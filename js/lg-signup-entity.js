@@ -379,7 +379,7 @@
     const chev=function(d){return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="'+(d==='left'?'15 18 9 12 15 6':'9 18 15 12 9 6')+'"/></svg>';};
     const bar='<div class="lp-isb-tabbar">'
       +'<button class="lp-isb-nav-btn" onclick="scrollTabRow(\'left\',\'cs-isb-tabs\')" title="Scroll left">'+chev('left')+'</button>'
-      +'<div class="lp-isb-tabs" id="cs-isb-tabs">'+TABS.map(function(t){return '<button class="lp-isb-tab'+(suTab===t[0]?' active':'')+'" onclick="suEntTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>'
+      +'<div class="lp-isb-tabs" id="cs-isb-tabs">'+TABS.filter(function(t){return !(typeof csTabsOff==='function'&&csTabsOff().indexOf(t[0])>=0);}).map(function(t){return '<button class="lp-isb-tab'+(suTab===t[0]?' active':'')+'" onclick="suEntTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>'
       +'<button class="lp-isb-nav-btn nav-right" onclick="scrollTabRow(\'right\',\'cs-isb-tabs\')" title="Scroll right">'+chev('right')+'</button>'
       +'<div class="lp-isb-right"><button class="lp-isb-close" onclick="closeCsSidebar()" title="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>';
     let body='';
