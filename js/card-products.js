@@ -463,6 +463,15 @@ const ccpBook={};
       g.children.splice(at<0?g.children.length:at+1,0,{id:PGL,label:'Card Management',color:'green',icon:I.fileText||I.card||''});
     }
   }
+  /* A menu saved by a browser earlier still says Card List: the name is put right each time the menu is drawn
+     (product owner, 17 Nov 2026: Card List reads Card Management). Label only. */
+  if(typeof buildSidebar==='function'){
+    const b0=buildSidebar;
+    buildSidebar=function(){
+      try{sidebarItems.forEach(function(x){(x&&x.children||[]).forEach(function(c){if(c&&c.id===PGL&&c.label!=='Card Management')c.label='Card Management';});});}catch(e){}
+      return b0.apply(this,arguments);
+    };
+  }
   [PG,PGL].forEach(function(id){
     if(typeof supportPageMeta!=='undefined')supportPageMeta[id]={title:id===PGL?'Card Management':'Cards',context:id===PGL?'Card Management':'Cards',filters:[],columns:[],rows:[]};
     if(typeof MC_PAGE_MODULE!=='undefined')MC_PAGE_MODULE[id]='cards';
