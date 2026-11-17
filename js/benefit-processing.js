@@ -347,6 +347,10 @@
   function shown(){
     const m=month(),s=q.trim().toLowerCase();
     return cards().filter(function(c){
+      /* No Inactive line on the page (product owner, 17 Nov 2026: "in wallet load remove the inactive line item ...
+         on the confirmation page make the inactive to 0"): a card that is not Active, or whose employee is not, is
+         not listed, so it is never selected or counted. The card itself is untouched. */
+      if(status(c,m)==='Inactive')return false;
       if(fBranch&&branchOf(c)!==fBranch)return false;
       if(fDept&&(emp(c).dept||'')!==fDept)return false;
       if(fStatus&&status(c,m)!==fStatus)return false;
@@ -384,7 +388,7 @@
   }
   function pageHTML(){
     baseline();sampleAdjustments();
-    const m=month(),rows=shown(),all=cards(),okAll=rows.filter(pickable);
+    const m=month(),rows=shown(),all=cards().filter(function(c){return status(c,m)!=='Inactive';}),okAll=rows.filter(pickable);
     if(open!=null&&!rows.some(function(c){return c.id===open;})){open=null;adjOf=null;act=null;}
     const allOn=okAll.length>0&&okAll.every(function(c){return sel[c.id];});
     const trs=rows.map(function(c,i){
