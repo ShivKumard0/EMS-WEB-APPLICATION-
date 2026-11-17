@@ -42,8 +42,32 @@
     let out=l0.apply(this,arguments);
     if(out.indexOf('<th>Substatus</th>')<0)out=out.replace('<th>Status</th>','<th>Status</th><th>Substatus</th>');
     /* An empty list's message spans the new column too. */
-    return out.replace(/(<td[^>]*colspan=")(\d+)("[^>]*>)/g,function(m,a,n,b){return a+(Number(n)+1)+b;});
+    out=out.replace(/(<td[^>]*colspan=")(\d+)("[^>]*>)/g,function(m,a,n,b){return a+(Number(n)+1)+b;});
+    /* A Partially Approved tile, right after Approved (product owner, 17 Nov 2026: "in the top add partially approved
+       card after approved"). It counts the rows whose Substatus pill reads Partially Approved - Approved, Reimbursed
+       or Disbursed - and a click lists just those. The other tiles count what they counted. */
+    if(typeof caStat==='function'&&typeof eaRows==='function'){
+      const tmp=document.createElement('div');tmp.innerHTML=out;
+      const box=tmp.querySelector('.exp-stats');
+      const ap=box?Array.prototype.find.call(box.children,function(t){const l=t.querySelector('.listing-stat-label');return l&&l.textContent.trim()==='Approved';}):null;
+      if(ap&&box.innerHTML.indexOf('eaSubStat(')<0){
+        const n=eaRows().filter(function(x){return sub(x)===PART;}).length;
+        const h=document.createElement('div');h.innerHTML=caStat(PART,n,subF,'eaSubStat()','info');
+        box.insertBefore(h.firstElementChild,ap.nextSibling);out=tmp.innerHTML;
+      }
+    }
+    return out;
   };
+  /* The tile's own filter: on its own, so the Status filter and its tiles work as before. */
+  const PART='Partially Approved';let subF=false;
+  window.eaSubStat=function(){
+    subF=!subF;
+    if(subF&&typeof eaApprF!=='undefined')eaApprF='';
+    if(typeof eaClosePanels==='function')eaClosePanels();renderADTPage();
+  };
+  if(typeof eaRowPass==='function'){const p0=eaRowPass;eaRowPass=function(x){return p0.apply(this,arguments)&&(!subF||sub(x)===PART);};}
+  if(typeof eaResetVals==='function'){const v0=eaResetVals;eaResetVals=function(){subF=false;return v0.apply(this,arguments);};}
+  if(typeof eaStat==='function'){const s0=eaStat;eaStat=function(){subF=false;return s0.apply(this,arguments);};}
   (function(){
     if(document.getElementById('ea-sub-style'))return;
     const st=document.createElement('style');st.id='ea-sub-style';
