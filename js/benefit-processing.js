@@ -538,14 +538,15 @@
         }).join('')+'</tbody></table></div>'
         +'<div class="ea-hint" style="margin-top:10px">'+(loaded?'The balance includes this month\'s load.':live?'The balance goes up by the Final Load once the load is disbursed.':'This card is not processed this month: '+E(why(c)||'no wallet limit is set')+'.')+'</div>';
     }else if(tab==='logs'){
-      body=typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'';
+      /* its own header, so the badge beside the name follows the status after a step (product owner, 17 Nov 2026) */
+      body=hero+(typeof lpLogsView==='function'?lpLogsView(logsOf(c),logForm(c),{select:true,current:st,open:act&&act.id===c.id?act.label:undefined}):'');
     }else if(tab==='workflow'){
       const done=logsOf(c).map(function(l){return {title:l.step||l.status||'',user:l.user||'System',date:l.date||'',time:l.time||'',description:l.action||''};});
       const S2={title:'Approval',owner:'Finance or Company Admin'},S3={title:'Disbursement',owner:'Finance or Company Admin'};
       const steps=st==='Ready for Review'?[S2,S3]:st==='Approved'?[S3]:st==='Rejected'?[{title:'Edit the load',owner:'Company Admin'},S2,S3]
         :st==='Inactive'?[{title:'Make the '+(/^Employee/.test(why(c))?'employee':'card')+' Active',owner:'Company Admin'},S2,S3]
         :st==='No Limit'?[{title:'Set the wallet limits',owner:'Company Admin'},S2,S3]:[];
-      body=typeof wfTimelineHTML==='function'?wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done):'';
+      body=hero+(typeof wfTimelineHTML==='function'?wfTimelineHTML(typeof wfPlan==='function'?wfPlan(done,steps):done):'');
     }else if(tab==='history'){
       const hs=runs().filter(function(r){return r.items.some(function(i){return i.cardId===c.id;});}).sort(function(a,b){return b.month.localeCompare(a.month);});
       body=hero+'<div class="lp-sb-view-header"><span class="lp-sb-section-title">Load History</span><span class="ax-count">'+hs.length+'</span></div>'
